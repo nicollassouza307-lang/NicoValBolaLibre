@@ -1,0 +1,9 @@
+node_modules/
+dist/
+release/
+.env
+cloud-sync/.data/
+cloud-sync/node_modules/
+*.log
+.DS_Store
+Thumbs.db
