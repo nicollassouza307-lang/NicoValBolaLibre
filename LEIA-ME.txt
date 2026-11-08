@@ -1,4 +1,4 @@
-NicoValBolaLibre V0.18.7 — placar, lances e escalações aprimoradas
+NicoValBolaLibre V0.18.8 — configuração segura do football-data.org
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football não adiciona partidas: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -43,7 +43,7 @@ A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita ape
 #Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.7 no computador administrador (o seu).
+2. Instale a V0.18.8 no computador administrador (o seu).
 3. Abra Painel Admin → API-Football · Dados das partidas.
 4. Cole a chave em API Key pessoal e clique Salvar chave neste computador.
 5. Clique Testar conexão. O teste consulta `/status`, que não reduz a cota diária.
@@ -83,15 +83,15 @@ O workflow executa:
 
 Os testes da API-Football usam respostas simuladas. Eles verificam cache, consulta de fixtures sem parâmetro page, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-#Publicar V0.18.7
+#Publicar V0.18.8
 
 1. Publique o Worker pelo Passo A.
 2. Execute novamente cloudflare-sync/schema.sql no D1 para criar provider_cache (o script preserva shared_config e os snapshots).
 3. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
 4. Confirme que `NVB_SYNC_READ_TOKEN` continua em Settings → Secrets and variables → Actions. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-5. Faça commit `NicoValBolaLibre V0.18.7` e `Push origin`.
-6. Crie a tag `v0.18.7` nesse commit e faça outro `Push origin`.
-7. Acompanhe o GitHub Actions e a Release `v0.18.7`.
+5. Faça commit `NicoValBolaLibre V0.18.8` e `Push origin`.
+6. Crie a tag `v0.18.8` nesse commit e faça outro `Push origin`.
+7. Acompanhe o GitHub Actions e a Release `v0.18.8`.
 
 #Limitações conhecidas desta primeira fase
 
@@ -141,3 +141,17 @@ MIGRAÇÃO CLOUDFLARE NECESSÁRIA
 4. Atualize o app nos dois computadores. Sem a migração, cache remoto não funciona, mas cache local e consultas normais continuam ativos.
 
 football-data.org e TheSportsDB ainda aparecem como integrações planejadas, sem chamadas externas nesta versão. A agenda continua vindo do Rei dos Canais/PelotaLibre.
+
+
+V0.18.8 - CONFIGURAÇÃO DO FOOTBALL-DATA.ORG
+=========================================
+
+- Painel Admin ganhou a seção football-data.org - Resultados e competições.
+- Cole o token no campo Token pessoal e clique Salvar token neste computador.
+- Clique Testar conexão para validar a credencial com uma chamada ao catálogo /v4/competitions.
+- O token é criptografado com Electron safeStorage no perfil deste Windows, nunca é enviado ao navegador, GitHub, Worker Cloudflare, instalador ou computador do Val.
+- Apagar token local remove a credencial deste computador.
+- Esta versão cadastra e testa o token. A integração de consultas a jogos, resultados e classificações será ativada posteriormente; por enquanto a API-Football continua sendo o provedor efetivo de dados esportivos.
+
+Documentação oficial: https://docs.football-data.org/general/v4/index.html
+Autenticação: cabeçalho HTTP X-Auth-Token.

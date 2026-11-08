@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
+const { FootballDataService } = require('./football-data-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -32,6 +33,9 @@ const API_FOOTBALL_DATA_DIR = process.env.NVB_USER_DATA_DIR || path.join(__dirna
 const apiFootballService = new ApiFootballService({
   dataDir: API_FOOTBALL_DATA_DIR,
   getApiKey: () => String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()
+});
+const footballDataService = new FootballDataService({
+  getToken: () => String(process.env.NVB_FOOTBALL_DATA_TOKEN || '').trim()
 });
 
 const REQUESTED_PORT = Number(process.env.PORT || 8787);
@@ -987,8 +991,25 @@ const requestHandler = async (req, res) => {
     } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message }); }
   }
 
+  if (pathname === '/api/football-data/status' && req.method === 'GET') {
+    return json(res, 200, { ok: true, configured: footballDataService.isConfigured(), provider: 'football-data.org', keyNeverSentToBrowser: true });
+  }
+
+  if (pathname === '/api/football-data/test' && req.method === 'POST') {
+    try {
+      const result = await footballDataService.testConnection();
+      return json(res, 200, result);
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível testar o football-data.org.', code: error.code || '', keyNeverSentToBrowser: true });
+    }
+  }
+
   if (pathname === '/api/providers/status' && req.method === 'GET') {
-    return json(res, 200, { ok: true, ...apiFootballService.multiApiEngine.status() });
+    const status = apiFootballService.multiApiEngine.status();
+    status.providers = status.providers.map(provider => provider.id === 'football-data' && footballDataService.isConfigured()
+      ? { ...provider, state: 'configured', configured: true }
+      : provider);
+    return json(res, 200, { ok: true, ...status });
   }
 
   if (pathname === '/api/cloud-sync/provider-cache/get' && req.method === 'POST') {
@@ -1337,7 +1358,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.7 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.8 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

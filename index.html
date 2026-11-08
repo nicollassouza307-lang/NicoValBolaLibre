@@ -375,6 +375,7 @@
 
 
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
+/* V0.18.8: cadastro seguro do token football-data.org */
 .game-card .teams{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}
 .agenda-score-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;text-align:center}
 .agenda-score-wrap .score{font-size:22px;font-weight:1000;letter-spacing:.025em;white-space:nowrap}
@@ -586,6 +587,22 @@
         <div class="admin-small">Plano gratuito: 100 chamadas por dia. O NicoValBola usa um teto interno de 70 chamadas e preserva 30 de reserva. O teste de conexão usa /status, sem consumir a cota diária. Atenção: a documentação atual limita temporadas do plano Free; em 2026, indica cobertura de 2022 a 2024. Confira a cobertura da competição/temporada antes de depender dos dados atuais.</div>
         <div class="admin-small">Obtenha sua chave em <a href="https://dashboard.api-football.com/" target="_blank" rel="noopener">dashboard.api-football.com</a>. Consulte <a href="https://www.api-football.com/documentation-v3" target="_blank" rel="noopener">a documentação oficial</a>.</div>
       </div>
+      <div class="admin-panel" id="footballDataPanel">
+        <div class="section-head" style="margin:0 0 8px;align-items:center">
+          <div><h4>🌍 football-data.org · Resultados e competições</h4><p>Fonte complementar para placares, calendários, classificações e competições cobertas. Não adiciona partidas à agenda.</p></div>
+          <span class="api-football-status-pill warn" id="footballDataConfiguredBadge">Token não configurado</span>
+        </div>
+        <label class="admin-small" for="footballDataTokenInput">Token pessoal (criptografado somente neste Windows)</label>
+        <input id="footballDataTokenInput" type="password" autocomplete="off" spellcheck="false" placeholder="Cole aqui o token do football-data.org">
+        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn small" type="button" id="saveFootballDataToken">Salvar token neste computador</button>
+          <button class="btn secondary small" type="button" id="testFootballDataToken">Testar conexão</button>
+          <button class="btn danger small" type="button" id="clearFootballDataToken">Apagar token local</button>
+        </div>
+        <div class="admin-small" id="footballDataTokenStatus" role="status" aria-live="polite" style="margin-top:10px">O token ainda não foi configurado.</div>
+        <p class="admin-small">O token fica criptografado no perfil deste Windows. Nunca é enviado ao navegador, ao GitHub, ao instalador nem ao computador do Val. O computador administrador consulta o provedor e poderá compartilhar os resultados pelo Cloudflare. O teste faz uma única consulta ao catálogo de competições.</p>
+        <div class="admin-small">Documentação: <a href="https://docs.football-data.org/general/v4/index.html" target="_blank" rel="noopener">API v4</a> · <a href="https://www.football-data.org/" target="_blank" rel="noopener">Cobertura e planos</a>.</div>
+      </div>
       <div class="admin-panel" id="cloudSyncPanel">
         <h4>☁️ Sincronização entre computadores</h4>
         <p>Compartilhe o catálogo de emissoras, vínculos por partida e escudos personalizados. Favoritos e idioma continuam individuais.</p>
@@ -623,7 +640,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.7 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.8 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -2015,7 +2032,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     const providers=Array.isArray(engine.providers)?engine.providers:[];
     host.innerHTML=providers.map(provider=>{
       const active=provider.state==='active';
-      const state=active?'Ativa':(provider.state==='available'?'Reserva local':'Próxima integração');
+      const state=active?'Ativa':(provider.state==='available'?'Reserva local':(provider.state==='configured'?'Token salvo':'Próxima integração'));
       const cache=Number(provider.cacheEntries||0);
       const quota=provider.quota?.appSoftLimit?` · teto ${provider.quota.appSoftLimit}/dia`:'';
       return `<div class="multi-api-provider"><strong>${escapeHtml(provider.name||provider.id)}</strong><span>${escapeHtml(provider.description||'')}</span><em class="${active?'':'planned'}">${state} · ${cache} item(ns) em cache${quota}</em></div>`;
@@ -2065,6 +2082,53 @@ const BROADCASTER_ALIAS_GROUPS = [
     });
     await refreshApiFootballAdminStatus();
   }
+  let footballDataTokenConfigured = false;
+  async function refreshFootballDataAdminStatus() {
+    const badge=$('#footballDataConfiguredBadge'); const status=$('#footballDataTokenStatus');
+    try {
+      const info=window.nvbDesktop?.getFootballDataTokenStatus
+        ? await window.nvbDesktop.getFootballDataTokenStatus()
+        : {configured:false,encryptedAtRest:false};
+      footballDataTokenConfigured=Boolean(info?.configured);
+      if(badge){badge.textContent=footballDataTokenConfigured?'Token configurado':'Token não configurado';badge.classList.toggle('ok',footballDataTokenConfigured);badge.classList.toggle('warn',!footballDataTokenConfigured);}
+      if(status) status.textContent=footballDataTokenConfigured
+        ? 'Token protegido neste perfil do Windows. O segredo não é exibido nem enviado ao navegador.'
+        : (window.nvbDesktop?.isDesktop?'Cole o token do football-data.org aqui e clique em Salvar token neste computador.':'A configuração do token está disponível no aplicativo Windows.');
+    } catch(error) { if(status) status.textContent=`Não foi possível consultar o estado do token: ${error.message}`; }
+  }
+  async function initFootballDataPanel() {
+    const desktop=window.nvbDesktop;
+    const input=$('#footballDataTokenInput'); const save=$('#saveFootballDataToken'); const test=$('#testFootballDataToken'); const clear=$('#clearFootballDataToken'); const statusElement=$('#footballDataTokenStatus');
+    if(!desktop?.isDesktop){if(input)input.disabled=true;if(save)save.disabled=true;if(test)test.disabled=true;if(clear)clear.disabled=true;}
+    save?.addEventListener('click',async()=>{
+      const value=String(input?.value||'').trim(); if(!value){toast('Cole o token do football-data.org antes de salvar.');return;}
+      try {
+        const result=await desktop.saveFootballDataToken(value);
+        if(input)input.value='';
+        toast(result?.ok?'Token criptografado e salvo somente neste Windows.':'Não foi possível salvar o token.');
+        await refreshFootballDataAdminStatus();
+      } catch(error){toast(error.message||'Falha ao salvar o token.');}
+    });
+    test?.addEventListener('click',async()=>{
+      if(!footballDataTokenConfigured){toast('Salve primeiro o token do football-data.org neste computador.');return;}
+      test.disabled=true;
+      try {
+        const response=await fetch('/api/football-data/test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        const result=await response.json();
+        if(!response.ok||!result.ok)throw new Error(result.error||'O football-data.org não aceitou a conexão.');
+        toast(`football-data.org conectado. ${Number(result.competitionsCount||0)} competições disponíveis para sua conta.`);
+        if(statusElement) statusElement.textContent=`Conexão validada. ${Number(result.competitionsCount||0)} competições disponíveis para sua conta.`;
+      } catch(error){toast(error.message||'Não foi possível testar o football-data.org.');}
+      finally{test.disabled=false;await refreshFootballDataAdminStatus();}
+    });
+    clear?.addEventListener('click',async()=>{
+      if(!confirm('Apagar o token do football-data.org criptografado neste computador?'))return;
+      try{await desktop.clearFootballDataToken();toast('Token do football-data.org apagado deste computador.');await refreshFootballDataAdminStatus();}
+      catch(error){toast(error.message||'Não foi possível apagar o token.');}
+    });
+    await refreshFootballDataAdminStatus();
+  }
+
   async function shareApiFootballSnapshot(snapshot, type='match') {
     const settings=readCloudSyncSettings();
     if(settings.adminToken.length<24||!settings.url) return {shared:false,reason:'Este computador não possui a chave administrativa de publicação.'};
@@ -3232,7 +3296,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.7',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.8',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -3299,6 +3363,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   $('#importConfigFile').addEventListener('change',e=>importConfig(e.target.files?.[0]));
   initCloudSyncPanel();
   initApiFootballPanel();
+  initFootballDataPanel();
   initDesktopUpdatePanel();
   // V0.15: filtros (Todos / Ao vivo / Próximos / Encerrados / Favoritos) no topo da lista.
   document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.filter)));

@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.7 — escalações, escudos e atualizações
+# NicoValBolaLibre V0.18.8 — cadastro seguro do football-data.org
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football **não adiciona partidas**: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -6,6 +6,26 @@ Esta versão adiciona uma integração opcional com a API-Football. A agenda con
 Correção de publicação do atualizador na V0.18.3
 
 A Release V0.18.1 foi publicada sem o instalador Windows e sem o manifesto `latest.yml`; por isso o botão Verificar atualizações retornava 404. A V0.18.3 verifica explicitamente se `dist/*-Setup.exe` e `dist/latest.yml` foram gerados e anexa ambos à Release com `softprops/action-gh-release`. Se algum deles faltar, o workflow falha em vez de marcar a Release como sucesso incompleto. O aplicativo também apresenta uma mensagem amigável quando encontra esse 404.
+
+
+## V0.18.8 — configuração do football-data.org
+
+- O Painel Admin ganhou a seção **football-data.org · Resultados e competições**.
+- O token é salvo pelo Electron `safeStorage` em `userData/football-data-token.bin`; ele nunca é devolvido ao navegador, incluído no repositório, no instalador ou sincronizado com o computador do Val.
+- Use **Salvar token neste computador** e depois **Testar conexão**. O teste faz uma única chamada autenticada para `/v4/competitions` com o cabeçalho `X-Auth-Token`.
+- O botão **Apagar token local** remove o arquivo criptografado do perfil do Windows.
+- Esta entrega configura e testa a credencial. Consultas de jogos, resultados e classificações pelo football-data.org ainda serão ativadas em uma etapa posterior; por enquanto, a API-Football continua sendo a única fonte de dados esportivos efetivamente consultada pelo app. A agenda permanece exclusivamente Rei dos Canais/PelotaLibre.
+
+### Configurar o token
+
+1. Instale a V0.18.8 no computador administrador.
+2. Abra **Painel Admin → football-data.org · Resultados e competições**.
+3. Cole o token no campo **Token pessoal**.
+4. Clique **Salvar token neste computador**. O campo será limpo depois de salvar.
+5. Clique **Testar conexão**. O teste usa uma chamada da sua cota do football-data.org.
+6. Não coloque o token em GitHub Secrets, `.env`, no Cloudflare, nem no computador do Val. O Val receberá somente dados esportivos compartilhados futuramente.
+
+Documentação oficial: https://docs.football-data.org/general/v4/index.html. A autenticação usa o cabeçalho HTTP `X-Auth-Token`.
 
 ## O que esta versão entrega
 
@@ -43,7 +63,7 @@ A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita ape
 ## Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.7 no computador administrador (o seu).
+2. Instale a V0.18.8 no computador administrador (o seu).
 3. Abra **Painel Admin → API-Football · Dados das partidas**.
 4. Cole a chave em **API Key pessoal** e clique **Salvar chave neste computador**.
 5. Clique **Testar conexão**. O teste consulta `/status`, que não reduz a cota diária.
@@ -79,19 +99,20 @@ O workflow executa:
 - `node scripts/test-apifootball.js`
 - `node scripts/test-cloudflare-sports-data.js`
 - `node scripts/test-multi-api-engine.js`
+- `node scripts/test-football-data-service.js`
 - `node scripts/test-cloudflare-provider-cache.js`
 
 Os testes da API-Football usam respostas simuladas. Eles verificam que a consulta de fixtures por data não envia o parâmetro `page`, cache, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-## Publicar V0.18.7
+## Publicar V0.18.8
 
 1. Publique o Worker usando `cloudflare-sync/worker.js` desta versão.
 2. Execute novamente `cloudflare-sync/schema.sql` no D1 para criar `provider_cache`; o script preserva as tabelas e os dados existentes.
 3. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
 4. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-5. Faça commit `NicoValBolaLibre V0.18.7` e `Push origin`.
-6. Crie a tag `v0.18.7` nesse commit e faça outro `Push origin`.
-7. Acompanhe o GitHub Actions e a Release `v0.18.7`.
+5. Faça commit `NicoValBolaLibre V0.18.8` e `Push origin`.
+6. Crie a tag `v0.18.8` nesse commit e faça outro `Push origin`.
+7. Acompanhe o GitHub Actions e a Release `v0.18.8`.
 
 ## Limitações conhecidas desta primeira fase
 
@@ -113,7 +134,7 @@ Os testes da API-Football usam respostas simuladas. Eles verificam que a consult
 - Estatísticas exibidas em comparativos visuais entre os dois clubes.
 
 
-A compilação V0.18.7 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
+A compilação V0.18.8 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
 
 
 ## V0.18.6 — placar, lances e escalações aprimoradas

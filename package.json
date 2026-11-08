@@ -1,6 +1,6 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.18.7",
+  "version": "0.18.8",
   "description": "Central de partidas NicoValBolaLibre para Windows",
   "private": true,
   "main": "electron/main.js",
@@ -17,7 +17,8 @@
     "test:cloud-sports-sync": "node scripts/test-cloudflare-sports-data.js",
     "test:lineup-ui": "node scripts/test-apifootball-lineup-ui.js",
     "test:multi-api": "node scripts/test-multi-api-engine.js",
-    "test:cloud-provider-cache": "node scripts/test-cloudflare-provider-cache.js"
+    "test:cloud-provider-cache": "node scripts/test-cloudflare-provider-cache.js",
+    "test:football-data": "node scripts/test-football-data-service.js"
   },
   "devDependencies": {
     "electron": "^38.0.0",

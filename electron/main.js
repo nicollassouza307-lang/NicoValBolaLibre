@@ -12,9 +12,32 @@ let localServer = null;
 let updateDownloaded = false;
 let checkingForUpdates = false;
 let apiFootballKeyEncryptedAtRest = false;
+let footballDataTokenEncryptedAtRest = false;
 
 function apiFootballKeyPath() {
   return path.join(app.getPath('userData'), 'apifootball-key.bin');
+}
+
+function footballDataTokenPath() {
+  return path.join(app.getPath('userData'), 'football-data-token.bin');
+}
+
+function loadEncryptedFootballDataToken() {
+  try {
+    const file = footballDataTokenPath();
+    if (!require('node:fs').existsSync(file) || !safeStorage.isEncryptionAvailable()) {
+      footballDataTokenEncryptedAtRest = false;
+      return false;
+    }
+    const encrypted = require('node:fs').readFileSync(file);
+    const token = safeStorage.decryptString(encrypted).trim();
+    if (token) process.env.NVB_FOOTBALL_DATA_TOKEN = token;
+    footballDataTokenEncryptedAtRest = Boolean(token);
+    return Boolean(token);
+  } catch (error) {
+    console.error('Não foi possível carregar o token local do football-data.org:', error.message);
+    return false;
+  }
 }
 
 function loadEncryptedApiFootballKey() {
@@ -167,6 +190,29 @@ ipcMain.handle('nvb:update-install', () => {
   return { ok: updateDownloaded };
 });
 
+ipcMain.handle('nvb:football-data-token-status', () => {
+  const configured = Boolean(String(process.env.NVB_FOOTBALL_DATA_TOKEN || '').trim());
+  return { configured, encryptedAtRest: configured && footballDataTokenEncryptedAtRest };
+});
+ipcMain.handle('nvb:football-data-token-save', (_event, rawToken) => {
+  const token = String(rawToken || '').trim();
+  if (!/^[A-Za-z0-9]{12,128}$/.test(token)) throw new Error('O token parece inválido. Confira se copiou o token completo do football-data.org.');
+  if (!safeStorage.isEncryptionAvailable()) throw new Error('O Windows não disponibilizou a criptografia segura do sistema. O token não foi salvo.');
+  const fs = require('node:fs');
+  const file = footballDataTokenPath();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, safeStorage.encryptString(token), { mode: 0o600 });
+  process.env.NVB_FOOTBALL_DATA_TOKEN = token;
+  footballDataTokenEncryptedAtRest = true;
+  return { ok: true, configured: true, encryptedAtRest: true };
+});
+ipcMain.handle('nvb:football-data-token-clear', () => {
+  try { require('node:fs').rmSync(footballDataTokenPath(), { force: true }); } catch {}
+  delete process.env.NVB_FOOTBALL_DATA_TOKEN;
+  footballDataTokenEncryptedAtRest = false;
+  return { ok: true, configured: false, encryptedAtRest: false };
+});
+
 ipcMain.handle('nvb:apifootball-key-status', () => {
   const configured = Boolean(String(process.env.NVB_APIFOOTBALL_KEY || '').trim());
   return { configured, encryptedAtRest: configured && apiFootballKeyEncryptedAtRest };
@@ -196,6 +242,7 @@ app.whenReady().then(async () => {
     // Segredos e cache da API ficam no perfil local do Windows, nunca na pasta do app/GitHub.
     process.env.NVB_USER_DATA_DIR = app.getPath('userData');
     loadEncryptedApiFootballKey();
+    loadEncryptedFootballDataToken();
     const url = await startLocalServer();
     createWindow(url);
     configureAutoUpdater();
