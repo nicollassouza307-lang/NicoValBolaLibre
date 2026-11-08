@@ -218,31 +218,50 @@ class ApiFootballService {
   }
 
   async fixturesForDate(date, options = {}) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) throw Object.assign(new Error('Data da partida inválida.'), { status: 400 });
-    const cacheKey = `fixtures:${date}:page:`;
-    const pageOneCache = this.getCached(`${cacheKey}1`);
-    const pageOneData = pageOneCache?.__nvbApiCacheEnvelope === true ? pageOneCache.data : pageOneCache;
-    const isPageOneLive = asArray(pageOneData).some(item => ['1H','HT','2H','ET','P','LIVE'].includes(String(item?.fixture?.status?.short || '').toUpperCase()));
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(this.now()));
-    const baseTtl = date === today ? (isPageOneLive ? 90_000 : 15 * 60_000) : 12 * 60 * 60_000;
-    const pageOne = await this.request(`/fixtures?date=${encodeURIComponent(date)}&timezone=${encodeURIComponent(TIME_ZONE)}&page=1`, {
-      cacheKey: `${cacheKey}1`, ttlMs: baseTtl, force: Boolean(options.force)
-    });
-    const all = [...asArray(pageOne.data)];
-    const reportedPages = Math.max(1, Number(pageOne.paging?.total || 1));
-    const pageTotal = Math.min(10, reportedPages);
-    const receivedPageHasLive = asArray(pageOne.data).some(item => ['1H','HT','2H','ET','P','LIVE'].includes(String(item?.fixture?.status?.short || '').toUpperCase()));
-    const effectiveTtl = date === today && (isPageOneLive || receivedPageHasLive) ? 90_000 : baseTtl;
-    if (!pageOne.cached && effectiveTtl !== baseTtl) {
-      this.setCached(`${cacheKey}1`, { __nvbApiCacheEnvelope: true, data: pageOne.data, paging: pageOne.paging || {}, results: pageOne.results || 0 }, effectiveTtl);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) {
+      throw Object.assign(new Error('Data da partida inválida.'), { status: 400 });
     }
-    for (let page = 2; page <= pageTotal; page += 1) {
-      const result = await this.request(`/fixtures?date=${encodeURIComponent(date)}&timezone=${encodeURIComponent(TIME_ZONE)}&page=${page}`, {
-        cacheKey: `${cacheKey}${page}`, ttlMs: effectiveTtl, force: Boolean(options.force)
-      });
-      all.push(...asArray(result.data));
+
+    // IMPORTANTE: /fixtures não aceita o parâmetro `page`.
+    // A paginação existe em outros endpoints (por exemplo, profiles e odds),
+    // mas não deve ser acrescentada à consulta de fixtures por data.
+    // Uma única resposta de /fixtures?date=... devolve a lista do dia.
+    const cacheKey = `fixtures:${date}:all:v2`;
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date(this.now()));
+
+    // No dia atual, renovar a lista periodicamente para detectar partidas que
+    // começaram; quando há partidas ao vivo, usar uma janela ainda menor.
+    const normalTtl = date === today ? 5 * 60_000 : 12 * 60 * 60_000;
+    const result = await this.request(
+      `/fixtures?date=${encodeURIComponent(date)}&timezone=${encodeURIComponent(TIME_ZONE)}`,
+      { cacheKey, ttlMs: normalTtl, force: Boolean(options.force) }
+    );
+
+    const fixtures = asArray(result.data);
+    const liveStatuses = new Set(['1H', 'HT', '2H', 'ET', 'P', 'LIVE', 'BT']);
+    const hasLive = fixtures.some(item => liveStatuses.has(String(item?.fixture?.status?.short || '').toUpperCase()));
+    const effectiveTtl = date === today && hasLive ? 90_000 : normalTtl;
+
+    // request() já gravou com normalTtl. Se a resposta indicar jogo ao vivo,
+    // encurtamos a validade do cache para 90 segundos.
+    if (!result.cached && effectiveTtl !== normalTtl) {
+      this.setCached(cacheKey, {
+        __nvbApiCacheEnvelope: true,
+        data: fixtures,
+        paging: result.paging || {},
+        results: result.results || fixtures.length
+      }, effectiveTtl);
     }
-    return { fixtures: all, cached: pageOne.cached, pages: pageTotal, truncated: reportedPages > 10, usage: this.getUsage() };
+
+    return {
+      fixtures,
+      cached: result.cached,
+      pages: 1,
+      truncated: false,
+      usage: this.getUsage()
+    };
   }
 
   findFixture(event, fixtures) {

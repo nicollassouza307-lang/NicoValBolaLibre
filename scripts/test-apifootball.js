@@ -19,6 +19,9 @@ const fixture = {
 async function fakeFetch(url, options = {}) {
   const parsed = new URL(url);
   calls.push(parsed.pathname + parsed.search);
+  if (parsed.pathname === '/fixtures' && parsed.searchParams.has('page')) {
+    return new Response(JSON.stringify({ errors: { page: 'The page field does not exist' }, response: [] }), { status: 200, headers });
+  }
   const headers = new Headers({ 'x-ratelimit-requests-limit': '100', 'x-ratelimit-requests-remaining': String(Math.max(0, 100 - calls.filter(item => item !== '/status').length)) });
   if (parsed.pathname === '/status') {
     return new Response(JSON.stringify({ response: [{ account: { firstname: 'Nico', lastname: 'Test', email: 'private@example.test' }, subscription: { plan: 'Free', active: true, end: '2027-01-01' } }] }), { status: 200, headers });
@@ -65,7 +68,9 @@ async function fakeFetch(url, options = {}) {
   assert.equal(resolved.matched, true, 'A partida existente na agenda deve ser identificada.');
   assert.equal(resolved.fixture.id, 900001);
   const beforeDetails = service.getUsage().requestsUsedByApp;
-  assert.equal(beforeDetails, 1, 'A lista de partidas deve consumir uma chamada.');
+  assert.equal(beforeDetails, 1, 'A lista de partidas por data deve consumir uma chamada.');
+  assert.equal(calls.filter(item => item.startsWith('/fixtures?date=')).length, 1, 'A lista diária deve ser consultada uma única vez.');
+  assert.equal(calls.some(item => item.startsWith('/fixtures?') && item.includes('page=')), false, 'O endpoint /fixtures não deve receber o parâmetro page.');
 
   const details = await service.getMatchDetails(900001, 'NS');
   assert.equal(details.lineups.length, 2);
@@ -95,7 +100,7 @@ async function fakeFetch(url, options = {}) {
 
   const storedUsage = JSON.parse(fs.readFileSync(path.join(tempDir, 'apifootball-usage.json'), 'utf8'));
   assert.equal(storedUsage.used, 70);
-  console.log('PASSOU: /status sem consumo diário; identificação exata da partida da agenda; /fixtures?id combinado para lineups/statistics; cache; classificação; limite interno de 70; partida não encontrada permanece fora da agenda.');
+  console.log('PASSOU: /status sem consumo diário; /fixtures por data sem parâmetro page; identificação exata da partida da agenda; /fixtures?id combinado para lineups/statistics; cache; classificação; limite interno de 70; partida não encontrada permanece fora da agenda.');
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
