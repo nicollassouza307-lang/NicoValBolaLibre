@@ -95,6 +95,9 @@ async function fakeFetch(url, options = {}) {
   const cachedDetails = await service.getMatchDetails(900001, 'NS');
   assert.equal(cachedDetails.cached, true);
   assert.equal(service.getUsage().requestsUsedByApp, 2, 'O cache não deve gastar requisições adicionais.');
+  const engineCache = service.multiApiEngine.get('api-football', 'fixture-details:900001');
+  assert.ok(engineCache && engineCache.__nvbApiCacheEnvelope, 'O cache da API-Football também deve ser indexado pelo Multi-API Engine.');
+  assert.ok(service.multiApiEngine.getProviderUsage('api-football'), 'O uso da API-Football deve aparecer no catálogo unificado de provedores.');
 
   const unmatched = await service.resolveMatch({ id: 'agenda-2', home: 'Clube que não existe', away: 'Outro clube', dateEvent: '2026-11-08' });
   assert.equal(unmatched.matched, false, 'O enriquecimento nunca deve inventar ou adicionar partidas à agenda.');

@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.6 — escalações, escudos e atualizações
+# NicoValBolaLibre V0.18.7 — escalações, escudos e atualizações
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football **não adiciona partidas**: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -29,20 +29,21 @@ A disponibilidade varia por competição, temporada e partida. Escalações pode
 
 ## Cloudflare Worker (compartilhamento com o Val)
 
-O D1 existente não precisa de alteração SQL: os snapshots são armazenados dentro de `shared_config.config_json`.
+Na V0.18.7, o Worker passa a usar também a tabela `provider_cache` no D1. O script `cloudflare-sync/schema.sql` é idempotente: execute-o novamente para criar a tabela nova sem apagar `shared_config` nem os snapshots existentes.
 
 1. Abra o Cloudflare Dashboard → **Workers & Pages** → `nicoval-sync` → **Edit code**.
 2. Substitua o código do Worker pelo arquivo `cloudflare-sync/worker.js` deste projeto.
 3. Clique em **Deploy**.
-4. O binding D1 `DB` e as Secrets `SYNC_READ_TOKEN` e `SYNC_ADMIN_TOKEN` continuam iguais. Não crie novas Secrets e não execute SQL novamente.
-5. Confirme `https://nicoval-sync.tracker-mps.workers.dev/health` e depois que a sincronização normal do app continua funcionando.
+4. No Console do D1 `nicoval-db`, execute novamente o conteúdo de `cloudflare-sync/schema.sql` para criar `provider_cache`.
+5. O binding D1 `DB` e as Secrets `SYNC_READ_TOKEN` e `SYNC_ADMIN_TOKEN` continuam iguais. Não crie novas Secrets.
+6. Confirme `https://nicoval-sync.tracker-mps.workers.dev/health` e depois que a sincronização normal do app continua funcionando.
 
 A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita apenas `SYNC_ADMIN_TOKEN`, e mantém os snapshots ao publicar o catálogo normal. Nenhuma chave API-Football é guardada no Worker.
 
 ## Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.6 no computador administrador (o seu).
+2. Instale a V0.18.7 no computador administrador (o seu).
 3. Abra **Painel Admin → API-Football · Dados das partidas**.
 4. Cole a chave em **API Key pessoal** e clique **Salvar chave neste computador**.
 5. Clique **Testar conexão**. O teste consulta `/status`, que não reduz a cota diária.
@@ -56,7 +57,7 @@ Não crie um GitHub Secret para a API-Football. A única Secret de GitHub já us
 2. Abra uma partida já encontrada pelo Rei dos Canais/PelotaLibre.
 3. Na seção **API-Football**, clique em **Buscar dados da API-Football**.
 4. Se a API tiver um fixture com a mesma data, mandante e visitante, o app mostra o placar, gols, assistências, substituições e resultado dos pênaltis, além de escalações/estatísticas quando cobertos.
-5. Se estiver configurada a chave administrativa de sincronização Cloudflare neste computador, o snapshot (incluindo gols, assistências, substituições e placar dos pênaltis) é enviado para D1. O Val recebe automaticamente na próxima sincronização, desde que o Worker atualizado da V0.18.6 tenha sido publicado.
+5. Se estiver configurada a chave administrativa de sincronização Cloudflare neste computador, o snapshot (incluindo gols, assistências, substituições e placar dos pênaltis) é enviado para D1. O Val recebe automaticamente na próxima sincronização, desde que o Worker atualizado da V0.18.7 tenha sido publicado.
 6. Para consultar a classificação, use **Buscar classificação** depois que os dados do fixture estiverem disponíveis.
 
 Se o jogo não for encontrado ou houver mais de uma correspondência ambígua, o app não inventa um vínculo e não adiciona qualquer partida à agenda.
@@ -77,17 +78,20 @@ O workflow executa:
 - `node scripts/test-team-logo-index.js`
 - `node scripts/test-apifootball.js`
 - `node scripts/test-cloudflare-sports-data.js`
+- `node scripts/test-multi-api-engine.js`
+- `node scripts/test-cloudflare-provider-cache.js`
 
 Os testes da API-Football usam respostas simuladas. Eles verificam que a consulta de fixtures por data não envia o parâmetro `page`, cache, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-## Publicar V0.18.6
+## Publicar V0.18.7
 
-1. Atualize e publique obrigatoriamente o Worker pelo arquivo `cloudflare-sync/worker.js` desta versão. Isso é necessário para que gols, assistências, substituições e placares de pênaltis sejam preservados na sincronização com o Val.
-2. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
-3. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-4. Faça commit `NicoValBolaLibre V0.18.6` e `Push origin`.
-5. Crie a tag `v0.18.6` nesse commit e faça outro `Push origin`.
-6. Acompanhe o GitHub Actions e a Release `v0.18.6`.
+1. Publique o Worker usando `cloudflare-sync/worker.js` desta versão.
+2. Execute novamente `cloudflare-sync/schema.sql` no D1 para criar `provider_cache`; o script preserva as tabelas e os dados existentes.
+3. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
+4. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
+5. Faça commit `NicoValBolaLibre V0.18.7` e `Push origin`.
+6. Crie a tag `v0.18.7` nesse commit e faça outro `Push origin`.
+7. Acompanhe o GitHub Actions e a Release `v0.18.7`.
 
 ## Limitações conhecidas desta primeira fase
 
@@ -109,7 +113,7 @@ Os testes da API-Football usam respostas simuladas. Eles verificam que a consult
 - Estatísticas exibidas em comparativos visuais entre os dois clubes.
 
 
-A compilação V0.18.6 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
+A compilação V0.18.7 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
 
 
 ## V0.18.6 — placar, lances e escalações aprimoradas
@@ -122,3 +126,21 @@ A compilação V0.18.6 gera o instalador e `latest.yml` localmente; o workflow p
 - Compatibilidade: leitura dos objetos `player` aninhados no formato original da API-Football, tanto nos titulares quanto nos reservas.
 
 A V0.18.6 não altera as fontes da agenda: Rei dos Canais/PelotaLibre continuam fornecendo as partidas. A API-Football segue como complemento de partidas existentes. A atualização continua sob demanda para preservar a cota da chave. Para compartilhar os novos eventos com o Val, publique também a versão atualizada de `cloudflare-sync/worker.js` no Worker existente.
+
+## V0.18.7 — base do Multi-API Engine
+
+- Novo registro unificado de provedores: API-Football ativa, football-data.org e TheSportsDB preparados para integração nas próximas etapas, e GitHub Logos como fallback de imagens.
+- Cache local persistente e isolado por provedor, com expiração e importação de respostas já armazenadas na versão anterior.
+- Uso da API-Football passa a aparecer no registro unificado de provedores; o controle atual de 70 chamadas/dia e reserva de 30 permanece preservado.
+- Novo cache compartilhado no Cloudflare D1. O administrador publica entradas; o computador do Val pode lê-las com o token compartilhado. Nenhuma chave de API externa é gravada no Worker.
+- A lista diária de fixtures, detalhes de cada partida e classificações podem ser reaproveitadas no cache compartilhado, evitando consultas repetidas entre computadores.
+- O Painel Admin mostra o estado das integrações e a quantidade de entradas de cache locais.
+
+### Migração Cloudflare necessária na V0.18.7
+
+1. No Worker `nicoval-sync`, publique o arquivo `cloudflare-sync/worker.js` desta versão.
+2. No banco D1 `nicoval-db`, execute novamente o arquivo `cloudflare-sync/schema.sql`. O script usa `CREATE TABLE IF NOT EXISTS`, preserva a tabela de configuração atual e cria a tabela adicional `provider_cache`.
+3. Mantenha os secrets `SYNC_READ_TOKEN` e `SYNC_ADMIN_TOKEN` existentes. Não crie nem compartilhe chaves de API-Football no Worker.
+4. Atualize o aplicativo nos dois computadores. O cache remoto é best-effort: se a migração ainda não tiver sido aplicada, a consulta local continua funcionando e o aplicativo segue usando o cache local.
+
+As integrações football-data.org e TheSportsDB aparecem como próximas integrações no painel, mas ainda não realizam consultas externas nesta versão. Elas serão ativadas após validar suas coberturas, limites e termos oficiais. A agenda permanece exclusivamente Rei dos Canais/PelotaLibre.

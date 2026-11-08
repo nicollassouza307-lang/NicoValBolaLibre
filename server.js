@@ -824,10 +824,11 @@ function loadDesktopCloudSyncDefaults() {
 }
 
 async function cloudSyncFetch(url, options = {}) {
+  const { timeoutMs: customTimeoutMs, ...fetchOptions } = options;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  const timer = setTimeout(() => controller.abort(), Math.max(1000, Number(customTimeoutMs) || 12000));
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+    const response = await fetch(url, { ...fetchOptions, signal: controller.signal, cache: 'no-store' });
     const text = await response.text();
     let body;
     try { body = JSON.parse(text || '{}'); }
@@ -835,9 +836,38 @@ async function cloudSyncFetch(url, options = {}) {
     if (!response.ok) throw new Error(body.error || `O serviço de sincronização respondeu HTTP ${response.status}.`);
     return body;
   } catch (error) {
-    if (error.name === 'AbortError') throw new Error('O serviço de sincronização demorou mais de 12 segundos para responder.');
+    if (error.name === 'AbortError') throw new Error('O serviço de sincronização excedeu o tempo limite configurado.');
     throw error;
   } finally { clearTimeout(timer); }
+}
+
+async function readSharedProviderCache(cloudSync, key) {
+  const settings = cloudSync && typeof cloudSync === 'object' ? cloudSync : {};
+  const url = String(settings.url || '').trim();
+  const readToken = String(settings.readToken || '').trim();
+  if (!url || readToken.length < 24) return null;
+  try {
+    const base = normalizeCloudSyncBase(url);
+    const query = new URLSearchParams({ provider: 'api-football', key });
+    const result = await cloudSyncFetch(`${base}/v1/provider-cache?${query}`, { headers:{ 'Authorization':`Bearer ${readToken}` }, timeoutMs:4500 });
+    return result?.hit && result.record ? result.record : null;
+  } catch { return null; }
+}
+
+async function writeSharedProviderCache(cloudSync, key, record) {
+  const settings = cloudSync && typeof cloudSync === 'object' ? cloudSync : {};
+  const url = String(settings.url || '').trim();
+  const adminToken = String(settings.adminToken || '').trim();
+  if (!url || adminToken.length < 24 || !record || Number(record.expiresAt) <= Date.now()) return false;
+  try {
+    const base = normalizeCloudSyncBase(url);
+    const ttlSeconds = Math.max(1, Math.min(30 * 24 * 60 * 60, Math.floor((Number(record.expiresAt) - Date.now()) / 1000)));
+    await cloudSyncFetch(`${base}/v1/provider-cache`, {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${adminToken}` },
+      body:JSON.stringify({ provider:'api-football', key, data:record.data, ttlSeconds }), timeoutMs:4500
+    });
+    return true;
+  } catch { return false; }
 }
 
 async function fetchSportsApi(endpoint) {
@@ -957,6 +987,42 @@ const requestHandler = async (req, res) => {
     } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message }); }
   }
 
+  if (pathname === '/api/providers/status' && req.method === 'GET') {
+    return json(res, 200, { ok: true, ...apiFootballService.multiApiEngine.status() });
+  }
+
+  if (pathname === '/api/cloud-sync/provider-cache/get' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const base = normalizeCloudSyncBase(body.url);
+      const readToken = String(body.readToken || '').trim();
+      const provider = String(body.provider || '').trim().toLowerCase();
+      const key = String(body.key || '').trim();
+      if (readToken.length < 24) return json(res, 400, { ok:false, error:'Chave de leitura inválida.' });
+      if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(provider) || !key || key.length > 220) return json(res, 400, { ok:false, error:'Identificador de cache inválido.' });
+      const query = new URLSearchParams({ provider, key });
+      const result = await cloudSyncFetch(`${base}/v1/provider-cache?${query}`, { headers:{ 'Authorization':`Bearer ${readToken}` } });
+      return json(res, 200, result);
+    } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível ler o cache compartilhado.' }); }
+  }
+
+  if (pathname === '/api/cloud-sync/provider-cache/put' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 768 * 1024);
+      const base = normalizeCloudSyncBase(body.url);
+      const adminToken = String(body.adminToken || '').trim();
+      const provider = String(body.provider || '').trim().toLowerCase();
+      const key = String(body.key || '').trim();
+      if (adminToken.length < 24) return json(res, 403, { ok:false, error:'Somente o computador administrador pode atualizar o cache compartilhado.' });
+      if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(provider) || !key || key.length > 220) return json(res, 400, { ok:false, error:'Identificador de cache inválido.' });
+      const result = await cloudSyncFetch(`${base}/v1/provider-cache`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${adminToken}` },
+        body:JSON.stringify({ provider, key, data:body.data, ttlSeconds:body.ttlSeconds })
+      });
+      return json(res, 200, result);
+    } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível salvar o cache compartilhado.' }); }
+  }
+
   if (pathname === '/api/apifootball/status' && req.method === 'GET') {
     return json(res, 200, {
       configured: Boolean(String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()),
@@ -978,11 +1044,23 @@ const requestHandler = async (req, res) => {
     try {
       const body = await readRequestJson(req, 64 * 1024);
       const event = body.event || {};
+      const cloudSync = body.cloudSync || {};
       if (!event.id || !event.home || !event.away || !event.dateEvent) {
         return json(res, 400, { ok: false, error: 'A partida da agenda não contém os dados mínimos para cruzamento.' });
       }
+      const fixtureCacheKey = `fixtures:${String(event.dateEvent).slice(0,10)}:all:v2`;
+      if (!body.refreshMatch) {
+        const sharedFixtures = await readSharedProviderCache(cloudSync, fixtureCacheKey);
+        if (sharedFixtures) apiFootballService.importCacheRecord(fixtureCacheKey, sharedFixtures);
+      }
       const resolved = await apiFootballService.resolveMatch(event, { force: Boolean(body.refreshMatch) });
+      await writeSharedProviderCache(cloudSync, fixtureCacheKey, apiFootballService.getCacheRecord(fixtureCacheKey));
       if (!resolved.matched) return json(res, 200, { ok: true, matched: false, message: resolved.reason, usage: apiFootballService.getUsage() });
+      const detailsCacheKey = `fixture-details:${Number(resolved.fixture.id)}`;
+      if (!body.forceDetails) {
+        const sharedDetails = await readSharedProviderCache(cloudSync, detailsCacheKey);
+        if (sharedDetails) apiFootballService.importCacheRecord(detailsCacheKey, sharedDetails);
+      }
       let details;
       try {
         details = await apiFootballService.getMatchDetails(resolved.fixture.id, resolved.fixture.status, { force: Boolean(body.forceDetails) });
@@ -993,6 +1071,7 @@ const requestHandler = async (req, res) => {
           code: error.code || '', usage: apiFootballService.getUsage()
         });
       }
+      await writeSharedProviderCache(cloudSync, detailsCacheKey, apiFootballService.getCacheRecord(detailsCacheKey));
       const snapshot = buildApiFootballSnapshot(event, resolved, details);
       return json(res, 200, {
         ok: true, matched: true, fixture: resolved.fixture, snapshot,
@@ -1006,8 +1085,13 @@ const requestHandler = async (req, res) => {
 
   if (pathname === '/api/apifootball/standings' && req.method === 'POST') {
     try {
-      const body = await readRequestJson(req, 16 * 1024);
+      const body = await readRequestJson(req, 32 * 1024);
+      const cloudSync = body.cloudSync || {};
+      const cacheKey = `standings:${Number(body.leagueId)}:${Number(body.season)}`;
+      const sharedRecord = await readSharedProviderCache(cloudSync, cacheKey);
+      if (sharedRecord) apiFootballService.importCacheRecord(cacheKey, sharedRecord);
       const result = await apiFootballService.getStandings(body.leagueId, body.season);
+      await writeSharedProviderCache(cloudSync, cacheKey, apiFootballService.getCacheRecord(cacheKey));
       return json(res, 200, { ok: true, ...result });
     } catch (error) {
       return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível consultar a classificação.', code: error.code || '', usage: apiFootballService.getUsage() });
@@ -1253,7 +1337,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.6 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.7 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

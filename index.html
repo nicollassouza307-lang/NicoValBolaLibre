@@ -236,6 +236,7 @@
 .api-football-usage-card{border:1px solid var(--line);background:#ffffff05;border-radius:10px;padding:10px}
 .api-football-usage-card strong{display:block;color:#eff7ff;font-size:17px}
 .api-football-usage-card span{display:block;color:#8295b0;font-size:9px;margin-top:3px}
+.multi-api-engine{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.multi-api-provider{border:1px solid var(--line);background:#ffffff05;border-radius:10px;padding:9px}.multi-api-provider strong{display:block;color:#eaf3ff;font-size:11px}.multi-api-provider span{display:block;color:#8295b0;font-size:9px;line-height:1.4;margin-top:3px}.multi-api-provider em{display:inline-block;margin-top:6px;font-size:8px;font-style:normal;color:#89e3b2}.multi-api-provider em.planned{color:#ffd48a}@media(max-width:700px){.multi-api-engine{grid-template-columns:1fr}}
 .apifootball-panel{border:1px solid #48d9d02b;border-radius:16px;background:linear-gradient(145deg,#10263a,#0d1727);padding:16px;margin:0 0 14px}
 .apifootball-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .apifootball-panel h3{margin:2px 0 5px;font-size:16px}
@@ -373,7 +374,7 @@
 @media(max-width:390px){.apifootball-tabs{gap:4px}.apifootball-tab{padding:10px 5px;font-size:10px}.apifootball-pitch-player{width:56px}.apifootball-pitch-player .apifootball-photo-frame{width:31px;height:31px;flex-basis:31px}.apifootball-pitch-name{font-size:6px}.apifootball-pitch-half{height:270px;flex-basis:270px}}
 
 
-/* V0.18.6: placar e eventos completos + escalações maiores e mais compactas */
+/* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
 .game-card .teams{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}
 .agenda-score-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;text-align:center}
 .agenda-score-wrap .score{font-size:22px;font-weight:1000;letter-spacing:.025em;white-space:nowrap}
@@ -580,6 +581,7 @@
         </div>
         <div class="admin-small" id="apiFootballKeyStatus" role="status" aria-live="polite" style="margin-top:10px">A chave ainda não foi configurada.</div>
         <div class="api-football-usage" id="apiFootballUsage" hidden></div>
+        <div class="multi-api-engine" id="multiApiEngineStatus" aria-live="polite"><div class="admin-small">Carregando estado do Multi-API Engine…</div></div>
         <p class="admin-small">Configure a chave somente no computador administrador. Ela é salva com a criptografia do Windows e nunca é enviada ao GitHub, ao instalador ou ao computador do Val. O computador administrador consulta a API e compartilha os resultados pelo Cloudflare. O Val recebe os dados em modo somente leitura.</p>
         <div class="admin-small">Plano gratuito: 100 chamadas por dia. O NicoValBola usa um teto interno de 70 chamadas e preserva 30 de reserva. O teste de conexão usa /status, sem consumir a cota diária. Atenção: a documentação atual limita temporadas do plano Free; em 2026, indica cobertura de 2022 a 2024. Confira a cobertura da competição/temporada antes de depender dos dados atuais.</div>
         <div class="admin-small">Obtenha sua chave em <a href="https://dashboard.api-football.com/" target="_blank" rel="noopener">dashboard.api-football.com</a>. Consulte <a href="https://www.api-football.com/documentation-v3" target="_blank" rel="noopener">a documentação oficial</a>.</div>
@@ -621,7 +623,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.6 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.7 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -2008,17 +2010,31 @@ const BROADCASTER_ALIAS_GROUPS = [
     host.hidden=false;
     host.innerHTML=`<div class="api-football-usage-card"><strong>${used}/${cap}</strong><span>Chamadas usadas pelo app</span></div><div class="api-football-usage-card"><strong>${remain}</strong><span>Disponíveis antes da pausa</span></div><div class="api-football-usage-card"><strong>${usage.providerDailyRemaining===null?'—':Number(usage.providerDailyRemaining)}</strong><span>Restantes segundo a API</span></div>`;
   }
+  function renderMultiApiEngineStatus(engine) {
+    const host=$('#multiApiEngineStatus'); if(!host||!engine) return;
+    const providers=Array.isArray(engine.providers)?engine.providers:[];
+    host.innerHTML=providers.map(provider=>{
+      const active=provider.state==='active';
+      const state=active?'Ativa':(provider.state==='available'?'Reserva local':'Próxima integração');
+      const cache=Number(provider.cacheEntries||0);
+      const quota=provider.quota?.appSoftLimit?` · teto ${provider.quota.appSoftLimit}/dia`:'';
+      return `<div class="multi-api-provider"><strong>${escapeHtml(provider.name||provider.id)}</strong><span>${escapeHtml(provider.description||'')}</span><em class="${active?'':'planned'}">${state} · ${cache} item(ns) em cache${quota}</em></div>`;
+    }).join('')+`<div class="admin-small" style="grid-column:1/-1">Cache local: ${Number(engine.cacheEntries||0)} entrada(s). O cache compartilhado usa o Cloudflare quando as credenciais de leitura/admin estão configuradas. football-data.org e TheSportsDB ainda não fazem chamadas nesta versão.</div>`;
+  }
+
   async function refreshApiFootballAdminStatus() {
     const badge=$('#apiFootballConfiguredBadge'); const status=$('#apiFootballKeyStatus');
     try {
-      const [keyInfoResponse,apiStatusResponse]=await Promise.all([
+      const [keyInfoResponse,apiStatusResponse,providersResponse]=await Promise.all([
         window.nvbDesktop?.getApiFootballKeyStatus?window.nvbDesktop.getApiFootballKeyStatus():Promise.resolve({configured:false,encryptedAtRest:false}),
-        fetch('/api/apifootball/status',{cache:'no-store'})
+        fetch('/api/apifootball/status',{cache:'no-store'}),
+        fetch('/api/providers/status',{cache:'no-store'})
       ]);
       apiFootballLocalKeyConfigured=Boolean(keyInfoResponse?.configured);
       if(badge){badge.textContent=apiFootballLocalKeyConfigured?'Chave configurada':'Não configurada';badge.classList.toggle('ok',apiFootballLocalKeyConfigured);badge.classList.toggle('warn',!apiFootballLocalKeyConfigured);}
       if(status) status.textContent=apiFootballLocalKeyConfigured?'Chave protegida neste perfil do Windows. O segredo não é exibido nem enviado ao navegador.':(window.nvbDesktop?.isDesktop?'Configure a chave gratuita da API-Football neste computador administrador.':'A configuração da chave está disponível no aplicativo Windows.');
       if(apiStatusResponse.ok){const body=await apiStatusResponse.json();updateApiFootballUsage(body.usage);}
+      if(providersResponse?.ok){const providers=await providersResponse.json();renderMultiApiEngineStatus(providers);}
     } catch(error) { if(status) status.textContent=`Não foi possível consultar o estado da API: ${error.message}`; }
   }
   async function initApiFootballPanel() {
@@ -2065,7 +2081,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     apiFootballBusy=true;
     if(state.selected?.id===event.id)renderModal();
     try {
-      const response=await fetch('/api/apifootball/match-data',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({event:{id:event.id,home:event.home,away:event.away,dateEvent:event.dateEvent,timeText:event.timeText},refreshMatch:Boolean(options.refresh),forceDetails:Boolean(options.refresh)})});
+      const response=await fetch('/api/apifootball/match-data',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({event:{id:event.id,home:event.home,away:event.away,dateEvent:event.dateEvent,timeText:event.timeText},cloudSync:readCloudSyncSettings(),refreshMatch:Boolean(options.refresh),forceDetails:Boolean(options.refresh)})});
       const result=await response.json();
       if(result.usage)updateApiFootballUsage(result.usage);
       if(!response.ok||!result.ok)throw new Error(result.error||'Falha ao consultar dados da partida.');
@@ -2099,7 +2115,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(!leagueId||!season){toast('A API não informou o ID e a temporada desta competição.');return;}
     if(!apiFootballLocalKeyConfigured){toast('A classificação atualizada só pode ser consultada no computador administrador.');return;}
     try {
-      const response=await fetch('/api/apifootball/standings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leagueId,season})});
+      const response=await fetch('/api/apifootball/standings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leagueId,season,cloudSync:readCloudSyncSettings()})});
       const result=await response.json(); if(result.usage)updateApiFootballUsage(result.usage);
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação.');
       const leagueData=result.data?.[0]?.league||{};
@@ -3216,7 +3232,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.6',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.7',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

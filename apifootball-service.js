@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { MultiApiEngine } = require('./multi-api-engine');
 
 const API_BASE = 'https://v3.football.api-sports.io';
 const TIME_ZONE = 'America/Sao_Paulo';
@@ -50,10 +51,12 @@ class ApiFootballService {
     this.fetch = options.fetch || globalThis.fetch;
     this.now = options.now || (() => Date.now());
     this.dataDir = options.dataDir || path.join(process.cwd(), '.nvb-data');
+    this.multiApiEngine = options.multiApiEngine || new MultiApiEngine({ dataDir: this.dataDir, now: this.now });
     this.usageFile = path.join(this.dataDir, 'apifootball-usage.json');
     this.cacheFile = path.join(this.dataDir, 'apifootball-cache.json');
     this.usage = this.loadJson(this.usageFile, { day: utcDay(this.now()), used: 0, providerRemaining: null, providerLimit: null, minuteCalls: [] });
     this.cache = new Map(Object.entries(this.loadJson(this.cacheFile, {})));
+    this.multiApiEngine.importLegacyCache('api-football', Object.fromEntries(this.cache));
     this.persistDebounce = null;
   }
 
@@ -93,7 +96,7 @@ class ApiFootballService {
     const providerSafeRemaining = providerRemaining === null ? null : Math.max(0, providerRemaining - RESERVED_DAILY_QUOTA);
     const localRemaining = Math.max(0, DAILY_SOFT_LIMIT - Number(this.usage.used || 0));
     const effectiveRemaining = providerSafeRemaining === null ? localRemaining : Math.min(localRemaining, providerSafeRemaining);
-    return {
+    const usageSnapshot = {
       dayUtc: today,
       requestsUsedByApp: Number(this.usage.used || 0),
       appSoftLimit: DAILY_SOFT_LIMIT,
@@ -106,6 +109,8 @@ class ApiFootballService {
       appPerMinuteLimit: MINUTE_SOFT_LIMIT,
       resetAtUtc: `${today}T00:00:00Z`
     };
+    this.multiApiEngine?.recordUsage('api-football', usageSnapshot);
+    return usageSnapshot;
   }
 
   reserveRequest({ countDaily = true } = {}) {
@@ -136,12 +141,28 @@ class ApiFootballService {
 
   getCached(key) {
     const entry = this.cache.get(key);
-    if (!entry || Number(entry.expiresAt) <= this.now()) return null;
-    return entry.data;
+    if (entry && Number(entry.expiresAt) > this.now()) return entry.data;
+    const sharedEngineData = this.multiApiEngine?.get('api-football', key);
+    return sharedEngineData === undefined ? null : sharedEngineData;
+  }
+
+  getCacheRecord(key) {
+    const entry = this.cache.get(key);
+    if (entry && Number(entry.expiresAt) > this.now()) return { data: entry.data, expiresAt: Number(entry.expiresAt), updatedAt: Number(entry.updatedAt || 0) };
+    return this.multiApiEngine?.getRecord('api-football', key) || null;
+  }
+
+  importCacheRecord(key, record) {
+    if (!record || !Number.isFinite(Number(record.expiresAt)) || Number(record.expiresAt) <= this.now()) return false;
+    const ttl = Math.min(Number(record.expiresAt) - this.now(), 30 * 24 * 60 * 60_000);
+    if (ttl <= 0) return false;
+    this.setCached(key, record.data, ttl);
+    return true;
   }
 
   setCached(key, data, ttlMs) {
-    this.cache.set(key, { expiresAt: this.now() + ttlMs, data });
+    this.cache.set(key, { expiresAt: this.now() + ttlMs, updatedAt: this.now(), data });
+    this.multiApiEngine?.set('api-football', key, data, ttlMs);
     if (this.cache.size > 600) {
       const now = this.now();
       for (const [cacheKey, value] of this.cache) if (value.expiresAt <= now) this.cache.delete(cacheKey);

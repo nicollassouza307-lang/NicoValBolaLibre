@@ -16,7 +16,7 @@ Crie as duas variáveis do tipo Secret no Worker:
 
 ## Banco
 
-Execute `schema.sql` no Console do banco D1 uma única vez.
+Execute (ou reexecute) `schema.sql` no Console do banco D1. A V0.18.7 adiciona a tabela `provider_cache`; o script é idempotente e preserva os dados existentes.
 
 ## Implantar Worker
 
@@ -27,6 +27,9 @@ Cole `worker.js` no editor do Worker e clique Deploy. Confirme o binding D1 cham
 - `GET /health`: diagnóstico público; retorna somente estado e revisão.
 - `GET /v1/config`: requer `Authorization: Bearer <SYNC_READ_TOKEN>`.
 - `POST /v1/publish`: requer `Authorization: Bearer <SYNC_ADMIN_TOKEN>`.
+- `GET /v1/provider-cache?provider=api-football&key=...`: requer chave de leitura e retorna apenas entradas não expiradas.
+- `POST /v1/provider-cache`: requer chave administrativa; aceita TTL entre 1 segundo e 30 dias e payload individual de até 512 KB.
+- `GET /v1/provider-cache/status`: requer chave de leitura.
 
 ## Integração com o aplicativo desktop
 

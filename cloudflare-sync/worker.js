@@ -215,6 +215,71 @@ export default {
 
     if (!env.DB) return json({ ok: false, error: 'Banco D1 não conectado. Adicione o binding DB.' }, 503);
 
+    if (request.method === 'GET' && url.pathname === '/v1/provider-cache') {
+      if (!hasReadAccess(request, env)) return json({ ok:false, error:'Chave compartilhada de leitura inválida.' }, 401);
+      const provider = String(url.searchParams.get('provider') || '').trim().toLowerCase();
+      const cacheKey = String(url.searchParams.get('key') || '').trim();
+      if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(provider) || !cacheKey || cacheKey.length > 220) {
+        return json({ ok:false, error:'Identificador de cache inválido.' }, 400);
+      }
+      try {
+        const row = await env.DB.prepare('SELECT payload_json, expires_at, updated_at FROM provider_cache WHERE provider = ? AND cache_key = ?').bind(provider, cacheKey).first();
+        if (!row) return json({ ok:true, hit:false });
+        if (Number(row.expires_at) <= Date.now()) {
+          await env.DB.prepare('DELETE FROM provider_cache WHERE provider = ? AND cache_key = ?').bind(provider, cacheKey).run();
+          return json({ ok:true, hit:false, expired:true });
+        }
+        let data;
+        try { data = JSON.parse(row.payload_json || 'null'); }
+        catch { return json({ ok:false, error:'Entrada de cache corrompida.' }, 500); }
+        return json({ ok:true, hit:true, record:{ data, expiresAt:Number(row.expires_at), updatedAt:String(row.updated_at || '') } });
+      } catch (error) {
+        return json({ ok:false, error:'Não foi possível ler o cache compartilhado. Confira se a migração provider_cache foi aplicada.' }, 503);
+      }
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/provider-cache') {
+      if (!hasAdminAccess(request, env)) return json({ ok:false, error:'Chave administrativa inválida.' }, 401);
+      try {
+        const body = await readJson(request);
+        const provider = String(body.provider || '').trim().toLowerCase();
+        const cacheKey = String(body.key || '').trim();
+        const ttlSeconds = Math.floor(Number(body.ttlSeconds));
+        if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(provider) || !cacheKey || cacheKey.length > 220) {
+          return json({ ok:false, error:'Identificador de cache inválido.' }, 400);
+        }
+        if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 30 * 24 * 60 * 60) {
+          return json({ ok:false, error:'Validade do cache deve ficar entre 1 segundo e 30 dias.' }, 400);
+        }
+        if (!Object.prototype.hasOwnProperty.call(body, 'data')) return json({ ok:false, error:'O cache precisa conter o campo data.' }, 400);
+        const payload = JSON.stringify(body.data);
+        if (new TextEncoder().encode(payload).byteLength > 512 * 1024) return json({ ok:false, error:'A entrada individual de cache excede 512 KB.' }, 413);
+        const now = Date.now();
+        const expiresAt = now + ttlSeconds * 1000;
+        const updatedAt = new Date(now).toISOString();
+        // Limpeza oportunista para impedir que entradas expiradas ocupem o D1 indefinidamente.
+        await env.DB.prepare('DELETE FROM provider_cache WHERE expires_at <= ?').bind(now).run();
+        await env.DB.prepare(
+          `INSERT INTO provider_cache (provider, cache_key, payload_json, expires_at, updated_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(provider, cache_key) DO UPDATE SET payload_json = excluded.payload_json, expires_at = excluded.expires_at, updated_at = excluded.updated_at`
+        ).bind(provider, cacheKey, payload, expiresAt, updatedAt).run();
+        return json({ ok:true, provider, key:cacheKey, expiresAt, updatedAt });
+      } catch (error) {
+        return json({ ok:false, error:error.message || 'Não foi possível salvar o cache compartilhado. Confira a migração provider_cache.' }, error.status || 503);
+      }
+    }
+
+    if (request.method === 'GET' && url.pathname === '/v1/provider-cache/status') {
+      if (!hasReadAccess(request, env)) return json({ ok:false, error:'Chave compartilhada de leitura inválida.' }, 401);
+      try {
+        const row = await env.DB.prepare('SELECT COUNT(*) AS entries FROM provider_cache WHERE expires_at > ?').bind(Date.now()).first();
+        return json({ ok:true, entries:Number(row?.entries || 0) });
+      } catch {
+        return json({ ok:false, error:'Cache compartilhado ainda não foi inicializado. Aplique schema.sql atualizado.' }, 503);
+      }
+    }
+
     if (request.method === 'GET' && url.pathname === '/v1/config') {
       if (!hasReadAccess(request, env)) {
         return json({ ok: false, error: 'Chave compartilhada de leitura inválida.' }, 401);
