@@ -314,7 +314,13 @@ class ApiFootballService {
         league: { id: Number(league.id), name: String(league.name || ''), country: String(league.country || ''), logo: String(league.logo || ''), season: Number(league.season || 0), round: String(league.round || '') },
         home: { id: Number(item.teams?.home?.id || 0), name: String(item.teams?.home?.name || event.home), logo: String(item.teams?.home?.logo || '') },
         away: { id: Number(item.teams?.away?.id || 0), name: String(item.teams?.away?.name || event.away), logo: String(item.teams?.away?.logo || '') },
-        goals: { home: item.goals?.home ?? null, away: item.goals?.away ?? null }
+        goals: { home: item.goals?.home ?? null, away: item.goals?.away ?? null },
+        score: {
+          halftime: { home: item.score?.halftime?.home ?? null, away: item.score?.halftime?.away ?? null },
+          fulltime: { home: item.score?.fulltime?.home ?? null, away: item.score?.fulltime?.away ?? null },
+          extratime: { home: item.score?.extratime?.home ?? null, away: item.score?.extratime?.away ?? null },
+          penalty: { home: item.score?.penalty?.home ?? null, away: item.score?.penalty?.away ?? null }
+        }
       },
       pagesSearched: result.pages,
       cached: result.cached,
@@ -395,7 +401,13 @@ class ApiFootballService {
         league: { id: Number(latestLeague.id || 0), name: String(latestLeague.name || ''), country: String(latestLeague.country || ''), logo: String(latestLeague.logo || ''), season: Number(latestLeague.season || 0), round: String(latestLeague.round || '') },
         home: { id: Number(latestTeams.home?.id || 0), name: String(latestTeams.home?.name || ''), logo: String(latestTeams.home?.logo || '') },
         away: { id: Number(latestTeams.away?.id || 0), name: String(latestTeams.away?.name || ''), logo: String(latestTeams.away?.logo || '') },
-        goals: { home: fixture.goals?.home ?? null, away: fixture.goals?.away ?? null }
+        goals: { home: fixture.goals?.home ?? null, away: fixture.goals?.away ?? null },
+        score: {
+          halftime: { home: fixture.score?.halftime?.home ?? null, away: fixture.score?.halftime?.away ?? null },
+          fulltime: { home: fixture.score?.fulltime?.home ?? null, away: fixture.score?.fulltime?.away ?? null },
+          extratime: { home: fixture.score?.extratime?.home ?? null, away: fixture.score?.extratime?.away ?? null },
+          penalty: { home: fixture.score?.penalty?.home ?? null, away: fixture.score?.penalty?.away ?? null }
+        }
       };
       const lineups = this.normalizeCombinedLineups(fixture.lineups, fixture.teams || {});
       const statistics = this.normalizeCombinedStatistics(fixture.statistics, fixture.teams || {});

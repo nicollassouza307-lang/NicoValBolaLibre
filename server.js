@@ -889,10 +889,16 @@ function buildApiFootballSnapshot(event, resolved, details) {
     fixtureId: Number(fixture.id),
     fixture: {
       date: fixture.date, status: fixture.status, statusLong: fixture.statusLong, elapsed: fixture.elapsed,
-      venue: fixture.venue, referee: fixture.referee, goals: fixture.goals,
+      venue: fixture.venue, referee: fixture.referee, goals: fixture.goals, score: fixture.score || { halftime: { home: null, away: null }, fulltime: { home: null, away: null }, extratime: { home: null, away: null }, penalty: { home: null, away: null } },
       league: fixture.league, home: fixture.home, away: fixture.away
     },
-    lineups, statistics, detailErrors: Array.isArray(details.errors) ? details.errors.slice(0, 2).map(item => ({ section: String(item.section || ''), message: String(item.message || '').slice(0, 240), code: String(item.code || '').slice(0, 60) })) : [],
+    lineups, statistics, events: (Array.isArray(details.events) ? details.events : []).slice(0, 120).map(item => ({
+      time: { elapsed: item?.time?.elapsed === null || item?.time?.elapsed === undefined ? null : Number(item.time.elapsed), extra: item?.time?.extra === null || item?.time?.extra === undefined ? null : Number(item.time.extra) },
+      team: { id: Number(item?.team?.id || 0), name: String(item?.team?.name || '').slice(0, 100) },
+      player: { id: Number(item?.player?.id || 0), name: String(item?.player?.name || '').slice(0, 100) },
+      assist: { id: Number(item?.assist?.id || 0), name: String(item?.assist?.name || '').slice(0, 100) },
+      type: String(item?.type || '').slice(0, 24), detail: String(item?.detail || '').slice(0, 80), comments: String(item?.comments || '').slice(0, 160)
+    })), detailErrors: Array.isArray(details.errors) ? details.errors.slice(0, 2).map(item => ({ section: String(item.section || ''), message: String(item.message || '').slice(0, 240), code: String(item.code || '').slice(0, 60) })) : [],
     fetchedAt: new Date().toISOString()
   };
 }
@@ -1247,7 +1253,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.5 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.6 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

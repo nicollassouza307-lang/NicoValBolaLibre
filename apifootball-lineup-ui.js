@@ -29,11 +29,13 @@
 
   function sortLineupPlayers(players) {
     return (Array.isArray(players) ? players : []).map((player, index) => {
-      const gridMatch = String(player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
-      const position = String(player?.pos || '').toUpperCase();
+      const record = player?.player && typeof player.player === 'object' ? player.player : player;
+      const gridMatch = String(record?.grid || player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
+      const position = String(record?.pos || player?.pos || '').toUpperCase();
       const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : 2;
       return {
         ...player,
+        __player: record,
         __index: index,
         __depth: gridMatch ? Number(gridMatch[1]) : fallbackDepth,
         __row: gridMatch ? Number(gridMatch[2]) : null
@@ -59,10 +61,10 @@
     // A coluna do grid da API-Football preserva a ordem quando vem preenchida.
     const lanePresets = {
       1: [50],
-      2: [26, 74],
-      3: [13, 50, 87],
-      4: [8, 36, 64, 92],
-      5: [6, 28, 50, 72, 94]
+      2: [36, 64],
+      3: [24, 50, 76],
+      4: [19, 40, 60, 81],
+      5: [15, 32.5, 50, 67.5, 85]
     };
     const positions = [];
     for (const depth of [...byDepth.keys()].sort((a, b) => a - b)) {
@@ -73,17 +75,18 @@
       const maxGridRow = gridRows.length ? Math.max(...gridRows) : 0;
       group.forEach((player, index) => {
         const lane = Number.isFinite(player.__row) && maxGridRow > 1
-          ? 7 + ((player.__row - 1) / (maxGridRow - 1)) * 86
+          ? 18 + ((player.__row - 1) / (maxGridRow - 1)) * 64
           : preset[index];
-        let xForward = 10 + ((depth - minDepth) / depthRange) * 80;
+        let xForward = 23 + ((depth - minDepth) / depthRange) * 54;
         const wideLane = lane <= 28 || lane >= 72;
-        const position = String(player.pos || '').toUpperCase();
+        const position = String(player.__player?.pos || player.pos || '').toUpperCase();
         // Laterais dão amplitude e avançam um pouco. Pontas ficam mais abertos
         // e alguns passos à frente, criando o desenho assimétrico de um FC/FIFA.
-        if (count >= 3 && wideLane && depth === minDepth + 1) xForward += 2.5;
-        if (position.startsWith('F') && wideLane) xForward += 5;
-        if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1.5 : 4;
-        xForward = Math.min(94, xForward);
+        if (count >= 3 && wideLane && depth === minDepth + 1) xForward += 2;
+        if (position.startsWith('F')) xForward += 3.5;
+        if (position.startsWith('F') && wideLane) xForward += 2;
+        if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1 : 2.5;
+        xForward = Math.min(82, xForward);
         positions.push({
           player,
           left: Number((side === 'away' ? 100 - xForward : xForward).toFixed(2)),
@@ -113,15 +116,16 @@
   }
 
   function renderPhoto(player, compact = false) {
-    const id = safeId(player?.id);
-    const name = String(player?.name || 'Jogador');
+    const record = player?.player && typeof player.player === 'object' ? player.player : player;
+    const id = safeId(record?.id);
+    const name = String(record?.name || 'Jogador');
     const photo = playerPhotoUrl(id);
-    const number = player?.number === null || player?.number === undefined || player?.number === '' ? '—' : String(player.number);
+    const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
     return `<div class="apifootball-photo-frame${photo ? '' : ' is-fallback'}" aria-hidden="true">${photo ? `<img class="apifootball-player-photo" data-apifootball-player-photo src="${photo}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}<span class="apifootball-photo-fallback">${escapeHtml(initials(name))}</span></div>`;
   }
 
   function renderPitchPlayer(entry) {
-    const player = entry.player || {};
+    const player = entry.__player || (entry.player?.player && typeof entry.player.player === 'object' ? entry.player.player : entry.player) || {};
     const name = String(player.name || 'Jogador');
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
     const label = `${name}, camisa ${number}`;
@@ -133,9 +137,10 @@
   }
 
   function renderBenchPlayer(player) {
-    const name = String(player?.name || 'Jogador');
-    const number = player?.number === null || player?.number === undefined || player?.number === '' ? '—' : String(player.number);
-    const position = String(player?.pos || '').toUpperCase();
+    const record = player?.player && typeof player.player === 'object' ? player.player : player;
+    const name = String(record?.name || 'Jogador');
+    const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
+    const position = String(record?.pos || player?.pos || '').toUpperCase();
     return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}</div>`;
   }
 
@@ -210,6 +215,67 @@
     return match ? Math.max(0, Number(match[0])) : null;
   }
 
+  function eventMinute(event) {
+    const rawElapsed = event?.time?.elapsed;
+    if (rawElapsed === null || rawElapsed === undefined || rawElapsed === '') return '—';
+    const elapsed = Number(rawElapsed);
+    if (!Number.isFinite(elapsed)) return '—';
+    const extra = Number(event?.time?.extra);
+    return `${elapsed}${Number.isFinite(extra) && extra > 0 ? `+${extra}` : ''}′`;
+  }
+
+  function eventTeamName(event, snapshot) {
+    const teamId = safeId(event?.team?.id);
+    const homeId = safeId(snapshot?.fixture?.home?.id);
+    const awayId = safeId(snapshot?.fixture?.away?.id);
+    if (teamId && teamId === homeId) return String(snapshot?.fixture?.home?.name || 'Mandante');
+    if (teamId && teamId === awayId) return String(snapshot?.fixture?.away?.name || 'Visitante');
+    return String(event?.team?.name || '');
+  }
+
+  function renderMatchEvents(snapshot) {
+    const events = (Array.isArray(snapshot?.events) ? snapshot.events : []).filter(event => {
+      const type = String(event?.type || '').toLowerCase();
+      return ['goal', 'subst', 'substitution', 'card', 'var'].includes(type);
+    }).slice().sort((a, b) => {
+      const minuteA = Number(a?.time?.elapsed || 0) * 100 + Number(a?.time?.extra || 0);
+      const minuteB = Number(b?.time?.elapsed || 0) * 100 + Number(b?.time?.extra || 0);
+      return minuteA - minuteB;
+    });
+    const rows = events.map(event => {
+      const type = String(event?.type || '').toLowerCase();
+      const detail = String(event?.detail || '');
+      const player = String(event?.player?.name || 'Jogador não informado');
+      const assist = String(event?.assist?.name || '');
+      const team = eventTeamName(event, snapshot);
+      const minute = eventMinute(event);
+      let icon = '⚽';
+      let title = player;
+      let note = '';
+      let kind = 'goal';
+      if (type === 'goal') {
+        if (/missed penalty/i.test(detail)) { icon = '✖'; title = 'Pênalti perdido'; note = player; kind = 'missed-penalty'; }
+        else if (/own goal/i.test(detail)) { icon = '⚽'; title = `Gol contra · ${player}`; kind = 'own-goal'; }
+        else if (/penalty/i.test(detail)) { icon = '⚽'; title = `Gol de pênalti · ${player}`; kind = 'goal'; }
+        if (assist && !/missed penalty/i.test(detail)) note = `Assistência: ${assist}`;
+      } else if (type === 'subst' || type === 'substitution') {
+        icon = '⇄'; kind = 'substitution';
+        const incoming = assist || 'Jogador não informado';
+        title = `Entrou: ${incoming}`;
+        note = `Saiu: ${player}`;
+      } else if (type === 'card') {
+        icon = /red/i.test(detail) ? '🟥' : '🟨'; kind = 'card';
+        title = /red/i.test(detail) ? 'Cartão vermelho' : 'Cartão amarelo';
+        note = player;
+      } else if (type === 'var') {
+        icon = '📺'; kind = 'var'; title = 'Revisão do VAR'; note = detail || String(event?.comments || '');
+      }
+      return `<article class="apifootball-event-row ${kind}"><time>${escapeHtml(minute)}</time><span class="apifootball-event-icon" aria-hidden="true">${icon}</span><div class="apifootball-event-copy"><strong>${escapeHtml(title)}</strong>${note ? `<small>${escapeHtml(note)}</small>` : ''}</div><span class="apifootball-event-team">${escapeHtml(team)}</span></article>`;
+    }).join('');
+    if (!rows) return `<section class="apifootball-events-panel"><div class="apifootball-section-title">Gols, assistências e substituições</div><div class="apifootball-lineup-empty">A API ainda não disponibilizou lances para esta partida.</div></section>`;
+    return `<section class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Gols, assistências e substituições</div><small>Eventos oficiais fornecidos pela API-Football</small></div>${events.length ? `<span>${events.length} lance(s)</span>` : ''}</div><div class="apifootball-event-list">${rows}</div></section>`;
+  }
+
   function renderStatistics(snapshot) {
     const rows = statsRows(snapshot);
     if (!rows.length) return '<div class="apifootball-message">As estatísticas detalhadas ainda não estão disponíveis para esta partida. Isso pode depender da cobertura da competição ou do estágio do jogo.</div>';
@@ -225,5 +291,5 @@
     return `<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela API-Football. Um traço indica dado não informado.</div></div>`;
   }
 
-  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, renderStatistics };
+  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, renderStatistics, eventMinute, renderMatchEvents };
 });

@@ -135,6 +135,13 @@ function safeApiFootballData(input) {
         type: String(row?.type || '').slice(0, 80), value: row?.value === null || row?.value === undefined ? null : String(row.value).slice(0, 40)
       }))
     })) : [];
+    const events = Array.isArray(match.events) ? match.events.slice(0, 120).map((event) => ({
+      time: { elapsed: event?.time?.elapsed === null || event?.time?.elapsed === undefined ? null : Number(event.time.elapsed), extra: event?.time?.extra === null || event?.time?.extra === undefined ? null : Number(event.time.extra) },
+      team: cleanTeam(event?.team),
+      player: { id: Number(event?.player?.id || 0), name: String(event?.player?.name || '').slice(0, 100) },
+      assist: { id: Number(event?.assist?.id || 0), name: String(event?.assist?.name || '').slice(0, 100) },
+      type: String(event?.type || '').slice(0, 24), detail: String(event?.detail || '').slice(0, 80), comments: String(event?.comments || '').slice(0, 160)
+    })) : [];
     return {
       provider: 'API-Football', eventId, date: String(match.date || '').slice(0, 10),
       home: String(match.home || '').slice(0, 100), away: String(match.away || '').slice(0, 100), fixtureId,
@@ -143,10 +150,11 @@ function safeApiFootballData(input) {
         statusLong: String(fixture.statusLong || '').slice(0, 80), elapsed: fixture.elapsed === null || fixture.elapsed === undefined ? null : (Number.isFinite(Number(fixture.elapsed)) ? Number(fixture.elapsed) : null),
         venue: String(fixture.venue || '').slice(0, 120), referee: String(fixture.referee || '').slice(0, 120),
         goals: { home: fixture.goals?.home === null || fixture.goals?.home === undefined ? null : Number(fixture.goals.home), away: fixture.goals?.away === null || fixture.goals?.away === undefined ? null : Number(fixture.goals.away) },
+        score: Object.fromEntries(['halftime','fulltime','extratime','penalty'].map((part) => [part, { home: fixture.score?.[part]?.home === null || fixture.score?.[part]?.home === undefined ? null : Number(fixture.score[part].home), away: fixture.score?.[part]?.away === null || fixture.score?.[part]?.away === undefined ? null : Number(fixture.score[part].away) }])),
         league: { id: Number(fixture.league?.id || 0), name: String(fixture.league?.name || '').slice(0, 100), country: String(fixture.league?.country || '').slice(0, 80), season: Number(fixture.league?.season || 0), round: String(fixture.league?.round || '').slice(0, 100) },
         home: cleanTeam(fixture.home), away: cleanTeam(fixture.away)
       },
-      lineups, statistics,
+      lineups, statistics, events,
       detailErrors: Array.isArray(match.detailErrors) ? match.detailErrors.slice(0, 2).map(item => ({ section: String(item?.section || '').slice(0, 30), message: String(item?.message || '').slice(0, 240), code: String(item?.code || '').slice(0, 60) })) : [],
       fetchedAt: String(match.fetchedAt || new Date().toISOString()).slice(0, 40)
     };

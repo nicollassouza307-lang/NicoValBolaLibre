@@ -10,8 +10,15 @@ const snapshot = {
   home: 'Palmeiras', away: 'Flamengo',
   fixture: {
     home: { id: 10, name: 'Palmeiras', logo: 'https://media.api-sports.io/football/teams/10.png' },
-    away: { id: 20, name: 'Flamengo', logo: 'https://media.api-sports.io/football/teams/20.png' }
+    away: { id: 20, name: 'Flamengo', logo: 'https://media.api-sports.io/football/teams/20.png' },
+    goals: { home: 2, away: 1 },
+    score: { penalty: { home: 4, away: 3 } }
   },
+  events: [
+    { time: { elapsed: 18, extra: null }, team: { id: 10, name: 'Palmeiras' }, player: { id: 101, name: 'Camisa 10' }, assist: { id: 109, name: 'Meia Criador' }, type: 'Goal', detail: 'Normal Goal' },
+    { time: { elapsed: 64, extra: 2 }, team: { id: 20, name: 'Flamengo' }, player: { id: 208, name: 'Atacante que saiu' }, assist: { id: 209, name: 'Atacante que entrou' }, type: 'subst', detail: 'Substitution 1' },
+    { time: { elapsed: 90, extra: null }, team: { id: 10, name: 'Palmeiras' }, player: { id: 101, name: 'Camisa 10' }, assist: { id: 109, name: 'Meia Criador' }, type: 'Goal', detail: 'Penalty' }
+  ],
   lineups: [
     {
       team: { id: 20, name: 'Flamengo' }, formation: '4-3-3', coach: { name: 'Técnico Visitante' },
@@ -53,8 +60,8 @@ assert.doesNotMatch(lineupHtml, /apifootball-pitch-position/, 'O marcador de cam
 assert.match(lineupHtml, /apifootball-pitch-number/);
 const forwardPositions = ui.playerPlacements(snapshot.lineups[1].startXI, 'home').filter(entry => String(entry.player.pos).toUpperCase() === 'F');
 assert.ok(forwardPositions.length, 'A formação de teste deve incluir atacantes.');
-assert.ok(forwardPositions.every(entry => entry.left > 80), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
-assert.ok(forwardPositions.every(entry => entry.depth > 80), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
+assert.ok(forwardPositions.every(entry => entry.left >= 79), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
+assert.ok(forwardPositions.every(entry => entry.depth >= 79), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
 assert.match(lineupHtml, /Palmeiras/);
 assert.match(lineupHtml, /Flamengo/);
 assert.match(lineupHtml, /4-2-3-1/);
@@ -65,6 +72,28 @@ assert.match(lineupHtml, /Técnico Mandante/);
 assert.match(lineupHtml, /Reserva Mandante/);
 assert.ok(lineupHtml.indexOf('apifootball-pitch') < lineupHtml.indexOf('apifootball-support-grid'), 'Técnico e banco devem ficar fora e abaixo do campo.');
 assert.match(lineupHtml, /apifootball-photo-fallback/);
+
+const apiShapeLineups = {
+  ...snapshot,
+  lineups: [{
+    team: { id: 10, name: 'Palmeiras' }, formation: '4-3-3', coach: { name: 'Técnico' },
+    startXI: [{ player: { id: 777, name: 'Ponta Aberto', number: 7, pos: 'F', grid: '4:1' } }],
+    substitutes: [{ player: { id: 778, name: 'Reserva API', number: 19, pos: 'M' } }]
+  }]
+};
+const wrappedLineupHtml = ui.renderLineups(apiShapeLineups);
+assert.match(wrappedLineupHtml, /Ponta Aberto/, 'Formato original da API-Football com player aninhado deve renderizar o nome.');
+assert.match(wrappedLineupHtml, /players\/777\.png/, 'Formato original da API-Football deve manter o ID da foto.');
+assert.match(wrappedLineupHtml, /Reserva API/, 'Reservas com player aninhado também devem renderizar.');
+
+const eventsHtml = ui.renderMatchEvents(snapshot);
+assert.match(eventsHtml, /Camisa 10/);
+assert.match(eventsHtml, /Assistência: Meia Criador/);
+assert.match(eventsHtml, /Entrou: Atacante que entrou/);
+assert.match(eventsHtml, /Saiu: Atacante que saiu/);
+assert.match(eventsHtml, /4/);
+assert.match(eventsHtml, /3/);
+assert.doesNotMatch(eventsHtml, /DECISÃO POR PÊNALTIS/, 'O resultado dos pênaltis aparece uma única vez no placar da central da partida.');
 
 const statsHtml = ui.renderStatistics(snapshot);
 assert.match(statsHtml, /Estatísticas|Posse de bola/);
@@ -90,9 +119,14 @@ assert.ok(emptyMarkupPosition > cardMarkupPosition, 'A função dos cards deve e
 const cardMarkupBodyPosition = index.indexOf('{', cardMarkupPosition);
 assert.ok(cardMarkupBodyPosition > cardMarkupPosition && cardMarkupBodyPosition < emptyMarkupPosition, 'A função dos cards deve ter um corpo válido.');
 const cardMarkupSource = index.slice(cardMarkupBodyPosition + 1, emptyMarkupPosition);
-assert.doesNotMatch(cardMarkupSource, /homeScore|awayScore/, 'O placar não deve aparecer na agenda inicial.');
-assert.doesNotMatch(cardMarkupSource, /goals|substitution|scorer|marcador/i, 'Gols e substituições não devem ser renderizados nos cards da agenda.');
-assert.match(cardMarkupSource, /class=\"versus\">VS<\/div>/, 'O centro do card permanece apenas como VS.');
+assert.match(cardMarkupSource, /cardHomeScore|cardAwayScore/, 'A agenda deve exibir o placar quando os dados existirem.');
+assert.match(cardMarkupSource, /agenda-score-wrap/, 'O placar deve ter marcação própria nos cards da agenda.');
+assert.doesNotMatch(cardMarkupSource, /scorer|substitution|Assistência/i, 'Autores de gols, assistências e substituições ficam nos detalhes da partida, não no card da agenda.');
+assert.match(cardMarkupSource, /class=\"versus\">VS<\/div>/, 'Partidas sem placar continuam exibindo VS.');
+assert.match(index, /renderMatchEvents\(snapshot\)/, 'A central da partida deve exibir gols, assistências e substituições.');
+assert.match(index, /match-penalty-score/, 'A central da partida deve destacar o placar nos pênaltis.');
+assert.match(index, /e\.teams\?\.home\?\.score/, 'A agenda deve reconhecer o placar nas equipes aninhadas da fonte.');
+assert.match(index, /apifootball-pitch-player \.apifootball-photo-frame\{width:52px;height:52px/, 'As fotos dos titulares devem ter tamanho ampliado.');
 assert.match(index, /id="scheduleUpdateNotice"/, 'O aviso de nova atualização deve aparecer na tela de agendas.');
 assert.match(index, /scheduleDownloadUpdate/, 'O aviso deve permitir baixar a nova versão.');
 assert.match(index, /data-competition-logo/, 'A agenda deve aceitar o logo da competição quando disponível.');
@@ -100,4 +134,4 @@ assert.match(index, /competition-divider-mark/, 'Se o logo da competição falha
 assert.match(index, /--pitch-depth/, 'O campo deve adaptar a profundidade dos jogadores quando a tela fica estreita.');
 assert.match(index, /apifootball-pitch-half\.away \.apifootball-pitch-player/, 'O time visitante deve atacar na direção oposta no campo vertical.');
 
-console.log('PASSOU: abas Escalações/Estatísticas; campo com mandante/visitante; ordem por grid; fotos por ID; fallback de imagem; técnico e reservas abaixo do campo; estatísticas comparativas; escape HTML; painel abaixo do player.');
+console.log('PASSOU: escalações; wrappers originais da API; fotos; campo ampliado/compactado; gols, assistências, substituições e pênaltis; placar na agenda e central; estatísticas; escape HTML.');

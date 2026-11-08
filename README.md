@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.5 — escalações, escudos e atualizações
+# NicoValBolaLibre V0.18.6 — escalações, escudos e atualizações
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football **não adiciona partidas**: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -12,9 +12,9 @@ A Release V0.18.1 foi publicada sem o instalador Windows e sem o manifesto `late
 - Painel Admin para salvar, testar e apagar a chave pessoal da API-Football.
 - A chave é criptografada com `safeStorage` do Electron e guardada no perfil local do Windows (`userData/apifootball-key.bin`). Não vai para o instalador, GitHub, D1 nem computador do Val.
 - Ao abrir uma partida, o botão **Buscar dados da API-Football** procura o fixture da mesma data, mandante e visitante. Correspondências ambíguas ou inexistentes são recusadas; a agenda original permanece intacta.
-- Para o fixture identificado, a aplicação usa o endpoint combinado `/fixtures?id=...`, que pode trazer eventos, escalações, estatísticas de equipe e jogadores em uma única chamada, conforme a cobertura disponível. A tela exibe placar/status, posse, finalizações, chutes no gol, escanteios, faltas, cartões, passes e escalações/reservas quando a API os disponibiliza.
+- Para o fixture identificado, a aplicação usa o endpoint combinado `/fixtures?id=...`, que pode trazer eventos, escalações, estatísticas de equipe e jogadores em uma única chamada, conforme a cobertura disponível. A tela exibe placar/status, gols e autores, assistências, substituições, resultado dos pênaltis, posse, finalizações, chutes no gol, escanteios, faltas, cartões, passes e escalações/reservas quando a API os disponibiliza.
 - A classificação é carregada sob demanda por competição e temporada, com cache de 24 horas.
-- As fotografias ainda não fazem parte desta fase; os IDs únicos dos jogadores são preservados para a próxima etapa.
+- As fotos dos jogadores são exibidas por meio dos IDs individuais fornecidos nas escalações da API-Football; quando uma foto não está disponível, o app usa as iniciais.
 - Dados consultados no computador administrador podem ser publicados automaticamente para o Cloudflare usando a chave administrativa de sincronização já existente. O Val recebe os snapshots em modo somente leitura. A chave da API-Football não é compartilhada.
 - Contador de chamadas persistente, limite interno de 70 requisições/dia, reserva de 30, limite local de 8 chamadas/minuto e cache em disco. As respostas de `/status` são usadas para testar a chave sem consumir a cota diária.
 - Cache persistente para lista diária de fixtures (uma única chamada por data, sem parâmetro `page`), detalhes combinados, escalações, estatísticas e classificação. Consultas repetidas dentro da validade do cache não fazem nova chamada.
@@ -23,7 +23,7 @@ A Release V0.18.1 foi publicada sem o instalador Windows e sem o manifesto `late
 
 O plano Free da API-Football tem uma cota diária e limite por minuto definidos pelo fornecedor. Esta aplicação aplica um teto local de 70 chamadas diárias e para antes de usar a reserva interna de 30. A cota do fornecedor pode ser compartilhada com outras aplicações que usem a mesma chave; por isso, o contador da aplicação não substitui a conferência dos cabeçalhos oficiais de rate limit.
 
-A integração é **sob demanda**: abre-se a partida e clica-se para buscar. O app primeiro localiza os fixtures da data (cache de 15 minutos quando não há jogo ao vivo); depois usa `/fixtures?id=...` para obter placar/status mais recente e os blocos detalhados em uma única chamada. Assim, a primeira partida aberta costuma consumir até 2 chamadas; outras partidas da mesma data usam a lista já armazenada e consomem 1 chamada cada, e detalhes ainda dentro do cache não geram chamadas. A API também documenta `ids` para até 20 partidas em uma consulta quando o plano oferece suporte, mas esta primeira versão não depende desse recurso. Não há atualização automática contínua do placar nesta primeira fase. O botão Atualizar força nova consulta; evite clicar repetidamente.
+A integração é **sob demanda**: abre-se a partida e clica-se para buscar. O app primeiro localiza os fixtures da data (cache de 15 minutos quando não há jogo ao vivo); depois usa `/fixtures?id=...` para obter placar/status mais recente e os blocos detalhados em uma única chamada. Assim, a primeira partida aberta costuma consumir até 2 chamadas; outras partidas da mesma data usam a lista já armazenada e consomem 1 chamada cada, e detalhes ainda dentro do cache não geram chamadas. A API também documenta `ids` para até 20 partidas em uma consulta quando o plano oferece suporte, mas esta primeira versão não depende desse recurso. O placar da agenda é preenchido com dados da fonte ou com snapshots da API-Football já consultados. Não há atualização automática contínua de todos os jogos nesta versão; o botão Atualizar força nova consulta e evita chamadas em excesso. O botão Atualizar força nova consulta; evite clicar repetidamente.
 
 A disponibilidade varia por competição, temporada e partida. Escalações podem aparecer somente perto do início; estatísticas podem não existir antes da partida ou em certas ligas. A documentação publicada em 26/10/2026 informa que o plano Free limita as temporadas disponíveis a Year-4 até Year-2 (em 2026, 2022 a 2024). Portanto, não presuma que a temporada atual de 2026 esteja coberta; valide sua conta no teste real antes de depender desses dados. Quando a API não oferece os dados, o app informa a ausência e conserva os últimos dados armazenados.
 
@@ -42,7 +42,7 @@ A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita ape
 ## Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.5 no computador administrador (o seu).
+2. Instale a V0.18.6 no computador administrador (o seu).
 3. Abra **Painel Admin → API-Football · Dados das partidas**.
 4. Cole a chave em **API Key pessoal** e clique **Salvar chave neste computador**.
 5. Clique **Testar conexão**. O teste consulta `/status`, que não reduz a cota diária.
@@ -55,8 +55,8 @@ Não crie um GitHub Secret para a API-Football. A única Secret de GitHub já us
 1. Carregue a agenda normal do dia.
 2. Abra uma partida já encontrada pelo Rei dos Canais/PelotaLibre.
 3. Na seção **API-Football**, clique em **Buscar dados da API-Football**.
-4. Se a API tiver um fixture com a mesma data, mandante e visitante, o app mostra placar/status e tenta buscar escalações/estatísticas.
-5. Se estiver configurada a chave administrativa de sincronização Cloudflare neste computador, o snapshot é enviado para D1. O Val recebe automaticamente na próxima sincronização.
+4. Se a API tiver um fixture com a mesma data, mandante e visitante, o app mostra o placar, gols, assistências, substituições e resultado dos pênaltis, além de escalações/estatísticas quando cobertos.
+5. Se estiver configurada a chave administrativa de sincronização Cloudflare neste computador, o snapshot (incluindo gols, assistências, substituições e placar dos pênaltis) é enviado para D1. O Val recebe automaticamente na próxima sincronização, desde que o Worker atualizado da V0.18.6 tenha sido publicado.
 6. Para consultar a classificação, use **Buscar classificação** depois que os dados do fixture estiverem disponíveis.
 
 Se o jogo não for encontrado ou houver mais de uma correspondência ambígua, o app não inventa um vínculo e não adiciona qualquer partida à agenda.
@@ -80,14 +80,14 @@ O workflow executa:
 
 Os testes da API-Football usam respostas simuladas. Eles verificam que a consulta de fixtures por data não envia o parâmetro `page`, cache, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-## Publicar V0.18.5
+## Publicar V0.18.6
 
-1. Se o Worker da V0.18.0 já está implantado, não precisa republicá-lo.
+1. Atualize e publique obrigatoriamente o Worker pelo arquivo `cloudflare-sync/worker.js` desta versão. Isso é necessário para que gols, assistências, substituições e placares de pênaltis sejam preservados na sincronização com o Val.
 2. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
 3. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-4. Faça commit `NicoValBolaLibre V0.18.5` e `Push origin`.
-5. Crie a tag `v0.18.5` nesse commit e faça outro `Push origin`.
-6. Acompanhe o GitHub Actions e a Release `v0.18.5`.
+4. Faça commit `NicoValBolaLibre V0.18.6` e `Push origin`.
+5. Crie a tag `v0.18.6` nesse commit e faça outro `Push origin`.
+6. Acompanhe o GitHub Actions e a Release `v0.18.6`.
 
 ## Limitações conhecidas desta primeira fase
 
@@ -109,19 +109,16 @@ Os testes da API-Football usam respostas simuladas. Eles verificam que a consult
 - Estatísticas exibidas em comparativos visuais entre os dois clubes.
 
 
-A compilação V0.18.5 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
+A compilação V0.18.6 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
 
 
-## V0.18.5 — refinamento visual e atualizações na agenda
+## V0.18.6 — placar, lances e escalações aprimoradas
 
-- Correção do teste de cards da agenda: a validação identifica `cardMarkup` independentemente do nome do parâmetro, da indentação ou de funções auxiliares próximas, mantendo as verificações de placar, gols, substituições e VS.
+- Agenda: voltou a exibir o placar quando ele existe nos dados da agenda ou no snapshot da API-Football; partidas sem resultado continuam mostrando VS.
+- Central da partida: mantém o placar principal e destaca também o resultado da disputa por pênaltis quando fornecido.
+- Lances: exibe gols, autores, assistências, gols contra, pênaltis perdidos, cartões, eventos do VAR e substituições com minuto, jogador que saiu e jogador que entrou.
+- Compartilhamento: snapshots agora preservam placares de intervalo, tempo normal, prorrogação e pênaltis, além dos eventos, para que o computador do Val receba os mesmos detalhes pelo Cloudflare.
+- Escalações: jogadores maiores, nomes e números mais legíveis e posicionamento mais compacto, mantendo a assimetria de pontas e a orientação correta no celular.
+- Compatibilidade: leitura dos objetos `player` aninhados no formato original da API-Football, tanto nos titulares quanto nos reservas.
 
-
-- Escalações: titulares agora usam foto circular, nome e número, sem cartões quadrados atrás dos jogadores.
-- Posicionamento: espaçamento por faixa do campo e avanço dos jogadores abertos, especialmente pontas, para um desenho menos rígido e mais próximo dos modos táticos do FC/FIFA.
-- Agenda inicial: placar removido dos cards. O placar continua dentro da central da partida; autores de gols e eventos/substituições não são apresentados na agenda.
-- Escudos: correspondência exata continua prioritária; quando falha, o índice GitHub tenta uma correspondência aproximada restrita ao país inferido pela competição e recusa resultados ambíguos.
-- Logos da API-Football: quando um fixture já foi associado, o cache permite usar também os escudos dos clubes e da competição via mídia oficial, sem uma chamada adicional à API para baixar as imagens.
-- Atualizações: quando o desktop detecta uma nova versão, a agenda exibe um aviso com ações para baixar e instalar; o painel Admin continua disponível como alternativa.
-
-A V0.18.5 não altera as fontes da agenda: Rei dos Canais/PelotaLibre continuam fornecendo as partidas. A API-Football segue como complemento de partidas existentes.
+A V0.18.6 não altera as fontes da agenda: Rei dos Canais/PelotaLibre continuam fornecendo as partidas. A API-Football segue como complemento de partidas existentes. A atualização continua sob demanda para preservar a cota da chave. Para compartilhar os novos eventos com o Val, publique também a versão atualizada de `cloudflare-sync/worker.js` no Worker existente.

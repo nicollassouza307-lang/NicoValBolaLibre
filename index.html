@@ -372,6 +372,64 @@
 }
 @media(max-width:390px){.apifootball-tabs{gap:4px}.apifootball-tab{padding:10px 5px;font-size:10px}.apifootball-pitch-player{width:56px}.apifootball-pitch-player .apifootball-photo-frame{width:31px;height:31px;flex-basis:31px}.apifootball-pitch-name{font-size:6px}.apifootball-pitch-half{height:270px;flex-basis:270px}}
 
+
+/* V0.18.6: placar e eventos completos + escalações maiores e mais compactas */
+.game-card .teams{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}
+.agenda-score-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;text-align:center}
+.agenda-score-wrap .score{font-size:22px;font-weight:1000;letter-spacing:.025em;white-space:nowrap}
+.agenda-score-wrap .score small{font-size:14px;color:#7188a5;margin:0 2px}
+.agenda-penalty-score{font-size:7px;font-weight:900;letter-spacing:.04em;color:#f0c77b;white-space:nowrap}
+.match-penalty-score{margin-top:4px;color:#f0c77b;font-size:9px;letter-spacing:.08em;font-weight:850}
+.match-penalty-score strong{margin-left:5px;color:#ffe3a6;font-size:12px}
+.apifootball-penalty-inline{margin:-6px 0 10px;text-align:center;color:#e8c27d;font-size:10px;font-weight:750}
+.apifootball-penalty-inline strong{margin-left:5px;color:#ffe2a6;font-size:12px}
+.apifootball-events-panel{margin:12px 0 16px;padding:13px;border:1px solid #ffffff14;border-radius:13px;background:linear-gradient(145deg,#122238,#0b1726)}
+.apifootball-events-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+.apifootball-events-heading .apifootball-section-title{margin:0;color:#edf6ff}
+.apifootball-events-heading small{display:block;margin-top:4px;color:#8197b2;font-size:9px}
+.apifootball-events-heading>span{color:#6edfd2;font-size:9px;white-space:nowrap}
+.apifootball-event-list{display:grid;gap:5px}
+.apifootball-event-row{display:grid;grid-template-columns:39px 25px minmax(0,1fr) minmax(65px,auto);align-items:center;gap:8px;padding:8px 9px;border-radius:9px;background:#ffffff05;min-width:0}
+.apifootball-event-row time{font-size:10px;font-weight:900;color:#a9bfd8;font-variant-numeric:tabular-nums}
+.apifootball-event-icon{font-size:15px;text-align:center}
+.apifootball-event-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.apifootball-event-copy strong{font-size:10px;color:#f0f6ff;line-height:1.25;overflow-wrap:anywhere}
+.apifootball-event-copy small{font-size:9px;color:#90a8c3;line-height:1.3;overflow-wrap:anywhere}
+.apifootball-event-team{font-size:8px;color:#7f96b2;text-align:right;overflow-wrap:anywhere}
+.apifootball-event-row.substitution .apifootball-event-icon{color:#6ce0bf;font-weight:950}
+.apifootball-event-row.missed-penalty .apifootball-event-copy strong{color:#ffb2a9}
+.apifootball-event-row.own-goal .apifootball-event-copy strong{color:#ffd18a}
+.apifootball-penalty-result{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:0 0 8px;border:1px solid #e5b96b33;border-radius:9px;background:#e5b96b0d;color:#e8c27d}
+.apifootball-penalty-result span{font-size:8px;font-weight:900;letter-spacing:.09em}
+.apifootball-penalty-result strong{font-size:17px;color:#ffe2a6}
+.apifootball-penalty-result strong small{font-size:11px;color:#a48c66;margin:0 4px}
+.apifootball-pitch{min-width:650px;min-height:450px}
+.apifootball-pitch-player{width:78px;gap:3px}
+.apifootball-pitch-player .apifootball-photo-frame{width:52px;height:52px;flex-basis:52px;border-width:2px}
+.apifootball-pitch-name{font-size:9.5px;line-height:1.2;max-width:78px;-webkit-line-clamp:2}
+.apifootball-pitch-number{font-size:9px;padding:2px 6px;min-width:20px}
+@media(max-width:700px){
+  .game-card .teams{grid-template-columns:minmax(0,1fr) 62px minmax(0,1fr)}
+  .agenda-score-wrap .score{font-size:19px}
+  .apifootball-pitch{min-width:0}
+  .apifootball-pitch-half{height:330px;flex-basis:330px}
+  .apifootball-pitch-player{width:76px}
+  .apifootball-pitch-player .apifootball-photo-frame{width:47px;height:47px;flex-basis:47px}
+  .apifootball-pitch-name{font-size:8.5px;max-width:76px}
+  .apifootball-pitch-number{font-size:8px}
+  .apifootball-event-row{grid-template-columns:34px 22px minmax(0,1fr);gap:6px;padding:8px 7px}
+  .apifootball-event-team{grid-column:3;text-align:left;font-size:7px}
+  .apifootball-events-panel{padding:10px}
+}
+@media(max-width:390px){
+  .game-card .teams{grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr)}
+  .agenda-score-wrap .score{font-size:17px}
+  .apifootball-pitch-half{height:320px;flex-basis:320px}
+  .apifootball-pitch-player{width:70px}
+  .apifootball-pitch-player .apifootball-photo-frame{width:44px;height:44px;flex-basis:44px}
+  .apifootball-pitch-name{font-size:8px;max-width:70px}
+}
+
 </style>
 </head>
 <body>
@@ -563,7 +621,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.5 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.6 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -1201,8 +1259,11 @@ const BROADCASTER_ALIAS_GROUPS = [
     const titleParts = title.split(/\s+(?:x|vs\.?)\s+/i);
     const home = homeObj.name || e.home || e.homeTeamName || (typeof e.homeTeam === 'string' ? e.homeTeam : '') || titleParts[0] || 'Time da casa';
     const away = awayObj.name || e.away || e.awayTeamName || (typeof e.awayTeam === 'string' ? e.awayTeam : '') || titleParts[1] || 'Visitante';
-    const homeScore = e.home_score ?? e.homeScore ?? e.score?.home ?? null;
-    const awayScore = e.away_score ?? e.awayScore ?? e.score?.away ?? null;
+    const homeScore = e.home_score ?? e.homeScore ?? e.score?.home ?? e.teams?.home?.score ?? e.homeTeam?.score ?? null;
+    const awayScore = e.away_score ?? e.awayScore ?? e.score?.away ?? e.teams?.away?.score ?? e.awayTeam?.score ?? null;
+    const penaltyScore = e.penalty_score || e.penaltyScore || e.score?.penalty || {};
+    const homePenaltyScore = penaltyScore.home ?? e.home_penalty_score ?? e.homePenaltyScore ?? null;
+    const awayPenaltyScore = penaltyScore.away ?? e.away_penalty_score ?? e.awayPenaltyScore ?? null;
     const dateEvent = start ? localDateString(start) : String(e.start_time || '').slice(0,10);
     const timeText = e.gameTimeDisplay || e.timeText || (start
       ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(start)
@@ -1226,7 +1287,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       start,
       status: eventStatus(e, start),
       rawStatus: e.status || '',
-      homeScore, awayScore,
+      homeScore, awayScore, homePenaltyScore, awayPenaltyScore,
       dateEvent,
       timeText,
       round: e.roundName || e.round || '',
@@ -1689,7 +1750,16 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function cardMarkup(e) {
     const fav=favorites.has(e.id);
-    const middle='<div class="versus">VS</div>';
+    const matchSnapshot=apiFootballMatchCache[String(e.id)]||null;
+    const snapshotGoals=matchSnapshot?.fixture?.goals||{};
+    const cardHomeScore=snapshotGoals.home ?? e.homeScore;
+    const cardAwayScore=snapshotGoals.away ?? e.awayScore;
+    const hasCardScore=cardHomeScore!==null&&cardHomeScore!==undefined&&cardHomeScore!==''&&cardAwayScore!==null&&cardAwayScore!==undefined&&cardAwayScore!=='';
+    const penalties=matchSnapshot?.fixture?.score?.penalty||{};
+    const cardPenaltyHome=penalties.home??e.homePenaltyScore;
+    const cardPenaltyAway=penalties.away??e.awayPenaltyScore;
+    const hasPenaltyScore=cardPenaltyHome!==null&&cardPenaltyHome!==undefined&&cardPenaltyAway!==null&&cardPenaltyAway!==undefined;
+    const middle=hasCardScore?`<div class="agenda-score-wrap"><div class="score">${escapeHtml(cardHomeScore)} <small>:</small> ${escapeHtml(cardAwayScore)}</div>${hasPenaltyScore?`<div class="agenda-penalty-score">PÊNALTIS ${escapeHtml(cardPenaltyHome)}–${escapeHtml(cardPenaltyAway)}</div>`:''}</div>`:'<div class="versus">VS</div>';
     const demo=e.demo?'<span style="color:#ffc76b;font-size:8px;margin-left:5px">DEMO</span>':'';
     const tv=e.tvNetworks?.length ? `<span class="watch-label">📺 ${escapeHtml(e.tvNetworks.map(n=>n.displayName||n.name).join(', '))}</span>` : '<span>Emissora a confirmar</span>';
     return `<article class="game-card" data-id="${escapeHtml(e.id)}" tabindex="0" role="button" aria-label="Abrir ${escapeHtml(e.home)} contra ${escapeHtml(e.away)}">
@@ -1890,6 +1960,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       : (tab === 'statistics' ? window.NVBLineupUI.renderStatistics(snapshot) : window.NVBLineupUI.renderLineups(snapshot));
     return `<div class="apifootball-scoreline"><span>${escapeHtml(homeScoreText)}</span><small>${escapeHtml(status||'STATUS NÃO INFORMADO')}</small><span>${escapeHtml(awayScoreText)}</span></div>
       <div class="apifootball-match-meta"><span>${escapeHtml(homeName)} <b>×</b> ${escapeHtml(awayName)}</span><small>Atualizado em ${escapeHtml(fetched)}</small></div>
+      ${snapshot?window.NVBLineupUI.renderMatchEvents(snapshot):''}
       ${errorMarkup}
       <div class="apifootball-tabs" role="tablist" aria-label="Dados da partida">
         <button class="apifootball-tab ${tab==='lineups'?'active':''}" type="button" role="tab" aria-selected="${tab==='lineups'}" data-apifootball-tab="lineups"><span>♟</span> Escalações</button>
@@ -2012,7 +2083,8 @@ const BROADCASTER_ALIAS_GROUPS = [
       catch(error){shareMessage=` Dados locais salvos; sincronização estatística pendente: ${error.message}`;}
       const partialMessage=result.partial?' Alguns dados (escalação ou estatísticas) ainda não estão disponíveis para esta partida.':'';
       toast(`Dados da API-Football atualizados.${partialMessage}${shareMessage}`);
-      if(state.selected?.id===event.id)renderModal(); else render();
+      render();
+      if(state.selected?.id===event.id)renderModal();
     } catch(error) {
       const status=$('#apiFootballMatchStatus'); if(status)status.textContent=error.message||'Erro ao consultar a API-Football.';
       toast(error.message||'Erro ao consultar a API-Football.');
@@ -2052,10 +2124,15 @@ const BROADCASTER_ALIAS_GROUPS = [
     const status=statusLabel(e.status);
     const apiSnapshot=apiFootballMatchCache[String(e.id)]||null;
     const apiGoals=apiSnapshot?.fixture?.goals;
-    const displayHomeScore=apiGoals&&apiGoals.home!==null?apiGoals.home:e.homeScore;
-    const displayAwayScore=apiGoals&&apiGoals.away!==null?apiGoals.away:e.awayScore;
-    const hasScore=displayHomeScore!==null && displayHomeScore!=='' && displayAwayScore!==null && displayAwayScore!=='';
+    const displayHomeScore=apiGoals?.home ?? e.homeScore;
+    const displayAwayScore=apiGoals?.away ?? e.awayScore;
+    const hasScore=displayHomeScore!==null && displayHomeScore!==undefined && displayHomeScore!=='' && displayAwayScore!==null && displayAwayScore!==undefined && displayAwayScore!=='';
     const score=hasScore?`${escapeHtml(displayHomeScore)} <span>:</span> ${escapeHtml(displayAwayScore)}`:'<span>VS</span>';
+    const penaltyScores=apiSnapshot?.fixture?.score?.penalty||{};
+    const displayPenaltyHome=penaltyScores.home??e.homePenaltyScore;
+    const displayPenaltyAway=penaltyScores.away??e.awayPenaltyScore;
+    const hasPenaltyScore=displayPenaltyHome!==null&&displayPenaltyHome!==undefined&&displayPenaltyAway!==null&&displayPenaltyAway!==undefined;
+    const penaltyScoreMarkup=hasPenaltyScore?`<div class="match-penalty-score">PÊNALTIS <strong>${escapeHtml(displayPenaltyHome)} × ${escapeHtml(displayPenaltyAway)}</strong></div>`:'';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
     const matchTime=e.timeText || 'Horário a confirmar';
     const round=e.round?`Rodada: ${escapeHtml(e.round)}`:'';
@@ -2075,7 +2152,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         </div>
         <div class="match-scoreboard">
           <div class="match-team-home">${logoMarkup(e.home,e.homeBadge || apiFootballTeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.home?.id || '')}<div class="match-team-name">${escapeHtml(e.home)}</div><div class="match-team-role">MANDANTE</div></div>
-          <div class="match-score-center"><div class="match-score">${score}</div><div class="match-kickoff">${escapeHtml(matchTime)}</div></div>
+          <div class="match-score-center"><div class="match-score">${score}</div>${penaltyScoreMarkup}<div class="match-kickoff">${escapeHtml(matchTime)}</div></div>
           <div class="match-team-away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '')}<div class="match-team-name">${escapeHtml(e.away)}</div><div class="match-team-role">VISITANTE</div></div>
         </div>
         <div class="match-facts">
@@ -3139,7 +3216,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.5',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.6',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

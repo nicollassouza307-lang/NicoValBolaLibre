@@ -13,7 +13,8 @@ const fixture = {
   fixture: { id: 900001, date: '2026-11-08T15:00:00-03:00', timezone: 'America/Sao_Paulo', status: { short: 'NS', long: 'Not Started', elapsed: null }, venue: { name: 'Estádio Teste' }, referee: null },
   league: { id: 71, name: 'Brasileirão', country: 'Brazil', logo: 'https://media.api-sports.io/football/leagues/71.png', season: 2026, round: 'Regular Season - 30' },
   teams: { home: { id: 123, name: 'Palmeiras', logo: 'https://example.test/pal.png' }, away: { id: 456, name: 'Remo', logo: 'https://example.test/rem.png' } },
-  goals: { home: null, away: null }
+  goals: { home: null, away: null },
+  score: { halftime: { home: null, away: null }, fulltime: { home: null, away: null }, extratime: { home: null, away: null }, penalty: { home: null, away: null } }
 };
 
 async function fakeFetch(url, options = {}) {
@@ -33,6 +34,7 @@ async function fakeFetch(url, options = {}) {
     const combined = structuredClone(fixture);
     combined.fixture.status = { short: '1H', long: 'First Half', elapsed: 12 };
     combined.goals = { home: 1, away: 0 };
+    combined.score = { halftime: { home: 1, away: 0 }, fulltime: { home: 1, away: 1 }, extratime: { home: 1, away: 1 }, penalty: { home: 4, away: 3 } };
     combined.lineups = [
       { team: { id: 123, name: 'Palmeiras' }, formation: '4-2-3-1', coach: { id: 9, name: 'Técnico A' }, startXI: [{ player: { id: 1, name: 'Jogador A', number: 10, pos: 'M', grid: '2:3' } }], substitutes: [] },
       { team: { id: 456, name: 'Remo' }, formation: '4-4-2', coach: { id: 10, name: 'Técnico B' }, startXI: [], substitutes: [] }
@@ -42,7 +44,7 @@ async function fakeFetch(url, options = {}) {
       { team: { id: 456, name: 'Remo' }, statistics: [{ type: 'Ball Possession', value: '38%' }, { type: 'Total Shots', value: 4 }] }
     ];
     combined.players = [{ player: { id: 1, name: 'Jogador A', photo: 'https://media.api-sports.io/football/players/1.png' } }];
-    combined.events = [];
+    combined.events = [{ time: { elapsed: 65, extra: null }, team: { id: 123, name: 'Palmeiras' }, player: { id: 20, name: 'Atacante A' }, assist: { id: 21, name: 'Meia A' }, type: 'Goal', detail: 'Normal Goal' }, { time: { elapsed: 90, extra: null }, team: { id: 456, name: 'Remo' }, player: { id: 31, name: 'Jogador que saiu' }, assist: { id: 32, name: 'Jogador que entrou' }, type: 'subst', detail: 'Substitution 1' }];
     return new Response(JSON.stringify({ response: [combined], paging: { current: 1, total: 1 }, results: 1 }), { status: 200, headers });
   }
   if (parsed.pathname === '/standings') {
@@ -67,6 +69,7 @@ async function fakeFetch(url, options = {}) {
   const resolved = await service.resolveMatch({ id: 'agenda-1', home: 'Palmeiras', away: 'Remo', dateEvent: '2026-11-08', timeText: '15:00' });
   assert.equal(resolved.matched, true, 'A partida existente na agenda deve ser identificada.');
   assert.equal(resolved.fixture.id, 900001);
+  assert.equal(resolved.fixture.score.penalty.home, null, 'O placar de pênaltis deve acompanhar o fixture inicial, mesmo vazio.');
   assert.equal(resolved.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png', 'O logo da competição deve acompanhar o fixture encontrado.');
   assert.equal(resolved.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png', 'O logo da competição precisa acompanhar o snapshot da partida.');
   const beforeDetails = service.getUsage().requestsUsedByApp;
@@ -80,6 +83,9 @@ async function fakeFetch(url, options = {}) {
   assert.equal(details.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png');
   assert.equal(details.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png');
   assert.equal(details.fixture.goals.home, 1, 'O endpoint combinado deve atualizar o placar/status mais recente.');
+  assert.equal(details.fixture.score.penalty.home, 4, 'O placar da disputa de pênaltis deve ser preservado.');
+  assert.equal(details.events.length, 2, 'Gols e substituições devem permanecer no snapshot detalhado.');
+  assert.equal(details.events[0].assist.name, 'Meia A', 'O assistente do gol deve ser preservado.');
   assert.equal(details.lineups[0].startXI[0].player.id, 1);
   assert.equal(details.statistics[0].statistics[0].value, '62%');
   assert.equal(service.getUsage().requestsUsedByApp, 2, 'O endpoint combinado /fixtures?id busca escalações e estatísticas em uma única chamada adicional.');
