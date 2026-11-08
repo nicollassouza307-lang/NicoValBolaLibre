@@ -1,6 +1,11 @@
-# NicoValBolaLibre V0.18.1 — API-Football Data Engine (primeira integração)
+# NicoValBolaLibre V0.18.2 — API-Football Data Engine (primeira integração)
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football **não adiciona partidas**: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
+
+
+Correção de publicação do atualizador na V0.18.2
+
+A Release V0.18.1 foi publicada sem o instalador Windows e sem o manifesto `latest.yml`; por isso o botão Verificar atualizações retornava 404. A V0.18.2 verifica explicitamente se `dist/*-Setup.exe` e `dist/latest.yml` foram gerados e anexa ambos à Release com `softprops/action-gh-release`. Se algum deles faltar, o workflow falha em vez de marcar a Release como sucesso incompleto. O aplicativo também apresenta uma mensagem amigável quando encontra esse 404.
 
 ## O que esta versão entrega
 
@@ -37,7 +42,7 @@ A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita ape
 ## Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.1 no computador administrador (o seu).
+2. Instale a V0.18.2 no computador administrador (o seu).
 3. Abra **Painel Admin → API-Football · Dados das partidas**.
 4. Cole a chave em **API Key pessoal** e clique **Salvar chave neste computador**.
 5. Clique **Testar conexão**. O teste consulta `/status`, que não reduz a cota diária.
@@ -75,14 +80,14 @@ O workflow executa:
 
 Os testes da API-Football usam respostas simuladas. Eles verificam que a consulta de fixtures por data não envia o parâmetro `page`, cache, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-## Publicar V0.18.1
+## Publicar V0.18.2
 
 1. Se o Worker da V0.18.0 já está implantado, não precisa republicá-lo.
 2. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
 3. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-4. Faça commit `NicoValBolaLibre V0.18.1` e `Push origin`.
-5. Crie a tag `v0.18.1` nesse commit e faça outro `Push origin`.
-6. Acompanhe o GitHub Actions e a Release `v0.18.1`.
+4. Faça commit `NicoValBolaLibre V0.18.2` e `Push origin`.
+5. Crie a tag `v0.18.2` nesse commit e faça outro `Push origin`.
+6. Acompanhe o GitHub Actions e a Release `v0.18.2`.
 
 ## Limitações conhecidas desta primeira fase
 

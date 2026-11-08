@@ -1,0 +1,16 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const workflow = fs.readFileSync(path.join(root, '.github/workflows/release.yml'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+assert.equal(pkg.version, '0.18.2');
+assert.match(workflow, /Verify Windows installer and updater manifest/);
+assert.match(workflow, /dist\/latest\.yml/);
+assert.match(workflow, /dist\/\*-Setup\.exe/);
+assert.match(workflow, /softprops\/action-gh-release@v2/);
+assert.match(workflow, /overwrite_files:\s*true/);
+assert.match(main, /A versão publicada não contém o manifesto latest\.yml/);
+console.log('PASS: versão, verificação obrigatória e upload explícito de Setup.exe/latest.yml configurados.');

@@ -110,7 +110,13 @@ function configureAutoUpdater() {
     updateDownloaded = true;
     sendUpdateStatus(`Versão ${info.version} baixada. Reinicie para instalar.`, { downloaded: true });
   });
-  autoUpdater.on('error', error => sendUpdateStatus(`Atualizador: ${error.message || 'falha ao verificar atualização.'}`));
+  autoUpdater.on('error', error => {
+    const detail = String(error?.message || 'falha ao verificar atualização.');
+    const friendly = /Cannot find latest\.yml|latest\.yml.*404|404.*latest\.yml/i.test(detail)
+      ? 'A versão publicada não contém o manifesto latest.yml. A verificação automática ficará indisponível até uma Release corrigida; você ainda pode usar o aplicativo normalmente.'
+      : `Atualizador: ${detail}`;
+    sendUpdateStatus(friendly);
+  });
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch(error => sendUpdateStatus(`Não foi possível verificar atualizações: ${error.message}`));
   }, 7000);

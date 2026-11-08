@@ -28,6 +28,8 @@ jobs:
         run: node scripts/test-team-logo-index.js
       - name: Test API-Football quota, cache and strict match matching
         run: node scripts/test-apifootball.js
+      - name: Test release updater assets
+        run: node scripts/test-release-assets.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
       - name: Inject automatic read-only Cloud Sync settings
@@ -42,3 +44,31 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Verify Windows installer and updater manifest
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path dist -Filter '*-Setup.exe' -File | Select-Object -First 1
+          $manifest = Join-Path (Get-Location) 'dist/latest.yml'
+          if (-not $installer) {
+            Write-Host 'Arquivos encontrados em dist:'
+            Get-ChildItem -Path dist -Force | Format-Table Name, Length
+            throw 'O instalador Windows (*-Setup.exe) não foi gerado.'
+          }
+          if (-not (Test-Path $manifest)) {
+            Write-Host 'Arquivos encontrados em dist:'
+            Get-ChildItem -Path dist -Force | Format-Table Name, Length
+            throw 'latest.yml não foi gerado. A Release não será marcada como concluída sem os metadados do atualizador.'
+          }
+          Write-Host "Instalador: $($installer.Name) ($($installer.Length) bytes)"
+          Write-Host "Manifesto: $manifest"
+      - name: Ensure installer and updater manifest are attached to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/*-Setup.exe
+            dist/latest.yml
+          overwrite_files: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
