@@ -266,6 +266,101 @@
 .apifootball-section-title{font-size:11px;letter-spacing:.08em;color:#8da5c4;text-transform:uppercase;font-weight:900;margin:15px 0 8px}
 .apifootball-stat-row{grid-template-columns:50px minmax(105px,1fr) minmax(120px,1.5fr) 50px}
 
+
+
+/* Match-center: tabs, pitch lineup and side-by-side statistics */
+.apifootball-panel{margin-top:16px;background:linear-gradient(145deg,#0e2032,#0b1422 72%);border-color:#5bd8cb30;box-shadow:0 18px 38px #0000001c}
+.apifootball-match-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#c1d3e8;font-size:11px;margin:4px 0 14px}
+.apifootball-match-meta b{color:#56d8ca;padding:0 5px}
+.apifootball-match-meta small{color:#7f93ad;font-size:9px}
+.apifootball-tabs{display:flex;gap:7px;padding:5px;border:1px solid #ffffff12;background:#071321;border-radius:12px;margin:15px 0 13px}
+.apifootball-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#8fa5bf;padding:11px 12px;font:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:background .16s,border-color .16s,color .16s}
+.apifootball-tab span{font-size:15px;color:#6f89a7}
+.apifootball-tab.active{background:linear-gradient(135deg,#164b4d,#17364d);border-color:#4dd8ca45;color:#eafffb;box-shadow:0 4px 14px #0002}
+.apifootball-tab.active span{color:#6ce5d9}
+.apifootball-tab-content{min-height:130px}
+.apifootball-pitch-team-heads{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.apifootball-pitch-team-head{display:flex;align-items:center;gap:9px;min-width:0;padding:10px 12px;border:1px solid #ffffff12;border-radius:11px;background:#ffffff06}
+.apifootball-team-head-crest{width:34px;height:34px;flex:0 0 34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#ffffff0b;overflow:hidden;color:#a9c1d9;font-weight:900;font-size:10px}
+.apifootball-team-head-crest img{width:100%;height:100%;object-fit:contain;padding:3px}
+.apifootball-team-head-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.apifootball-team-head-info strong{font-size:11px;color:#eff7ff;overflow-wrap:anywhere}
+.apifootball-team-head-info small{font-size:9px;color:#5edfd0;font-weight:850}
+.apifootball-pitch-scroll{overflow-x:auto;border-radius:15px;scrollbar-color:#436b65 #101c28}
+.apifootball-pitch{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;min-width:690px;min-height:455px;overflow:hidden;border:2px solid #b6e6ca88;border-radius:15px;background:repeating-linear-gradient(90deg,#17633f 0,#17633f 8.33%,#1b7048 8.33%,#1b7048 16.66%)}
+.apifootball-pitch-outline{position:absolute;inset:9px;border:1px solid #d9f7e38a;border-radius:2px;pointer-events:none;z-index:1}
+.apifootball-pitch-center-line{position:absolute;top:9px;bottom:9px;left:50%;width:1px;background:#d9f7e38a;z-index:1;pointer-events:none}
+.apifootball-pitch-center-circle{position:absolute;left:50%;top:50%;width:116px;height:116px;transform:translate(-50%,-50%);border:1px solid #d9f7e38a;border-radius:50%;z-index:1;pointer-events:none}
+.apifootball-pitch-box{position:absolute;top:33%;height:34%;width:8.5%;border:1px solid #d9f7e38a;z-index:1;pointer-events:none}
+.apifootball-pitch-box.home{left:9px;border-left:0}
+.apifootball-pitch-box.away{right:9px;border-right:0}
+.apifootball-pitch-half{position:relative;min-width:0;z-index:2}
+.apifootball-pitch-half.home{border-right:1px solid #d9f7e355}
+.apifootball-pitch-half-empty{display:flex;align-items:center;justify-content:center}
+.apifootball-half-empty-label{font-size:10px;color:#e4f4e6;background:#071b19b8;border:1px solid #d8eee22b;border-radius:8px;padding:8px 10px}
+.apifootball-pitch-player{position:absolute;z-index:3;width:78px;min-height:98px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;padding:4px 3px;border:1px solid #ffffff24;border-radius:10px;background:linear-gradient(180deg,#0b241fe8,#07151be8);box-shadow:0 4px 12px #0004;text-align:center}
+.apifootball-photo-frame{position:relative;width:43px;height:43px;flex:0 0 43px;border-radius:50%;overflow:hidden;border:2px solid #bdebd2;background:linear-gradient(145deg,#315c50,#18352f);display:flex;align-items:center;justify-content:center}
+.apifootball-player-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.apifootball-photo-fallback{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:11px;font-weight:950;color:#e7fff1;letter-spacing:.02em}
+.apifootball-photo-frame.is-fallback .apifootball-player-photo{display:none}
+.apifootball-pitch-number{font-size:9px;font-weight:950;color:#6ae6d4;line-height:1.1}
+.apifootball-pitch-name{max-width:100%;font-size:8px;line-height:1.15;font-weight:800;color:#f1f7ff;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.apifootball-pitch-position{font-size:7px;color:#9ab2ca;line-height:1}
+.apifootball-support-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.apifootball-support-card{min-width:0;border:1px solid #ffffff12;border-radius:12px;padding:12px;background:linear-gradient(145deg,#122238,#0d1928)}
+.apifootball-support-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.apifootball-support-kicker{font-size:8px;letter-spacing:.1em;font-weight:900;color:#5edfd0}
+.apifootball-support-head h5{font-size:11px;margin:4px 0 0;color:#edf5ff}
+.apifootball-support-count{font-size:8px;color:#9ab0c9;border:1px solid #ffffff16;border-radius:99px;padding:4px 7px;white-space:nowrap}
+.apifootball-coach-row{display:flex;align-items:center;gap:9px;border:1px solid #ffffff10;border-radius:9px;padding:8px;background:#ffffff05}
+.apifootball-coach-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#1f4c4a;color:#73e8d8;font-size:12px;font-weight:950}
+.apifootball-coach-row div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.apifootball-coach-row small{font-size:8px;color:#7e94ae}
+.apifootball-coach-row strong{font-size:10px;color:#e3eefb;overflow-wrap:anywhere}
+.apifootball-support-card .apifootball-section-title{margin:12px 0 8px}
+.apifootball-bench-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.apifootball-bench-player{display:grid;grid-template-columns:30px 18px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;gap:1px 6px;min-width:0;padding:5px;border-radius:8px;background:#ffffff05}
+.apifootball-bench-player .apifootball-photo-frame{grid-row:1/3;width:30px;height:30px;flex-basis:30px;border-width:1px}
+.apifootball-bench-player .apifootball-photo-fallback{font-size:8px}
+.apifootball-bench-number{grid-column:2;grid-row:1/3;font-size:9px;color:#67dfd0;font-weight:900}
+.apifootball-bench-name{grid-column:3;grid-row:1;font-size:8px;color:#e3edf8;line-height:1.2;overflow-wrap:anywhere}
+.apifootball-bench-position{grid-column:3;grid-row:2;font-size:7px;color:#8095ae}
+.apifootball-lineup-footnote{margin-top:10px}
+.apifootball-stat-team-labels{display:flex;justify-content:space-between;gap:10px;color:#aec2d9;font-size:10px;margin:5px 2px 10px}
+.apifootball-stat-team-labels strong{max-width:48%;overflow-wrap:anywhere}
+.apifootball-stat-team-labels strong:last-child{text-align:right}
+.apifootball-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.apifootball-stat-card{border:1px solid #ffffff12;border-radius:11px;padding:11px;background:linear-gradient(145deg,#122238,#0d1928);min-width:0}
+.apifootball-stat-values{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;gap:6px;text-align:center}
+.apifootball-stat-values strong{font-size:12px;color:#eef7ff}
+.apifootball-stat-values span{font-size:9px;color:#94a9c2;line-height:1.25}
+.apifootball-stat-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;background:#ffffff12;margin-top:10px;gap:2px}
+.apifootball-stat-bar .home{background:#48d9d0;border-radius:99px 0 0 99px}
+.apifootball-stat-bar .away{background:#6797ff;border-radius:0 99px 99px 0}
+@media(max-width:700px){
+  .apifootball-pitch-team-heads{gap:6px}
+  .apifootball-pitch-team-head{padding:8px 7px;gap:6px}
+  .apifootball-team-head-crest{width:28px;height:28px;flex-basis:28px}
+  .apifootball-team-head-info strong{font-size:9px}
+  .apifootball-pitch-scroll{overflow:visible}
+  .apifootball-pitch{min-width:0;min-height:0;display:flex;flex-direction:column;background:repeating-linear-gradient(0deg,#17633f 0,#17633f 8.33%,#1b7048 8.33%,#1b7048 16.66%)}
+  .apifootball-pitch-half{width:100%;height:280px;flex:0 0 280px}
+  .apifootball-pitch-half.away{order:1;border-bottom:1px solid #d9f7e35c}
+  .apifootball-pitch-half.home{order:2;border-right:0;border-top:1px solid #d9f7e35c}
+  .apifootball-pitch-center-line{left:9px;right:9px;top:50%;bottom:auto;width:auto;height:1px}
+  .apifootball-pitch-center-circle{width:76px;height:76px}
+  .apifootball-pitch-box{top:auto;left:31%;right:31%;width:auto;height:9%;border:1px solid #d9f7e38a}
+  .apifootball-pitch-box.home{bottom:9px;border-bottom:0;border-left:1px solid #d9f7e38a}
+  .apifootball-pitch-box.away{top:9px;right:31%;border-top:0;border-right:1px solid #d9f7e38a}
+  .apifootball-pitch-player{width:66px;min-height:85px;padding:3px 2px}
+  .apifootball-photo-frame{width:36px;height:36px;flex-basis:36px}
+  .apifootball-pitch-name{font-size:7px}
+  .apifootball-pitch-position{font-size:6px}
+  .apifootball-support-grid,.apifootball-stat-grid{grid-template-columns:1fr}
+  .apifootball-bench-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:390px){.apifootball-tabs{gap:4px}.apifootball-tab{padding:10px 5px;font-size:10px}.apifootball-pitch-player{width:59px}.apifootball-pitch-half{height:270px;flex-basis:270px}}
+
 </style>
 </head>
 <body>
@@ -453,7 +548,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.1 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.3 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -467,6 +562,7 @@
 
 <script src="/team-logo-index.js"></script>
 <script src="/competition-ranking.js"></script>
+<script src="/apifootball-lineup-ui.js"></script>
 <script>
 (() => {
   'use strict';
@@ -698,6 +794,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   let apiFootballLocalKeyConfigured = false;
   let apiFootballBusy = false;
   const apiFootballNoMatchLookup = new Set();
+  const apiFootballPanelActiveTab = new Map();
 
   // Idioma da interface: preferência local, independente do JSON de emissoras.
   let currentLanguage = readStore('futeblox_language_v1', 'pt-BR') === 'es-AR' ? 'es-AR' : 'pt-BR';
@@ -830,6 +927,19 @@ const BROADCASTER_ALIAS_GROUPS = [
     'Instalar e reiniciar':'Instalar y reiniciar',
     'Salvo':'Guardado', 'Carregando':'Cargando', 'Nenhuma partida':'Ningún partido', 'Tentar novamente':'Intentar de nuevo',
     'Agendas:':'Agendas:', 'Escudos:':'Escudos:', 'Automação de fontes + reset':'Automatización de fuentes + reinicio',
+    'Escalações':'Alineaciones', 'Estatísticas':'Estadísticas', 'Mandante':'Local', 'Visitante':'Visitante',
+    'Jogador':'Jugador', 'Técnico':'Entrenador', 'Técnico não informado':'Entrenador no informado',
+    'COMISSÃO TÉCNICA':'CUERPO TÉCNICO', 'Banco de reservas':'Banco de suplentes',
+    'Reservas não informados.':'Suplentes no informados.', 'Escalação não disponível':'Alineación no disponible',
+    'A escalação ainda não foi divulgada ou não está disponível para esta competição.':'La alineación todavía no fue publicada o no está disponible para esta competición.',
+    'Formação não informada':'Formación no informada', 'Posse de bola':'Posesión',
+    'Finalizações':'Tiros', 'No gol':'A puerta', 'Finalizações para fora':'Tiros fuera',
+    'Escanteios':'Córners', 'Faltas':'Faltas', 'Amarelos':'Amarillas', 'Vermelhos':'Rojas',
+    'Impedimentos':'Fuera de juego', 'Passes':'Pases', 'Precisão dos passes':'Precisión de pases',
+    'As estatísticas detalhadas ainda não estão disponíveis para esta partida. Isso pode depender da cobertura da competição ou do estágio do jogo.':'Las estadísticas detalladas todavía no están disponibles para este partido. Puede depender de la cobertura de la competición o de la fase del juego.',
+    'Comparativo das estatísticas fornecidas pela API-Football. Um traço indica dado não informado.':'Comparación de las estadísticas proporcionadas por API-Football. Un guion indica un dato no informado.',
+    'Fotos obtidas pelo ID do jogador na mídia da API-Football. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.':'Fotos obtenidas por el ID del jugador en los medios de API-Football. Cuando no existe una foto, mostramos las iniciales en lugar de asociar una imagen dudosa.',
+    'Busque os dados da API-Football para carregar escalações e estatísticas desta partida.':'Busca los datos de API-Football para cargar las alineaciones y estadísticas de este partido.',
   };
   const UI_ES_PHRASES = [
     ['Associação automática pausada.', 'Asociación automática pausada.'],
@@ -1715,38 +1825,28 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
     return 'upcoming';
   }
-  function apiFootballStatsRows(snapshot) {
-    const teams=Array.isArray(snapshot?.statistics)?snapshot.statistics:[];
-    const home=teams[0]?.values||[]; const away=teams[1]?.values||[];
-    const get=(arr,names)=>{const row=arr.find(item=>names.includes(String(item.type||'').toLowerCase()));return row?.value??'—';};
-    const specs=[
-      ['Posse de bola',['ball possession']],['Finalizações',['total shots']],['No gol',['shots on goal']],
-      ['Escanteios',['corner kicks']],['Faltas',['fouls']],['Amarelos',['yellow cards']],
-      ['Vermelhos',['red cards']],['Passes',['total passes','passes']],['Precisão dos passes',['passes %','pass accuracy']]
-    ];
-    return specs.map(([label,names])=>({label,home:get(home,names),away:get(away,names)})).filter(row=>row.home!=='—'||row.away!=='—');
-  }
-  function renderApiFootballSnapshot(snapshot) {
-    if(!snapshot) return '<div class="apifootball-message">Ainda não há dados estatísticos salvos para esta partida.</div>';
-    const rows=apiFootballStatsRows(snapshot);
-    const homeName=snapshot.fixture?.home?.name||snapshot.home||'Mandante';
-    const awayName=snapshot.fixture?.away?.name||snapshot.away||'Visitante';
-    const stats=rows.length?`<div class="apifootball-section-title">Estatísticas da partida</div><div class="apifootball-stats">${rows.map(row=>`<div class="apifootball-stat-row"><span class="home-value">${escapeHtml(row.home)}</span><span class="apifootball-stat-label">${escapeHtml(row.label)}</span><span class="away-value">${escapeHtml(row.away)}</span></div>`).join('')}</div>`:'<div class="apifootball-message">As estatísticas detalhadas ainda não estão disponíveis para esta partida.</div>';
-    const lineups=Array.isArray(snapshot.lineups)?snapshot.lineups:[];
-    const lineupMarkup=lineups.length?`<div class="apifootball-section-title">Escalações</div><div class="apifootball-lineups">${lineups.map(lineup=>{
-      const starters=Array.isArray(lineup.startXI)?lineup.startXI:[];
-      const subs=Array.isArray(lineup.substitutes)?lineup.substitutes:[];
-      const renderPlayers=(players)=>players.length?players.map(player=>`<div class="apifootball-player"><b>${Number(player.number)||'·'}</b><span>${escapeHtml(player.name||'Jogador')}</span></div>`).join(''):'<div class="apifootball-lineup-empty">Ainda não divulgada.</div>';
-      return `<article class="apifootball-lineup"><h4>${escapeHtml(lineup.team?.name||'Equipe')}</h4><div class="formation">${escapeHtml(lineup.formation||'Formação não informada')}</div>${lineup.coach?.name?`<div class="apifootball-muted">Técnico: ${escapeHtml(lineup.coach.name)}</div>`:''}<div class="apifootball-player-list">${renderPlayers(starters)}</div>${subs.length?`<details style="margin-top:9px"><summary class="apifootball-muted">Reservas (${subs.length})</summary><div class="apifootball-player-list">${renderPlayers(subs)}</div></details>`:''}</article>`;
-    }).join('')}</div>`:'<div class="apifootball-message">A escalação ainda não foi divulgada ou a competição não oferece esse dado.</div>';
-    const fetched=snapshot.fetchedAt?new Date(snapshot.fetchedAt).toLocaleString():'horário desconhecido';
-    const status=String(snapshot.fixture?.statusLong||snapshot.fixture?.status||'');
-    const homeGoals=snapshot.fixture?.goals?.home; const awayGoals=snapshot.fixture?.goals?.away;
+  function renderApiFootballSnapshot(snapshot, activeTab = 'lineups') {
+    const tab = activeTab === 'statistics' ? 'statistics' : 'lineups';
+    const homeGoals=snapshot?.fixture?.goals?.home; const awayGoals=snapshot?.fixture?.goals?.away;
     const homeScoreText=homeGoals===null||homeGoals===undefined?'—':String(homeGoals);
     const awayScoreText=awayGoals===null||awayGoals===undefined?'—':String(awayGoals);
-    const errors=Array.isArray(snapshot.detailErrors)?snapshot.detailErrors:[];
-    const errorMarkup=errors.length?`<div class="apifootball-message">Alguns dados não puderam ser carregados: ${errors.map(item=>escapeHtml(item.message||item.section)).join(' · ')}. A cota e os últimos dados permanecem protegidos.</div>`:'';
-    return `<div class="apifootball-scoreline"><span>${escapeHtml(homeScoreText)}</span><small>${escapeHtml(status)}</small><span>${escapeHtml(awayScoreText)}</span></div><div class="apifootball-muted">${escapeHtml(homeName)} · ${escapeHtml(awayName)} · Atualizado em ${escapeHtml(fetched)}</div>${errorMarkup}${stats}${lineupMarkup}`;
+    const status=String(snapshot?.fixture?.statusLong||snapshot?.fixture?.status||'');
+    const homeName=snapshot?.fixture?.home?.name||snapshot?.home||'Mandante';
+    const awayName=snapshot?.fixture?.away?.name||snapshot?.away||'Visitante';
+    const fetched=snapshot?.fetchedAt?new Date(snapshot.fetchedAt).toLocaleString():'ainda não consultado';
+    const errors=Array.isArray(snapshot?.detailErrors)?snapshot.detailErrors:Array.isArray(snapshot?.errors)?snapshot.errors:[];
+    const errorMarkup=errors.length?`<div class="apifootball-message">${errors.map(item=>escapeHtml(item.message||item.section)).join(' · ')}</div>`:'';
+    const content = !snapshot
+      ? '<div class="apifootball-message">Busque os dados da API-Football para carregar escalações e estatísticas desta partida.</div>'
+      : (tab === 'statistics' ? window.NVBLineupUI.renderStatistics(snapshot) : window.NVBLineupUI.renderLineups(snapshot));
+    return `<div class="apifootball-scoreline"><span>${escapeHtml(homeScoreText)}</span><small>${escapeHtml(status||'STATUS NÃO INFORMADO')}</small><span>${escapeHtml(awayScoreText)}</span></div>
+      <div class="apifootball-match-meta"><span>${escapeHtml(homeName)} <b>×</b> ${escapeHtml(awayName)}</span><small>Atualizado em ${escapeHtml(fetched)}</small></div>
+      ${errorMarkup}
+      <div class="apifootball-tabs" role="tablist" aria-label="Dados da partida">
+        <button class="apifootball-tab ${tab==='lineups'?'active':''}" type="button" role="tab" aria-selected="${tab==='lineups'}" data-apifootball-tab="lineups"><span>♟</span> Escalações</button>
+        <button class="apifootball-tab ${tab==='statistics'?'active':''}" type="button" role="tab" aria-selected="${tab==='statistics'}" data-apifootball-tab="statistics"><span>▥</span> Estatísticas</button>
+      </div>
+      <div class="apifootball-tab-content" role="tabpanel">${content}</div>`;
   }
   function renderApiFootballStandings(snapshot) {
     if(!snapshot?.rows?.length) return '';
@@ -1761,7 +1861,26 @@ const BROADCASTER_ALIAS_GROUPS = [
     const desktop=Boolean(window.nvbDesktop?.isDesktop);
     const canQuery=desktop&&apiFootballLocalKeyConfigured;
     const actionLabel=snapshot?'Atualizar dados da partida':(apiFootballNoMatchLookup.has(String(event.id))?'Tentar novamente (nova consulta)':'Buscar dados da API-Football');
-    return `<section class="apifootball-panel" id="apiFootballMatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">DADOS ESPORTIVOS</div><h3>⚽ API-Football</h3><div class="apifootball-muted">A agenda continua sendo exclusivamente do Rei dos Canais e PelotaLibre. Esta fonte só complementa a partida selecionada.</div></div><span class="api-football-status-pill ${snapshot?'ok':'warn'}">${snapshot?'Dados disponíveis':'Complemento opcional'}</span></div><div class="apifootball-actions">${canQuery?`<button class="btn small" id="apiFootballLoadMatchData" type="button" ${apiFootballBusy?'disabled':''}>${apiFootballBusy?'Consultando…':actionLabel}</button>`:''}${canQuery&&snapshot&&leagueId&&season?'<button class="btn secondary small" id="apiFootballLoadStandings" type="button">Buscar classificação</button>':''}</div><div id="apiFootballMatchStatus" class="apifootball-key-note">${snapshot?'Dados armazenados localmente e compartilhados quando o computador administrador consegue publicar.':canQuery?'A consulta é feita somente quando você solicita. Atualizar ou tentar novamente ignora o cache e pode usar até 2 chamadas; evite clicar repetidamente.':desktop?'Este computador está em modo somente leitura. Aguarde os dados publicados pelo administrador.':'Disponível na versão desktop após configurar a chave no Painel Admin.'}</div><div class="apifootball-result">${renderApiFootballSnapshot(snapshot)}${renderApiFootballStandings(standings)}</div></section>`;
+    const activeTab=apiFootballPanelActiveTab.get(String(event.id))||'lineups';
+    return `<section class="apifootball-panel" id="apiFootballMatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">DADOS ESPORTIVOS</div><h3>⚽ API-Football</h3><div class="apifootball-muted">A agenda continua sendo exclusivamente do Rei dos Canais e PelotaLibre. Esta fonte só complementa a partida selecionada.</div></div><span class="api-football-status-pill ${snapshot?'ok':'warn'}">${snapshot?'Dados disponíveis':'Complemento opcional'}</span></div><div class="apifootball-actions">${canQuery?`<button class="btn small" id="apiFootballLoadMatchData" type="button" ${apiFootballBusy?'disabled':''}>${apiFootballBusy?'Consultando…':actionLabel}</button>`:''}${canQuery&&snapshot&&leagueId&&season?'<button class="btn secondary small" id="apiFootballLoadStandings" type="button">Buscar classificação</button>':''}</div><div id="apiFootballMatchStatus" class="apifootball-key-note">${snapshot?'Dados armazenados localmente e compartilhados quando o computador administrador consegue publicar.':canQuery?'A consulta é feita somente quando você solicita. Atualizar ou tentar novamente ignora o cache e pode usar até 2 chamadas; evite clicar repetidamente.':desktop?'Este computador está em modo somente leitura. Aguarde os dados publicados pelo administrador.':'Disponível na versão desktop após configurar a chave no Painel Admin.'}</div><div class="apifootball-result">${renderApiFootballSnapshot(snapshot,activeTab)}${renderApiFootballStandings(standings)}</div></section>`;
+  }
+  function attachApiFootballPhotoFallback(root) {
+    root?.querySelectorAll('[data-apifootball-player-photo]').forEach(image => {
+      image.addEventListener('error', () => image.closest('.apifootball-photo-frame')?.classList.add('is-fallback'), { once: true });
+    });
+  }
+  function bindApiFootballPanelEvents(event) {
+    const panel=$('#apiFootballMatchDataPanel');
+    if(!panel) return;
+    panel.querySelectorAll('[data-apifootball-tab]').forEach(button=>button.addEventListener('click',()=>{
+      const selected=button.dataset.apifootballTab==='statistics'?'statistics':'lineups';
+      apiFootballPanelActiveTab.set(String(event.id),selected);
+      panel.outerHTML=renderApiFootballMatchPanel(event);
+      bindApiFootballPanelEvents(event);
+    }));
+    panel.querySelector('#apiFootballLoadMatchData')?.addEventListener('click',()=>loadApiFootballMatchData(event,{refresh:Boolean(apiFootballMatchCache[String(event.id)])||apiFootballNoMatchLookup.has(String(event.id))}));
+    panel.querySelector('#apiFootballLoadStandings')?.addEventListener('click',()=>loadApiFootballStandings(apiFootballMatchCache[String(event.id)]));
+    attachApiFootballPhotoFallback(panel);
   }
   function updateApiFootballUsage(usage) {
     const host=$('#apiFootballUsage'); if(!host||!usage) return;
@@ -1920,7 +2039,6 @@ const BROADCASTER_ALIAS_GROUPS = [
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
       </section>
       <section class="broadcast-panel match-broadcast-panel"><div class="broadcast-heading"><span class="broadcast-label">📺 ONDE ASSISTIR</span><small>${(e.tvNetworks||[]).length} emissora(s) identificada(s)</small></div><div class="broadcast-list">${broadcastChipsMarkup(e)}</div></section>
-      ${renderApiFootballMatchPanel(e)}
       <section class="player-shell match-player-card">
         <div class="player-section-head"><div><div class="eyebrow">TRANSMISSÃO</div><h3>Assistir à partida</h3><p>${active?`Player selecionado: ${escapeHtml(active.name)}`:'Confira as fontes disponíveis para esta partida.'}</p></div><div class="player-section-action">${playerOpen || '<span class="player-count-empty">Player ainda não vinculado</span>'}</div></div>
         ${sourceSelector}
@@ -1928,11 +2046,11 @@ const BROADCASTER_ALIAS_GROUPS = [
         ${active?'<div class="player-runtime-status" id="playerRuntimeStatus">Conectando ao player…</div>':''}
         <div class="player-footnote">As opções de fontes são gerenciadas no Painel Admin. A reprodução depende de a página de origem permitir incorporação no navegador.</div>
       </section>
+      ${renderApiFootballMatchPanel(e)}
       <div class="match-bottom-note"><span>⚽ NicoValBolaLibre Match Center</span><span>Dados fornecidos pelas agendas selecionadas</span></div>`;
     $('#modalContent').querySelectorAll('[data-source-index]').forEach(btn=>btn.addEventListener('click',()=>{state.sourceIndex=Number(btn.dataset.sourceIndex);renderModal();}));
     $('#favoriteToggle').addEventListener('click',()=>toggleFavorite(e.id));
-    $('#apiFootballLoadMatchData')?.addEventListener('click',()=>loadApiFootballMatchData(e,{refresh:Boolean(apiFootballMatchCache[String(e.id)])||apiFootballNoMatchLookup.has(String(e.id))}));
-    $('#apiFootballLoadStandings')?.addEventListener('click',()=>loadApiFootballStandings(apiFootballMatchCache[String(e.id)]));
+    bindApiFootballPanelEvents(e);
     const copyDiag=$('#copyPlayerDiag');
     if(copyDiag) copyDiag.addEventListener('click',async()=>{
       const report=buildPlayerDiagnostic(e,catalogMatches,active);
@@ -2946,7 +3064,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.1',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.3',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

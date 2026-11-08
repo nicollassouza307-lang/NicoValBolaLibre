@@ -869,11 +869,11 @@ function buildApiFootballSnapshot(event, resolved, details) {
     coach: { id: Number(team?.coach?.id || 0), name: String(team?.coach?.name || '').slice(0, 100) },
     startXI: (Array.isArray(team?.startXI) ? team.startXI : []).slice(0, 11).map(row => ({
       id: Number(row?.player?.id || 0), name: String(row?.player?.name || '').slice(0, 100),
-      number: Number(row?.player?.number || 0), pos: String(row?.player?.pos || '').slice(0, 12), grid: String(row?.player?.grid || '').slice(0, 12)
+      number: row?.player?.number === null || row?.player?.number === undefined || row?.player?.number === '' ? null : Number(row.player.number), pos: String(row?.player?.pos || '').slice(0, 12), grid: String(row?.player?.grid || '').slice(0, 12)
     })),
     substitutes: (Array.isArray(team?.substitutes) ? team.substitutes : []).slice(0, 20).map(row => ({
       id: Number(row?.player?.id || 0), name: String(row?.player?.name || '').slice(0, 100),
-      number: Number(row?.player?.number || 0), pos: String(row?.player?.pos || '').slice(0, 12)
+      number: row?.player?.number === null || row?.player?.number === undefined || row?.player?.number === '' ? null : Number(row.player.number), pos: String(row?.player?.pos || '').slice(0, 12)
     }))
   })) : [];
   const statistics = Array.isArray(details.statistics) ? details.statistics.slice(0, 2).map(team => ({
@@ -1247,7 +1247,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.1 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.3 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

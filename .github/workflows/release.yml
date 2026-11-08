@@ -30,6 +30,8 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
+      - name: Test match-center lineup pitch, player photos and statistics tabs
+        run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
       - name: Inject automatic read-only Cloud Sync settings

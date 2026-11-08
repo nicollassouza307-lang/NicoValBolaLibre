@@ -32,6 +32,7 @@ module.exports = {
     { from: path.resolve(__dirname, '..', 'competition-ranking.js'), to: 'app-server/competition-ranking.js' },
     { from: path.resolve(__dirname, '..', 'team-logo-index.js'), to: 'app-server/team-logo-index.js' },
     { from: path.resolve(__dirname, '..', 'apifootball-service.js'), to: 'app-server/apifootball-service.js' },
+    { from: path.resolve(__dirname, '..', 'apifootball-lineup-ui.js'), to: 'app-server/apifootball-lineup-ui.js' },
     { from: path.resolve(__dirname, '..', '.env.example'), to: 'app-server/.env.example' }
   ],
   asar: true,
