@@ -26,15 +26,21 @@ module.exports = {
   ],
   extraResources: [
     { from: path.resolve(__dirname, '..', 'server.js'), to: 'app-server/server.js' },
+    { from: path.resolve(__dirname, 'cloud-sync-defaults.json'), to: 'app-server/cloud-sync-defaults.json' },
+    { from: path.resolve(__dirname, 'icon.ico'), to: 'icon.ico' },
     { from: path.resolve(__dirname, '..', 'index.html'), to: 'app-server/index.html' },
     { from: path.resolve(__dirname, '..', '.env.example'), to: 'app-server/.env.example' }
   ],
   asar: true,
   win: {
+    icon: path.resolve(__dirname, 'icon.ico'),
     target: [{ target: 'nsis', arch: ['x64'] }],
     artifactName: '${productName}-${version}-Setup.${ext}'
   },
   nsis: {
+    installerIcon: path.resolve(__dirname, 'icon.ico'),
+    uninstallerIcon: path.resolve(__dirname, 'icon.ico'),
+    installerHeaderIcon: path.resolve(__dirname, 'icon.ico'),
     oneClick: true,
     perMachine: false,
     allowToChangeInstallationDirectory: false,

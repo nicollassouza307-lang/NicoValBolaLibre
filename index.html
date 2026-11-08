@@ -335,12 +335,14 @@
         <h4>☁️ Sincronização entre computadores</h4>
         <p>Compartilhe o catálogo de emissoras, vínculos por partida e escudos personalizados. Favoritos e idioma continuam individuais.</p>
         <label class="admin-small" for="cloudSyncUrl">Endereço HTTPS do serviço compartilhado</label>
-        <input id="cloudSyncUrl" type="url" inputmode="url" placeholder="https://seu-servico-de-sincronizacao.up.railway.app" autocomplete="url">
+        <input id="cloudSyncUrl" type="url" inputmode="url" placeholder="https://nicoval-sync.seu-subdominio.workers.dev" autocomplete="url">
         <label class="admin-small" for="cloudSyncReadToken" style="display:block;margin-top:10px">Chave compartilhada de leitura (no seu computador e no do Val)</label>
         <input id="cloudSyncReadToken" type="password" placeholder="Chave de acesso compartilhada" autocomplete="off">
-        <label class="admin-small" for="cloudSyncAdminToken" style="display:block;margin-top:10px">Chave administrativa de publicação (somente no seu computador)</label>
+        <label class="admin-small" for="cloudSyncAdminToken" style="display:block;margin-top:10px" id="cloudSyncAdminLabel">Chave administrativa de publicação (somente no seu computador)</label>
         <input id="cloudSyncAdminToken" type="password" placeholder="Chave privada de publicação" autocomplete="off">
-        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <div class="admin-small" id="cloudSyncProvisionInfo" hidden style="margin-top:10px">Este aplicativo já vem conectado automaticamente. Você não precisa preencher endereço nem chave de leitura neste computador.</div>
+        <div class="admin-small" id="cloudSyncReadOnlyInfo" hidden style="margin-top:8px">Este computador está no modo de leitura. A publicação fica disponível somente no computador administrador.</div>
+        <div class="modal-actions" id="cloudSyncActions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
           <button class="btn secondary small" type="button" id="saveCloudSyncSettings">Salvar conexão</button>
           <button class="btn small" type="button" id="pullCloudSync">↓ Buscar dados compartilhados</button>
           <button class="btn small" type="button" id="publishCloudSync">↑ Publicar meus dados para todos</button>
@@ -366,7 +368,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.17.0 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.17.1 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -707,6 +709,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     'Configurações importadas; catálogo e estado da automação preservados.':'Configuraciones importadas; catálogo y estado de la automatización conservados.',
     'Falha ao ler o arquivo JSON.':'No se pudo leer el archivo JSON.', 'Arquivo não reconhecido.':'Archivo no reconocido.',
     '☁️ Sincronização entre computadores':'☁️ Sincronización entre computadoras',
+    'Este aplicativo já vem conectado automaticamente. Você não precisa preencher endereço nem chave de leitura neste computador.':'Esta aplicación ya viene conectada automáticamente. No necesitas ingresar la dirección ni la clave de lectura en esta computadora.',
+    'Este computador está no modo de leitura. A publicação fica disponível somente no computador administrador.':'Esta computadora está en modo de solo lectura. La publicación está disponible únicamente en la computadora administradora.',
+    'Conexão automática pronta. Este computador também pode publicar dados.':'Conexión automática lista. Esta computadora también puede publicar datos.',
+    'Conexão automática pronta. Sincronização em modo de leitura.':'Conexión automática lista. Sincronización en modo de solo lectura.',
     'Compartilhe o catálogo de emissoras, vínculos por partida e escudos personalizados. Favoritos e idioma continuam individuais.':'Comparte el catálogo de canales, los enlaces por partido y los escudos personalizados. Los favoritos y el idioma siguen siendo individuales.',
     'Endereço HTTPS do serviço compartilhado':'Dirección HTTPS del servicio compartido',
     'Chave compartilhada de leitura (no seu computador e no do Val)':'Clave compartida de lectura (en tu computadora y en la de Val)',
@@ -2510,17 +2516,73 @@ const BROADCASTER_ALIAS_GROUPS = [
       toast(error.message || 'Falha ao publicar os dados.');
     }
   }
-  function initCloudSyncPanel() {
-    const settings=readCloudSyncSettings();
+  async function initCloudSyncPanel() {
+    const saveButton=$('#saveCloudSyncSettings');
+    const pullButton=$('#pullCloudSync');
+    const publishButton=$('#publishCloudSync');
+    saveButton?.addEventListener('click',()=>{if(saveCloudSyncSettings()) pullCloudSyncConfig({silent:false});});
+    pullButton?.addEventListener('click',()=>{if(saveCloudSyncSettings(false)) pullCloudSyncConfig({silent:false,force:true});});
+    publishButton?.addEventListener('click',publishCloudSyncConfig);
+
+    let defaults={url:'',readToken:'',preconfigured:false};
+    try {
+      const response=await fetch('/api/cloud-sync/defaults',{headers:{'Accept':'application/json'},cache:'no-store'});
+      if(response.ok) {
+        const body=await response.json();
+        if(body?.ok) defaults={url:String(body.url||''),readToken:String(body.readToken||''),preconfigured:Boolean(body.preconfigured)};
+      }
+    } catch {}
+
+    const saved=readCloudSyncSettings();
+    const settings={
+      // A configuração do instalador tem prioridade para que todos usem o mesmo serviço.
+      url:defaults.url || saved.url,
+      readToken:defaults.readToken || saved.readToken,
+      adminToken:saved.adminToken
+    };
+    if(settings.url || settings.readToken || settings.adminToken) writeStore(CLOUD_SYNC_SETTINGS_KEY,settings);
+
     if ($('#cloudSyncUrl')) $('#cloudSyncUrl').value=settings.url;
     if ($('#cloudSyncReadToken')) $('#cloudSyncReadToken').value=settings.readToken;
     if ($('#cloudSyncAdminToken')) $('#cloudSyncAdminToken').value=settings.adminToken;
-    $('#saveCloudSyncSettings')?.addEventListener('click',()=>{if(saveCloudSyncSettings()) pullCloudSyncConfig({silent:false});});
-    $('#pullCloudSync')?.addEventListener('click',()=>{if(saveCloudSyncSettings(false)) pullCloudSyncConfig({silent:false,force:true});});
-    $('#publishCloudSync')?.addEventListener('click',publishCloudSyncConfig);
-    if (settings.url) {
+
+    const urlLabel=document.querySelector('label[for="cloudSyncUrl"]');
+    const readLabel=document.querySelector('label[for="cloudSyncReadToken"]');
+    const adminLabel=$('#cloudSyncAdminLabel');
+    const urlInput=$('#cloudSyncUrl');
+    const readInput=$('#cloudSyncReadToken');
+    const adminInput=$('#cloudSyncAdminToken');
+    const provisionInfo=$('#cloudSyncProvisionInfo');
+    const readOnlyInfo=$('#cloudSyncReadOnlyInfo');
+    const isPreconfigured=defaults.preconfigured && settings.url && settings.readToken.length>=32;
+    const isAdmin=settings.adminToken.length>=24;
+
+    if(isPreconfigured) {
+      if(urlLabel) urlLabel.hidden=true;
+      if(readLabel) readLabel.hidden=true;
+      if(urlInput) urlInput.hidden=true;
+      if(readInput) readInput.hidden=true;
+      if(saveButton) saveButton.hidden=true;
+      if(provisionInfo) provisionInfo.hidden=false;
+      if(urlInput) urlInput.readOnly=true;
+      if(readInput) readInput.readOnly=true;
+      if(adminLabel) adminLabel.hidden=true;
+      if(adminInput) adminInput.hidden=true;
+      if(publishButton) publishButton.hidden=!isAdmin;
+      if(readOnlyInfo) readOnlyInfo.hidden=isAdmin;
+      const status=$('#cloudSyncStatus');
+      if(status) status.textContent=isAdmin
+        ? 'Conexão automática pronta. Este computador também pode publicar dados.'
+        : 'Conexão automática pronta. Sincronização em modo de leitura.';
+    } else {
+      if(adminLabel) adminLabel.hidden=false;
+      if(adminInput) adminInput.hidden=false;
+      if(publishButton) publishButton.hidden=false;
+    }
+
+    if (settings.url && settings.readToken.length>=24) {
       cloudSyncLastAutoPull=Date.now();
-      setTimeout(()=>pullCloudSyncConfig({silent:true}),1500);
+      setTimeout(()=>pullCloudSyncConfig({silent:true}), isPreconfigured ? 500 : 1500);
     }
     setInterval(()=>{
       const active=readCloudSyncSettings();
@@ -2555,7 +2617,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.17.0',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.17.1',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

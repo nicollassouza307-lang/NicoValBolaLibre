@@ -799,6 +799,23 @@ function normalizeCloudSyncBase(value) {
   return parsed.toString().replace(/\/+$/, '');
 }
 
+function loadDesktopCloudSyncDefaults() {
+  const candidates = [
+    path.join(ROOT, 'cloud-sync-defaults.json'),
+    path.join(ROOT, 'build', 'cloud-sync-defaults.json')
+  ];
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+      const url = normalizeCloudSyncBase(parsed.url || '');
+      const readToken = String(parsed.readToken || '').trim();
+      if (url && readToken.length >= 32) return { url, readToken, preconfigured: true };
+    } catch {}
+  }
+  return { url: '', readToken: '', preconfigured: false };
+}
+
 async function cloudSyncFetch(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
@@ -849,6 +866,12 @@ function safeStaticPath(pathname) {
 const requestHandler = async (req, res) => {
   const requestUrl = new URL(req.url, `http://${HOST}:${ACTIVE_PORT}`);
   const pathname = requestUrl.pathname;
+
+  // Defaults públicos de leitura para o app desktop. A chave administrativa nunca
+  // é incluída neste arquivo nem nesta resposta.
+  if (pathname === '/api/cloud-sync/defaults' && req.method === 'GET') {
+    return json(res, 200, { ok: true, ...loadDesktopCloudSyncDefaults() });
+  }
 
   // A API cloud é acessada pelo servidor local. O token administrativo nunca precisa
   // ser colocado em código remoto nem exposto ao navegador de outro domínio.
@@ -1106,7 +1129,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.17.0 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.17.1 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

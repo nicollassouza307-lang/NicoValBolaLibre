@@ -1,45 +1,31 @@
-NICOVALBOLALIBRE V0.17.0
+NICOVALBOLALIBRE V0.17.1
 ========================
 
-IMPORTANTE
-Esta pasta contém o código-fonte e a configuração de build do aplicativo desktop. O instalador .exe ainda precisa ser compilado/publicado em um computador Windows com internet ou pelo GitHub Actions. Não há um .exe pronto neste ZIP.
+NOVIDADES
+- Ícone provisório do gato com VR no aplicativo, instalador, desinstalador e atalhos do Windows.
+- O endereço do Cloudflare e a chave de leitura são configurados automaticamente no instalador.
+- O Val só precisa instalar e abrir; não precisa colar endereço nem tokens.
+- A publicação continua disponível somente no computador que tem a chave administrativa salva localmente.
 
-ANTES DA MIGRAÇÃO: na versão antiga aberta no Chrome, exporte as configurações pelo Painel Admin. O Electron usa armazenamento separado; depois de instalar o desktop, importe o JSON uma vez para preservar catálogo, vínculos e favoritos.
+PARA PUBLICAR A V0.17.1 NO GITHUB
+1. No repositório, abra Settings > Secrets and variables > Actions.
+2. Clique New repository secret.
+3. Name: NVB_SYNC_READ_TOKEN
+4. Secret: cole somente o valor da chave SYNC_READ_TOKEN (sem o nome da variável e sem sinal de igual).
+5. Salve. Nunca cadastre SYNC_ADMIN_TOKEN no GitHub.
+6. Copie os arquivos da V0.17.1 para a pasta local do repositório, faça Commit e Push origin.
+7. Crie a tag v0.17.1 no commit novo e faça Push origin para enviar a tag.
+8. O GitHub Actions compila e publica dist/NicoValBolaLibre-0.17.1-Setup.exe em Releases.
 
-1) PARA CRIAR O INSTALADOR WINDOWS
-- Instale Node.js 22+ somente no computador usado para criar o aplicativo.
-- Dê dois cliques em build-windows.bat.
-- O instalador será criado em dist/NicoValBolaLibre-0.17.0-Setup.exe.
-- O Node.js fica integrado ao instalador final pelo Electron. Nico e Val não precisam instalar Node.js para usar o app.
+USO
+- Nico: feche o app, instale a atualização sem apagar os dados do perfil e abra novamente. A chave administrativa local da V0.17.0 deve continuar disponível.
+- Val: instale o mesmo Setup.exe e abra. URL e chave de leitura vêm pré-configuradas; não é necessário preencher nada.
 
-2) PARA PUBLICAR ATUALIZAÇÕES PARA TODOS
-- Crie um repositório GitHub para o projeto e envie os arquivos.
-- Atualize a versão em package.json antes de cada nova versão.
-- Crie uma tag vX.Y.Z e envie ao GitHub.
-- O workflow .github/workflows/release.yml compila o instalador e publica uma Release.
-- O aplicativo desktop verifica atualizações ao iniciar e também tem um botão no Painel Admin.
-- Para atualização automática simples, use GitHub Releases público. Repositório privado exige autenticação adicional.
+SEGURANÇA
+- O token somente-leitura é incorporado ao instalador para facilitar a conexão e poderá ser extraído por alguém com conhecimento técnico. Ele não permite publicar.
+- SYNC_ADMIN_TOKEN nunca entra no repositório, no workflow, no instalador ou no computador do Val.
+- O Worker Cloudflare deve ter as Secrets SYNC_READ_TOKEN e SYNC_ADMIN_TOKEN e o binding D1 DB.
+- A API já configurada: https://nicoval-sync.tracker-mps.workers.dev
 
-3) SINCRONIZAÇÃO ENTRE O NICO E O VAL
-- A API remota está em cloud-sync/.
-- Implante cloud-sync/Dockerfile em uma hospedagem Docker com HTTPS e volume persistente em /data.
-- Gere duas chaves com cloud-sync/GERAR_CHAVES.ps1.
-- Configure SYNC_READ_TOKEN e SYNC_ADMIN_TOKEN como segredos no serviço.
-- No Painel Admin dos dois computadores, configure o endereço HTTPS e a chave de leitura.
-- Somente no seu computador, configure também a chave administrativa.
-- Clique em Salvar conexão e depois em Publicar meus dados para todos.
-- O Val usa Buscar dados compartilhados ou recebe as mudanças automaticamente ao abrir o app e a cada ~2 minutos.
-
-4) O QUE É COMPARTILHADO
-- Catálogo de emissoras e fontes.
-- Vínculos por partida.
-- Escudos personalizados.
-
-Favoritos e idioma continuam individuais. A sincronização combina os dados compartilhados com o que já existe localmente; ela não apaga dados locais quando uma entrada desaparece da nuvem.
-
-5) O QUE AINDA PRECISA DE CONFIGURAÇÃO EXTERNA
-- Hospedar a API cloud-sync com armazenamento persistente.
-- Criar o repositório GitHub para as Releases de atualização.
-- Fazer o primeiro build/publicação do instalador.
-
-Sem essas etapas externas, a aplicação local continua funcionando como site/servidor local, mas o update compartilhado e a sincronização entre PCs ainda não ficam ativos.
+ÍCONE
+O arquivo build/icon.ico usa o favicon atual de 64x64 como ícone provisório. Quando a imagem original em alta resolução estiver disponível, substitua build/icon.ico e publique uma nova versão.

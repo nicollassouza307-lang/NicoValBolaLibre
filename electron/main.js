@@ -101,6 +101,7 @@ function createWindow(url) {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#0b1220',
+    icon: app.isPackaged ? path.join(process.resourcesPath, 'icon.ico') : path.join(app.getAppPath(), 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

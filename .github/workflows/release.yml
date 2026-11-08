@@ -14,11 +14,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
+          package-manager-cache: false
+      - name: Inject automatic read-only Cloud Sync settings
+        env:
+          NVB_SYNC_READ_TOKEN: ${{ secrets.NVB_SYNC_READ_TOKEN }}
+          NVB_SYNC_URL: https://nicoval-sync.tracker-mps.workers.dev
+        run: node scripts/write-cloud-sync-defaults.js
       - name: Install dependencies
         run: npm install
       - name: Build installer and publish release assets

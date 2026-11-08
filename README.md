@@ -1,93 +1,84 @@
-# NicoValBolaLibre V0.17.0
+# NicoValBolaLibre V0.17.1
 
-Esta versão acrescenta a base do aplicativo desktop Windows, atualizações por GitHub Releases e sincronização remota do catálogo.
+Esta versão acrescenta o ícone provisório do mascote (gato com VR) ao executável/instalador Windows e prepara a conexão Cloudflare automaticamente no aplicativo desktop. O idioma e os favoritos continuam locais; o catálogo de emissoras, vínculos e escudos podem ser compartilhados.
 
-## Preservar os dados da versão no navegador
+## O que mudou na V0.17.1
 
-O Electron usa um perfil de armazenamento próprio, separado do Chrome/Edge. Antes de migrar da versão web, abra o Painel Admin antigo e use **Exportar configurações para compartilhar**. Depois instale o desktop, abra o Painel Admin e importe esse JSON uma vez. Isso preserva catálogo, vínculos, favoritos, escudos e o estado da automação. Em seguida, use a publicação na nuvem para enviar os dados compartilhados ao computador do Val.
+- Ícone Windows do app, instalador, desinstalador, atalho e janela usando o favicon atual do gato com VR (`build/icon.ico`). Quando a imagem original em alta resolução estiver disponível, substitua `build/icon.ico` e gere uma nova versão.
+- O instalador recebe o endereço do Worker e a chave de leitura somente durante o GitHub Actions build.
+- O app configura e busca o catálogo compartilhado automaticamente ao iniciar. O usuário Val não precisa digitar URL nem token.
+- A chave administrativa (`SYNC_ADMIN_TOKEN`) nunca é incluída no instalador. Ela permanece apenas no perfil local do administrador, preservada da instalação anterior quando o perfil Electron é mantido.
+- A interface esconde os campos de conexão e publicação em computadores de leitura. Só aparece o botão de publicar se houver uma chave administrativa salva neste computador.
+- O código de origem do Worker no projeto foi atualizado para exigir `SYNC_READ_TOKEN` na leitura e `SYNC_ADMIN_TOKEN` na publicação.
+- GitHub Actions atualizado para actions/checkout@v7, actions/setup-node@v7 e Node.js 24.
 
-## Para quem vai usar o aplicativo
+## Antes de gerar a V0.17.1: cadastrar um Secret no GitHub
 
-Quando o instalador `NicoValBolaLibre-0.17.0-Setup.exe` for publicado, o Nico e o Val só precisarão instalá-lo uma vez. O programa já leva o runtime do Node.js dentro do Electron. Não é necessário instalar Node.js, Python, abrir terminal ou executar arquivos `.bat` para usar o programa.
+O repositório é público, então nunca coloque tokens diretamente em arquivos commitados.
 
-O instalador cria atalhos no Menu Iniciar e na Área de Trabalho. O aplicativo inicia o servidor local internamente e abre sua janela própria.
+1. Abra o repositório GitHub `NicoValBolaLibre`.
+2. Vá em **Settings > Secrets and variables > Actions**.
+3. Clique **New repository secret**.
+4. Nome: `NVB_SYNC_READ_TOKEN`.
+5. Valor: cole somente o valor gerado para `SYNC_READ_TOKEN` (sem o nome da variável e sem `=`).
+6. Salve.
 
-## Criar o instalador Windows
+Esse token é somente de leitura. Como ele é incorporado ao aplicativo que será distribuído, alguém tecnicamente experiente poderá extraí-lo do instalador. Ele não pode publicar dados. A chave `SYNC_ADMIN_TOKEN` nunca deve ser adicionada ao GitHub nem ao instalador.
 
-O `.exe` ainda precisa ser compilado em Windows ou pelo GitHub Actions. Este ambiente de edição está sem acesso ao npm e não consegue baixar o Electron para produzir o binário final.
+## Publicar a versão
 
-### Opção A: compilar no Windows
+1. Copie todos os arquivos deste projeto para o repositório local já conectado ao GitHub.
+2. Faça commit e `Push origin`.
+3. No GitHub Desktop, abra History e crie a tag `v0.17.1` no commit novo.
+4. Faça `Push origin` para enviar a tag.
+5. O GitHub Actions cria o instalador `NicoValBolaLibre-0.17.1-Setup.exe` e publica em Releases.
 
-1. Instale Node.js 22+ somente no computador de desenvolvimento/build.
-2. Abra `build-windows.bat` com duplo clique.
-3. Aguarde a instalação de dependências e o build.
-4. O instalador estará em `dist/NicoValBolaLibre-0.17.0-Setup.exe`.
+O workflow falhará com uma mensagem clara se o Secret `NVB_SYNC_READ_TOKEN` não estiver configurado. O valor do Secret não é impresso nos logs.
 
-O Node.js é necessário apenas para criar o instalador, não para executar o programa instalado.
+## O que acontece em cada computador
 
-### Opção B: publicar pelo GitHub Actions
+### Computador do Nico (administrador)
 
-1. Crie um repositório GitHub para este projeto.
-2. Envie os arquivos do projeto para a branch principal.
-3. Para cada versão, atualize `version` no `package.json` e o texto de versão no rodapé do `index.html`.
-4. Crie e envie uma tag, por exemplo `v0.17.0` (`git tag v0.17.0` e `git push origin v0.17.0`).
-5. O workflow `.github/workflows/release.yml` compila o instalador Windows e publica os arquivos da versão em GitHub Releases.
-6. O app desktop verifica atualizações no início e também oferece o botão **Verificar atualizações** no Painel Admin. Ao encontrar uma versão, permite baixar e instalar.
+- A atualização V0.17.1 usa automaticamente a URL `https://nicoval-sync.tracker-mps.workers.dev` e a chave de leitura incorporada.
+- O `SYNC_ADMIN_TOKEN` salvo na configuração local da V0.17.0 deve permanecer no mesmo perfil Electron e permite publicar dados.
+- Feche o app antes de instalar a atualização; não desinstale limpando os dados do aplicativo.
+- Após atualizar, abra o Painel Admin e use **Publicar meus dados para todos** se tiver feito alterações locais que ainda não foram enviadas.
 
-Para atualização automática sem login nos computadores do usuário, use um repositório de Releases público. Repositórios privados exigem uma estratégia adicional de autenticação que não está configurada nesta entrega.
+### Computador do Val
 
-## Sincronização entre o Nico e o Val
+- Instale o mesmo `NicoValBolaLibre-0.17.1-Setup.exe`.
+- Ao abrir, o endereço e a chave de leitura já estarão configurados e o app buscará os dados automaticamente.
+- Não precisa preencher tokens ou endereço.
+- O computador do Val fica em modo de leitura e não verá o botão de publicação.
 
-A sincronização precisa de uma API online. O código dela está em `cloud-sync/`. Ela não pode ser substituída por `localStorage`: os dois computadores precisam conversar com um endereço HTTPS comum.
+## Cloudflare já implantado
 
-### Implantar o serviço uma vez
+O Worker é `nicoval-sync`, o banco D1 é `nicoval-db` e o binding é `DB`. O Worker deve ter duas Secrets no ambiente Production:
 
-1. Publique a pasta `cloud-sync/` em um repositório que você controle.
-2. Crie um serviço Docker em um host como Railway ou outro compatível, usando `cloud-sync/Dockerfile`.
-3. Anexe um volume persistente em `/data`.
-4. Configure `DATA_FILE=/data/shared-config.json`.
-5. Gere as duas chaves executando `cloud-sync/GERAR_CHAVES.ps1` no PowerShell.
-6. Configure `SYNC_READ_TOKEN` e `SYNC_ADMIN_TOKEN` como variáveis secretas do serviço.
-7. Gere um domínio HTTPS para o serviço.
+- `SYNC_READ_TOKEN`: igual ao valor usado como Secret `NVB_SYNC_READ_TOKEN` no GitHub.
+- `SYNC_ADMIN_TOKEN`: chave administrativa mantida somente no Cloudflare e no perfil local do administrador.
 
-### Conectar os dois computadores
+Rotas:
+- `GET /health`: diagnóstico público; não expõe dados.
+- `GET /v1/config`: exige `Authorization: Bearer <SYNC_READ_TOKEN>`.
+- `POST /v1/publish`: exige `Authorization: Bearer <SYNC_ADMIN_TOKEN>`.
 
-No Painel Admin do NicoValBolaLibre:
+URL do Worker: `https://nicoval-sync.tracker-mps.workers.dev`.
 
-1. Cole o domínio HTTPS do serviço.
-2. Cole `SYNC_READ_TOKEN`.
-3. Cole também `SYNC_ADMIN_TOKEN` neste computador, que será o administrador.
-4. Clique em **Salvar conexão** e depois em **Publicar meus dados para todos**.
+## Segurança e limites
 
-No computador do Val:
+O token de leitura precisa estar dentro do app para o Val não digitar nada; portanto, trate-o como uma credencial pública de leitura, não como senha secreta. Ele permite apenas ler a configuração compartilhada. Não coloque a chave administrativa no GitHub, no instalador ou no computador do Val. Se o token de leitura for exposto além do esperado, gere outro e atualize a Secret no Cloudflare e no GitHub, depois publique nova versão.
 
-1. Cole o mesmo domínio HTTPS.
-2. Cole somente `SYNC_READ_TOKEN`.
-3. Clique em **Salvar conexão**.
-
-Depois disso, o app busca automaticamente novos dados ao iniciar e aproximadamente a cada dois minutos enquanto está aberto. Também é possível clicar em **Buscar dados compartilhados**.
-
-### O que sincroniza
-
-- Catálogo de emissoras e fontes cadastradas;
-- Vínculos de players por partida;
-- Escudos personalizados.
-
-Favoritos, idioma e preferências pessoais continuam locais. A sincronização atual combina os dados remotos com os dados locais, sem apagar o que já existe em cada computador.
-
-**Segurança:** não envie `SYNC_ADMIN_TOKEN` ao Val. A chave de leitura deve ser compartilhada apenas entre os usuários pretendidos. As chaves ficam no armazenamento local do navegador/app e não são incluídas no arquivo de configuração publicado. A API guarda URLs HTTPS e metadados, não hospeda vídeos nem transmite conteúdo.
+Cloudflare Workers e D1 estão no plano gratuito dentro das cotas publicadas. Se os limites gratuitos forem atingidos, as operações podem falhar até a renovação; não há upgrade pago automático.
 
 ## Estrutura importante
 
 - `index.html`: interface e lógica da agenda.
-- `server.js`: servidor local e agregador de agenda.
-- `electron/main.js`: aplicativo desktop, ciclo de vida e atualizador.
-- `electron/preload.js`: ponte segura entre a interface e o Electron.
-- `cloud-sync/server.js`: API remota de sincronização.
-- `.github/workflows/release.yml`: build e publicação de versões Windows.
-
-## Limites desta entrega
-
-- O código do desktop e do atualizador está preparado, mas o instalador `.exe` ainda não foi compilado/publicado.
-- A API de sincronização está incluída, mas ainda precisa ser implantada em hospedagem HTTPS com volume persistente.
-- Até configurar a API e as chaves nos dois computadores, a sincronização entre eles não estará ativa.
+- `server.js`: servidor local e integração Cloudflare.
+- `electron/main.js`: aplicativo desktop, janela, ícone e atualizador.
+- `electron/preload.js`: ponte segura entre interface e Electron.
+- `build/icon.ico`: ícone provisório gerado do favicon atual.
+- `build/cloud-sync-defaults.json`: valores de exemplo sem token; o workflow injeta o token durante o build.
+- `scripts/write-cloud-sync-defaults.js`: valida e escreve a configuração de leitura no runner do GitHub Actions.
+- `cloudflare-sync/worker.js`: código-fonte da API Cloudflare com leitura/publicação autenticadas.
+- `.github/workflows/release.yml`: build e publicação do instalador Windows.
