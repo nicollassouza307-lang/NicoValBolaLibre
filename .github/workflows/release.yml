@@ -30,7 +30,7 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
-      - name: Test V0.18.4 match-center lineup, photos, schedule and update notice
+      - name: Test V0.18.5 match-center lineup, photos, schedule and update notice
         run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js

@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.4 — escalações, escudos e atualizações
+# NicoValBolaLibre V0.18.5 — escalações, escudos e atualizações
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football **não adiciona partidas**: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -42,7 +42,7 @@ A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita ape
 ## Passo B — obter e configurar sua chave API-Football
 
 1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.4 no computador administrador (o seu).
+2. Instale a V0.18.5 no computador administrador (o seu).
 3. Abra **Painel Admin → API-Football · Dados das partidas**.
 4. Cole a chave em **API Key pessoal** e clique **Salvar chave neste computador**.
 5. Clique **Testar conexão**. O teste consulta `/status`, que não reduz a cota diária.
@@ -80,14 +80,14 @@ O workflow executa:
 
 Os testes da API-Football usam respostas simuladas. Eles verificam que a consulta de fixtures por data não envia o parâmetro `page`, cache, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
 
-## Publicar V0.18.4
+## Publicar V0.18.5
 
 1. Se o Worker da V0.18.0 já está implantado, não precisa republicá-lo.
 2. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
 3. Confirme que `NVB_SYNC_READ_TOKEN` continua em **Settings → Secrets and variables → Actions**. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-4. Faça commit `NicoValBolaLibre V0.18.4` e `Push origin`.
-5. Crie a tag `v0.18.4` nesse commit e faça outro `Push origin`.
-6. Acompanhe o GitHub Actions e a Release `v0.18.4`.
+4. Faça commit `NicoValBolaLibre V0.18.5` e `Push origin`.
+5. Crie a tag `v0.18.5` nesse commit e faça outro `Push origin`.
+6. Acompanhe o GitHub Actions e a Release `v0.18.5`.
 
 ## Limitações conhecidas desta primeira fase
 
@@ -109,10 +109,13 @@ Os testes da API-Football usam respostas simuladas. Eles verificam que a consult
 - Estatísticas exibidas em comparativos visuais entre os dois clubes.
 
 
-A compilação V0.18.4 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
+A compilação V0.18.5 gera o instalador e `latest.yml` localmente; o workflow publica os arquivos uma única vez pela ação de Release.
 
 
-## V0.18.4 — refinamento visual e atualizações na agenda
+## V0.18.5 — refinamento visual e atualizações na agenda
+
+- Correção do teste de cards da agenda: a validação identifica `cardMarkup` independentemente do nome do parâmetro, da indentação ou de funções auxiliares próximas, mantendo as verificações de placar, gols, substituições e VS.
+
 
 - Escalações: titulares agora usam foto circular, nome e número, sem cartões quadrados atrás dos jogadores.
 - Posicionamento: espaçamento por faixa do campo e avanço dos jogadores abertos, especialmente pontas, para um desenho menos rígido e mais próximo dos modos táticos do FC/FIFA.
@@ -121,4 +124,4 @@ A compilação V0.18.4 gera o instalador e `latest.yml` localmente; o workflow p
 - Logos da API-Football: quando um fixture já foi associado, o cache permite usar também os escudos dos clubes e da competição via mídia oficial, sem uma chamada adicional à API para baixar as imagens.
 - Atualizações: quando o desktop detecta uma nova versão, a agenda exibe um aviso com ações para baixar e instalar; o painel Admin continua disponível como alternativa.
 
-A V0.18.4 não altera as fontes da agenda: Rei dos Canais/PelotaLibre continuam fornecendo as partidas. A API-Football segue como complemento de partidas existentes.
+A V0.18.5 não altera as fontes da agenda: Rei dos Canais/PelotaLibre continuam fornecendo as partidas. A API-Football segue como complemento de partidas existentes.

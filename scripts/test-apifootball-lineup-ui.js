@@ -81,11 +81,18 @@ assert.match(index, /data-apifootball-tab="lineups"/);
 assert.match(index, /data-apifootball-tab="statistics"/);
 assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel esportivo deve aparecer depois do player.');
 assert.match(index, /bindApiFootballPanelEvents\(e\)/);
-const cardMarkupSource = index.match(/function cardMarkup\(e\) \{([\s\S]*?)\n  \}\n  function emptyMarkup/);
-assert.ok(cardMarkupSource, 'A função dos cards da agenda deve existir.');
-assert.doesNotMatch(cardMarkupSource[1], /homeScore|awayScore/, 'O placar não deve aparecer na agenda inicial.');
-assert.doesNotMatch(cardMarkupSource[1], /goals|substitution|scorer|marcador/i, 'Gols e substituições não devem ser renderizados nos cards da agenda.');
-assert.match(cardMarkupSource[1], /class=\"versus\">VS<\/div>/, 'O centro do card permanece apenas como VS.');
+// O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.
+// Encontramos a declaração pelo nome e isolamos o trecho até emptyMarkup.
+const cardMarkupPosition = index.search(/\bfunction\s+cardMarkup\s*\(/);
+const emptyMarkupPosition = index.search(/\bfunction\s+emptyMarkup\s*\(/);
+assert.ok(cardMarkupPosition >= 0, 'A função dos cards da agenda deve existir.');
+assert.ok(emptyMarkupPosition > cardMarkupPosition, 'A função dos cards deve estar antes de emptyMarkup.');
+const cardMarkupBodyPosition = index.indexOf('{', cardMarkupPosition);
+assert.ok(cardMarkupBodyPosition > cardMarkupPosition && cardMarkupBodyPosition < emptyMarkupPosition, 'A função dos cards deve ter um corpo válido.');
+const cardMarkupSource = index.slice(cardMarkupBodyPosition + 1, emptyMarkupPosition);
+assert.doesNotMatch(cardMarkupSource, /homeScore|awayScore/, 'O placar não deve aparecer na agenda inicial.');
+assert.doesNotMatch(cardMarkupSource, /goals|substitution|scorer|marcador/i, 'Gols e substituições não devem ser renderizados nos cards da agenda.');
+assert.match(cardMarkupSource, /class=\"versus\">VS<\/div>/, 'O centro do card permanece apenas como VS.');
 assert.match(index, /id="scheduleUpdateNotice"/, 'O aviso de nova atualização deve aparecer na tela de agendas.');
 assert.match(index, /scheduleDownloadUpdate/, 'O aviso deve permitir baixar a nova versão.');
 assert.match(index, /data-competition-logo/, 'A agenda deve aceitar o logo da competição quando disponível.');
