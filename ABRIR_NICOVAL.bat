@@ -12,7 +12,7 @@ if exist "%~dp0dist\win-unpacked\NicoValBolaLibre.exe" (
 )
 echo.
 echo O aplicativo desktop ainda nao foi compilado/instalado.
-echo Se voce recebeu o instalador, execute NicoValBolaLibre-0.17.2-Setup.exe.
+echo Se voce recebeu o instalador, execute NicoValBolaLibre-0.17.3-Setup.exe.
 echo Para criar o instalador a partir do codigo, execute build-windows.bat.
 echo.
 pause

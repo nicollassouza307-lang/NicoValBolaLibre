@@ -6,7 +6,7 @@
 // POST /v1/publish     admin-only write (SYNC_ADMIN_TOKEN secret)
 
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
-const EMPTY_CONFIG = { schemaVersion: 1, stations: [], sources: {}, teamLogoOverrides: {} };
+const EMPTY_CONFIG = { schemaVersion: 1, stations: [], sources: {}, teamLogoOverrides: {}, apiFootballData: { matches: [], standings: [] } };
 
 function json(payload, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
@@ -106,7 +106,62 @@ function safeConfig(input) {
     }
   }
 
-  return { schemaVersion: 1, stations, sources, teamLogoOverrides };
+  return { schemaVersion: 1, stations, sources, teamLogoOverrides, apiFootballData: safeApiFootballData(input.apiFootballData) };
+}
+
+function safeApiFootballData(input) {
+  const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const matches = Array.isArray(source.matches) ? source.matches.slice(-80).map((match) => {
+    if (!match || typeof match !== 'object' || Array.isArray(match)) return null;
+    const eventId = String(match.eventId || '').slice(0, 180);
+    const fixtureId = Number(match.fixtureId);
+    if (!eventId || !Number.isInteger(fixtureId) || fixtureId <= 0) return null;
+    const fixture = match.fixture && typeof match.fixture === 'object' ? match.fixture : {};
+    const cleanTeam = (team) => ({ id: Number(team?.id || 0), name: String(team?.name || '').slice(0, 100), logo: '' });
+    const lineups = Array.isArray(match.lineups) ? match.lineups.slice(0, 2).map((lineup) => ({
+      team: cleanTeam(lineup?.team), formation: String(lineup?.formation || '').slice(0, 20),
+      coach: { id: Number(lineup?.coach?.id || 0), name: String(lineup?.coach?.name || '').slice(0, 100) },
+      startXI: (Array.isArray(lineup?.startXI) ? lineup.startXI : []).slice(0, 11).map((player) => ({
+        id: Number(player?.id || 0), name: String(player?.name || '').slice(0, 100), number: Number(player?.number || 0),
+        pos: String(player?.pos || '').slice(0, 12), grid: String(player?.grid || '').slice(0, 12)
+      })),
+      substitutes: (Array.isArray(lineup?.substitutes) ? lineup.substitutes : []).slice(0, 20).map((player) => ({
+        id: Number(player?.id || 0), name: String(player?.name || '').slice(0, 100), number: Number(player?.number || 0), pos: String(player?.pos || '').slice(0, 12)
+      }))
+    })) : [];
+    const statistics = Array.isArray(match.statistics) ? match.statistics.slice(0, 2).map((team) => ({
+      team: cleanTeam(team?.team),
+      values: (Array.isArray(team?.values) ? team.values : []).slice(0, 35).map((row) => ({
+        type: String(row?.type || '').slice(0, 80), value: row?.value === null || row?.value === undefined ? null : String(row.value).slice(0, 40)
+      }))
+    })) : [];
+    return {
+      provider: 'API-Football', eventId, date: String(match.date || '').slice(0, 10),
+      home: String(match.home || '').slice(0, 100), away: String(match.away || '').slice(0, 100), fixtureId,
+      fixture: {
+        date: String(fixture.date || '').slice(0, 40), status: String(fixture.status || '').slice(0, 12),
+        statusLong: String(fixture.statusLong || '').slice(0, 80), elapsed: fixture.elapsed === null || fixture.elapsed === undefined ? null : (Number.isFinite(Number(fixture.elapsed)) ? Number(fixture.elapsed) : null),
+        venue: String(fixture.venue || '').slice(0, 120), referee: String(fixture.referee || '').slice(0, 120),
+        goals: { home: fixture.goals?.home === null || fixture.goals?.home === undefined ? null : Number(fixture.goals.home), away: fixture.goals?.away === null || fixture.goals?.away === undefined ? null : Number(fixture.goals.away) },
+        league: { id: Number(fixture.league?.id || 0), name: String(fixture.league?.name || '').slice(0, 100), country: String(fixture.league?.country || '').slice(0, 80), season: Number(fixture.league?.season || 0), round: String(fixture.league?.round || '').slice(0, 100) },
+        home: cleanTeam(fixture.home), away: cleanTeam(fixture.away)
+      },
+      lineups, statistics,
+      detailErrors: Array.isArray(match.detailErrors) ? match.detailErrors.slice(0, 2).map(item => ({ section: String(item?.section || '').slice(0, 30), message: String(item?.message || '').slice(0, 240), code: String(item?.code || '').slice(0, 60) })) : [],
+      fetchedAt: String(match.fetchedAt || new Date().toISOString()).slice(0, 40)
+    };
+  }).filter(Boolean) : [];
+  const standings = Array.isArray(source.standings) ? source.standings.slice(-40).map((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+    const leagueId = Number(entry.leagueId); const season = Number(entry.season);
+    if (!Number.isInteger(leagueId) || leagueId <= 0 || !Number.isInteger(season) || season <= 0) return null;
+    const rows = Array.isArray(entry.rows) ? entry.rows.slice(0, 40).map((row) => ({
+      rank: Number(row?.rank || 0), team: String(row?.team || '').slice(0, 100), points: Number(row?.points || 0),
+      goalsDiff: Number(row?.goalsDiff || 0), played: Number(row?.played || 0), form: String(row?.form || '').slice(0, 20)
+    })) : [];
+    return { leagueId, season, leagueName: String(entry.leagueName || '').slice(0, 100), rows, fetchedAt: String(entry.fetchedAt || new Date().toISOString()).slice(0, 40) };
+  }).filter(Boolean) : [];
+  return { provider: 'API-Football', updatedAt: String(source.updatedAt || new Date().toISOString()).slice(0, 40), matches, standings };
 }
 
 async function readStore(db) {
@@ -170,7 +225,26 @@ export default {
       }
       try {
         const body = await readJson(request);
-        const config = safeConfig(body.config);
+        const existing = await readStore(env.DB);
+        const incoming = body.config && typeof body.config === 'object' ? body.config : {};
+        const incomingSports = safeApiFootballData(incoming.apiFootballData);
+        const existingSports = existing.config.apiFootballData || { matches: [], standings: [] };
+        const matchMap = new Map((existingSports.matches || []).map(item => [String(item.eventId), item]));
+        for (const item of incomingSports.matches || []) {
+          const previous = matchMap.get(String(item.eventId));
+          if (!previous || String(item.fetchedAt) >= String(previous.fetchedAt)) matchMap.set(String(item.eventId), item);
+        }
+        const standingsMap = new Map((existingSports.standings || []).map(item => [`${item.leagueId}:${item.season}`, item]));
+        for (const item of incomingSports.standings || []) {
+          const key = `${item.leagueId}:${item.season}`; const previous = standingsMap.get(key);
+          if (!previous || String(item.fetchedAt) >= String(previous.fetchedAt)) standingsMap.set(key, item);
+        }
+        incoming.apiFootballData = safeApiFootballData({
+          updatedAt: new Date().toISOString(),
+          matches: [...matchMap.values()].sort((a,b) => String(a.fetchedAt).localeCompare(String(b.fetchedAt))).slice(-80),
+          standings: [...standingsMap.values()].sort((a,b) => String(a.fetchedAt).localeCompare(String(b.fetchedAt))).slice(-40)
+        });
+        const config = safeConfig(incoming);
         const updatedAt = new Date().toISOString();
         await env.DB.prepare(
           `UPDATE shared_config
@@ -192,6 +266,36 @@ export default {
         });
       } catch (error) {
         return json({ ok: false, error: error.message || 'Não foi possível publicar os dados.' }, error.status || 400);
+      }
+    }
+
+
+    if (request.method === 'POST' && url.pathname === '/v1/sports-data') {
+      if (!hasAdminAccess(request, env)) return json({ ok: false, error: 'Chave administrativa inválida.' }, 401);
+      try {
+        const body = await readJson(request);
+        const existing = await readStore(env.DB);
+        const current = existing.config.apiFootballData || { matches: [], standings: [] };
+        const incoming = safeApiFootballData({ matches: body.match ? [body.match] : [], standings: body.standings ? [body.standings] : [] });
+        if (!incoming.matches.length && !incoming.standings.length) return json({ ok: false, error: 'Nenhum snapshot estatístico válido foi enviado.' }, 400);
+        const matchMap = new Map((current.matches || []).map(item => [String(item.eventId), item]));
+        for (const item of incoming.matches) matchMap.set(String(item.eventId), item);
+        const standingsMap = new Map((current.standings || []).map(item => [`${item.leagueId}:${item.season}`, item]));
+        for (const item of incoming.standings) standingsMap.set(`${item.leagueId}:${item.season}`, item);
+        const merged = safeApiFootballData({
+          updatedAt: new Date().toISOString(),
+          matches: [...matchMap.values()].sort((a, b) => String(a.fetchedAt).localeCompare(String(b.fetchedAt))).slice(-80),
+          standings: [...standingsMap.values()].sort((a, b) => String(a.fetchedAt).localeCompare(String(b.fetchedAt))).slice(-40)
+        });
+        const config = safeConfig({ ...existing.config, apiFootballData: merged });
+        const updatedAt = new Date().toISOString();
+        await env.DB.prepare(
+          `UPDATE shared_config SET revision = revision + 1, updated_at = ?, config_json = ? WHERE id = 1`
+        ).bind(updatedAt, JSON.stringify(config)).run();
+        const saved = await readStore(env.DB);
+        return json({ ok: true, revision: saved.revision, updatedAt, counts: { matches: merged.matches.length, standings: merged.standings.length } });
+      } catch (error) {
+        return json({ ok: false, error: error.message || 'Não foi possível compartilhar os dados esportivos.' }, error.status || 400);
       }
     }
 

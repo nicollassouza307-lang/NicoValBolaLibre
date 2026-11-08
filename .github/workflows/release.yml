@@ -22,6 +22,14 @@ jobs:
           package-manager-cache: false
       - name: Test popup and redirect protection
         run: node scripts/test-navigation-guard.js
+      - name: Test competition section ranking
+        run: node scripts/test-competition-ranking.js
+      - name: Test safe GitHub football crest matching
+        run: node scripts/test-team-logo-index.js
+      - name: Test API-Football quota, cache and strict match matching
+        run: node scripts/test-apifootball.js
+      - name: Test Cloudflare sports-data sharing and preservation
+        run: node scripts/test-cloudflare-sports-data.js
       - name: Inject automatic read-only Cloud Sync settings
         env:
           NVB_SYNC_READ_TOKEN: ${{ secrets.NVB_SYNC_READ_TOKEN }}

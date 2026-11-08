@@ -63,6 +63,18 @@
 .station-actions button{white-space:nowrap}
 .admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .admin-empty{padding:18px;text-align:center;border:1px dashed #60799855;border-radius:12px;color:#8ea3c0;font-size:11px}
+.competition-rank-list{display:grid;gap:7px;margin-top:12px}
+.competition-rank-row{display:flex;align-items:center;gap:10px;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#ffffff05}
+.competition-rank-position{width:28px;height:28px;flex:0 0 28px;display:grid;place-items:center;border:1px solid #48d9d044;background:#48d9d014;color:var(--cyan);border-radius:8px;font-size:11px;font-weight:900}
+.competition-rank-copy{flex:1;min-width:0}
+.competition-rank-name{font-size:11px;font-weight:850;color:#dce9fa;overflow-wrap:anywhere}
+.competition-rank-count{font-size:9px;color:#8195b1;margin-top:2px}
+.competition-rank-actions{display:flex;gap:5px;flex:0 0 auto}
+.competition-rank-actions button{min-width:34px;padding:6px 9px}
+.competition-rank-toolbar{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}
+.competition-divider-rank{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 5px;border:1px solid #48d9d033;background:#48d9d010;color:#83dcd5;border-radius:6px;font-size:9px;font-weight:900}
+@media(max-width:560px){.competition-rank-row{align-items:flex-start}.competition-rank-actions button{min-width:32px}.competition-rank-count{font-size:8px}}
+
 .admin-small{font-size:10px;color:#8195b1;line-height:1.5;margin-top:10px}
 .channel-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
 .channel-toolbar input,.channel-toolbar select{min-width:180px;flex:1;border:1px solid var(--line);background:#ffffff08;color:#edf4ff;border-radius:10px;padding:10px 12px;font-size:11px;outline:none}
@@ -207,6 +219,53 @@
 .match-bottom-note{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px 3px 3px;color:#647c9c;font-size:9px;letter-spacing:.02em}
 @media(max-width:640px){.match-scoreboard{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);gap:5px;margin:22px auto}.match-scoreboard .crest{width:52px;height:52px;flex-basis:52px;padding:6px}.match-team-name{font-size:13px}.match-score{font-size:25px}.match-facts{grid-template-columns:1fr}.match-fact{padding:10px 12px}.match-hero-actions{width:100%;justify-content:space-between}.match-player-card .player-screen:has(.player-placeholder){min-height:230px}.match-bottom-note{font-size:8px}}
 
+
+.api-football-status-pill{border:1px solid #ffffff20;border-radius:99px;padding:6px 10px;font-size:10px;color:#a9bad1;background:#ffffff08;white-space:nowrap}
+.api-football-status-pill.ok{border-color:#58df9a44;background:#58df9a12;color:#86e9b2}
+.api-football-status-pill.warn{border-color:#ffc76b44;background:#ffc76b12;color:#ffd48a}
+.api-football-usage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.api-football-usage-card{border:1px solid var(--line);background:#ffffff05;border-radius:10px;padding:10px}
+.api-football-usage-card strong{display:block;color:#eff7ff;font-size:17px}
+.api-football-usage-card span{display:block;color:#8295b0;font-size:9px;margin-top:3px}
+.apifootball-panel{border:1px solid #48d9d02b;border-radius:16px;background:linear-gradient(145deg,#10263a,#0d1727);padding:16px;margin:0 0 14px}
+.apifootball-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.apifootball-panel h3{margin:2px 0 5px;font-size:16px}
+.apifootball-muted{font-size:10px;line-height:1.5;color:#8297b3}
+.apifootball-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.apifootball-result{margin-top:12px}
+.apifootball-scoreline{display:flex;align-items:center;justify-content:center;gap:12px;font-size:21px;font-weight:900;margin:12px 0}
+.apifootball-scoreline small{font-size:10px;color:#8297b3;font-weight:700}
+.apifootball-stats{display:grid;gap:7px;margin-top:12px}
+.apifootball-stat-row{display:grid;grid-template-columns:55px minmax(90px,1fr) minmax(130px,1.5fr) 55px;align-items:center;gap:8px;font-size:10px}
+.apifootball-stat-row .home-value{text-align:right;color:#d9eaff;font-weight:800}
+.apifootball-stat-row .away-value{text-align:left;color:#d9eaff;font-weight:800}
+.apifootball-stat-label{text-align:center;color:#8ea3be}
+.apifootball-stat-track{grid-column:2/4;height:5px;background:#ffffff10;border-radius:99px;overflow:hidden;display:flex}
+.apifootball-stat-track .home{background:#48d9d0}.apifootball-stat-track .away{background:#5e91ff}
+.apifootball-lineups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.apifootball-lineup{border:1px solid #ffffff12;border-radius:12px;padding:11px;background:#ffffff04;min-width:0}
+.apifootball-lineup h4{font-size:12px;margin:0 0 4px}
+.apifootball-lineup .formation{font-size:10px;color:var(--cyan);font-weight:800}
+.apifootball-player-list{display:grid;gap:5px;margin-top:9px}
+.apifootball-player{display:flex;align-items:center;gap:7px;font-size:10px;color:#c8d8ed;min-width:0}
+.apifootball-player b{width:20px;color:#7f97b5;font-size:9px;text-align:right;flex:0 0 20px}
+.apifootball-player span{overflow-wrap:anywhere}
+.apifootball-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:10px}
+.apifootball-table th,.apifootball-table td{padding:7px 6px;border-bottom:1px solid #ffffff10;text-align:center}
+.apifootball-table th:first-child,.apifootball-table td:nth-child(2){text-align:left}
+.apifootball-table th{color:#8197b5;font-weight:700}
+.apifootball-table tr.highlight{background:#48d9d011;color:#bffff7}
+.apifootball-message{border:1px dashed #ffffff20;border-radius:10px;padding:12px;color:#91a7c4;font-size:10px;line-height:1.55;margin-top:10px}
+@media(max-width:700px){.api-football-usage{grid-template-columns:1fr 1fr}.apifootball-lineups{grid-template-columns:1fr}.apifootball-stat-row{grid-template-columns:42px minmax(65px,1fr) minmax(110px,1.5fr) 42px;gap:5px}}
+
+
+.apifootball-standings-wrap{overflow:auto;max-width:100%;border:1px solid #ffffff12;border-radius:10px}
+.apifootball-lineup-empty{color:#8499b5;font-size:10px;padding:8px 0}
+.apifootball-actions .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+.apifootball-key-note{font-size:10px;color:#91a7c4;margin-top:8px;line-height:1.5}
+.apifootball-section-title{font-size:11px;letter-spacing:.08em;color:#8da5c4;text-transform:uppercase;font-weight:900;margin:15px 0 8px}
+.apifootball-stat-row{grid-template-columns:50px minmax(105px,1fr) minmax(120px,1.5fr) 50px}
+
 </style>
 </head>
 <body>
@@ -252,6 +311,14 @@
         <div><h3>Emissoras e fontes</h3><p>Cadastre uma fonte uma vez; o NicoValBolaLibre associa a URL às partidas que indicarem a mesma emissora.</p></div>
       </div>
       <div class="notice">O catálogo reconhece emissoras e aliases. Ao carregar/filtrar a agenda, abrir uma partida ou usar o botão em lote, o NicoValBolaLibre usa a mesma rotina de gravação do vínculo manual para associar URLs HTTPS cadastradas à emissora correspondente. As URLs cadastradas são usadas somente como endereços de página/iframe informados pelo administrador; o provedor ainda pode bloquear a incorporação por suas próprias políticas.</div>
+      <div class="admin-panel" id="competitionRankingPanel">
+        <div class="section-head" style="margin:0 0 8px;align-items:center">
+          <div><h4>🏆 Ranking das seções de partidas</h4><p>Use as setas para escolher quais competições aparecem primeiro na agenda. Os jogos de cada seção continuam em ordem de horário.</p></div>
+          <button class="btn secondary small" type="button" id="resetCompetitionRanking">Restaurar ordem automática</button>
+        </div>
+        <div id="competitionRankingList" class="competition-rank-list"><div class="admin-empty">Carregue a agenda para identificar as competições disponíveis.</div></div>
+        <div class="admin-small" id="competitionRankingStatus">A ordem personalizada fica salva neste computador e não altera as agendas de origem, as partidas ou os players.</div>
+      </div>
       <div class="admin-grid">
         <div class="admin-panel">
           <h4>＋ Cadastrar emissora</h4>
@@ -331,6 +398,24 @@
         </form>
         <div id="teamLogoRegistry" class="team-registry-list"></div>
       </div>
+      <div class="admin-panel" id="apiFootballPanel">
+        <div class="section-head" style="margin:0 0 8px;align-items:center">
+          <div><h4>⚽ API-Football · Dados das partidas</h4><p>Livescore, escalações, posse de bola, finalizações e classificação. A agenda continua vindo somente do Rei dos Canais e PelotaLibre.</p></div>
+          <span class="api-football-status-pill" id="apiFootballConfiguredBadge">Não configurada</span>
+        </div>
+        <label class="admin-small" for="apiFootballKeyInput">API Key pessoal (fica criptografada somente neste Windows)</label>
+        <input id="apiFootballKeyInput" type="password" autocomplete="off" spellcheck="false" placeholder="Cole sua API Key da API-Football">
+        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn small" type="button" id="saveApiFootballKey">Salvar chave neste computador</button>
+          <button class="btn secondary small" type="button" id="testApiFootballKey">Testar conexão</button>
+          <button class="btn danger small" type="button" id="clearApiFootballKey">Apagar chave local</button>
+        </div>
+        <div class="admin-small" id="apiFootballKeyStatus" role="status" aria-live="polite" style="margin-top:10px">A chave ainda não foi configurada.</div>
+        <div class="api-football-usage" id="apiFootballUsage" hidden></div>
+        <p class="admin-small">Configure a chave somente no computador administrador. Ela é salva com a criptografia do Windows e nunca é enviada ao GitHub, ao instalador ou ao computador do Val. O computador administrador consulta a API e compartilha os resultados pelo Cloudflare. O Val recebe os dados em modo somente leitura.</p>
+        <div class="admin-small">Plano gratuito: 100 chamadas por dia. O NicoValBola usa um teto interno de 70 chamadas e preserva 30 de reserva. O teste de conexão usa /status, sem consumir a cota diária. Atenção: a documentação atual limita temporadas do plano Free; em 2026, indica cobertura de 2022 a 2024. Confira a cobertura da competição/temporada antes de depender dos dados atuais.</div>
+        <div class="admin-small">Obtenha sua chave em <a href="https://dashboard.api-football.com/" target="_blank" rel="noopener">dashboard.api-football.com</a>. Consulte <a href="https://www.api-football.com/documentation-v3" target="_blank" rel="noopener">a documentação oficial</a>.</div>
+      </div>
       <div class="admin-panel" id="cloudSyncPanel">
         <h4>☁️ Sincronização entre computadores</h4>
         <p>Compartilhe o catálogo de emissoras, vínculos por partida e escudos personalizados. Favoritos e idioma continuam individuais.</p>
@@ -368,7 +453,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.17.2 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.0 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
   </main>
 </div>
 
@@ -380,6 +465,8 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="/team-logo-index.js"></script>
+<script src="/competition-ranking.js"></script>
 <script>
 (() => {
   'use strict';
@@ -580,6 +667,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   const savedMarkets = normalizeMarkets(readStore('futeblox_broadcast_markets_v1', 'BR,AR'));
   const state = { events: [], filter: 'all', view: 'all', date: localDateString(new Date()), markets: savedMarkets, selected: null, sourceIndex: 0, demo: false, loading: false, provider: 'Rei + PelotaLibre', cached: false };
   const favorites = new Set(readStore('futeblox_favorites', []));
+  const COMPETITION_ORDER_KEY = 'nvb_competition_section_order_v1';
+  let competitionOrder = readStore(COMPETITION_ORDER_KEY, []);
+  if (!Array.isArray(competitionOrder)) competitionOrder = [];
   const sourcesStore = readStore('futeblox_sources', {});
   const teamLogoOverrides = readStore('futeblox_team_logo_overrides', {});
   let stationCatalog = readStore('futeblox_station_catalog', []);
@@ -599,6 +689,15 @@ const BROADCASTER_ALIAS_GROUPS = [
 
   function readStore(key, fallback) { try { const value = JSON.parse(localStorage.getItem(key)); return value ?? fallback; } catch { return fallback; } }
   function writeStore(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+  const API_FOOTBALL_MATCH_CACHE_KEY = 'nvb_apifootball_match_cache_v1';
+  const API_FOOTBALL_STANDINGS_CACHE_KEY = 'nvb_apifootball_standings_cache_v1';
+  let apiFootballMatchCache = readStore(API_FOOTBALL_MATCH_CACHE_KEY, {});
+  let apiFootballStandingsCache = readStore(API_FOOTBALL_STANDINGS_CACHE_KEY, {});
+  if (!apiFootballMatchCache || typeof apiFootballMatchCache !== 'object' || Array.isArray(apiFootballMatchCache)) apiFootballMatchCache = {};
+  if (!apiFootballStandingsCache || typeof apiFootballStandingsCache !== 'object' || Array.isArray(apiFootballStandingsCache)) apiFootballStandingsCache = {};
+  let apiFootballLocalKeyConfigured = false;
+  let apiFootballBusy = false;
+  const apiFootballNoMatchLookup = new Set();
 
   // Idioma da interface: preferência local, independente do JSON de emissoras.
   let currentLanguage = readStore('futeblox_language_v1', 'pt-BR') === 'es-AR' ? 'es-AR' : 'pt-BR';
@@ -619,6 +718,13 @@ const BROADCASTER_ALIAS_GROUPS = [
     'Emissora não informada pela fonte de dados.':'Canal no informado por la fuente de datos.',
     'Fontes: Rei dos Canais (prioridade) + LA18HD JSON + PelotaLibre.video + PelotaLibre.ar quando a data da agenda coincide. Importamos informações de partidas e nomes de emissoras; links de retransmissões de terceiros não são coletados.':'Fuentes: Rei dos Canais (prioridad) + LA18HD JSON + PelotaLibre.video + PelotaLibre.ar cuando coincide la fecha de la agenda. Importamos datos de partidos y nombres de canales; no recopilamos enlaces de retransmisiones de terceros.',
     'Emissoras e fontes':'Canales y fuentes',
+    '🏆 Ranking das seções de partidas':'🏆 Ranking de las secciones de partidos',
+    'Use as setas para escolher quais competições aparecem primeiro na agenda. Os jogos de cada seção continuam em ordem de horário.':'Usa las flechas para elegir qué competiciones aparecen primero en la agenda. Los partidos de cada sección siguen ordenados por horario.',
+    'Restaurar ordem automática':'Restaurar orden automático',
+    'Carregue a agenda para identificar as competições disponíveis.':'Carga la agenda para identificar las competiciones disponibles.',
+    'A ordem personalizada fica salva neste computador e não altera as agendas de origem, as partidas ou os players.':'El orden personalizado se guarda en este equipo y no modifica las agendas de origen, los partidos ni los reproductores.',
+    'Mover para cima':'Mover hacia arriba',
+    'Mover para baixo':'Mover hacia abajo',
     'Cadastre uma fonte uma vez; o NicoValBolaLibre associa a URL às partidas que indicarem a mesma emissora.':'Registra una fuente una sola vez; NicoValBolaLibre asocia la URL a los partidos que indiquen el mismo canal.',
     '＋ Cadastrar emissora':'＋ Registrar canal',
     'Cadastre uma URL HTTPS uma única vez. Escolha a emissora no catálogo para o NicoValBolaLibre reconhecer automaticamente em quais partidas ela aparece.':'Registra una URL HTTPS una sola vez. Elige el canal del catálogo para que NicoValBolaLibre reconozca automáticamente en qué partidos aparece.',
@@ -1301,29 +1407,19 @@ const BROADCASTER_ALIAS_GROUPS = [
     return '';
   }
   function indexGlobalLogoTree(tree) {
-    const index = new Map();
-    for (const item of tree || []) {
-      const path = String(item.path || '');
-      if (item.type !== 'blob' || !/^logos\/[^/]+\/.+\.svg$/i.test(path)) continue;
-      const parts = path.split('/');
-      const country = teamKey(parts[1]).replace(/\s+/g,'-');
-      const base = parts[parts.length - 1].replace(/\.svg$/i,'');
-      const key = teamKey(base);
-      if (!key) continue;
-      if (!index.has(key)) index.set(key, []);
-      index.get(key).push({path,country,base});
-    }
-    return index;
+    return window.NVBTeamLogoIndex.indexTree(tree, teamKey);
   }
   async function loadGlobalLogoIndex() {
     if (globalLogoLoaded) return true;
     if (globalLogoLoading) return globalLogoLoading;
     globalLogoLoading = (async () => {
       const cached = readStore(GLOBAL_LOGO_CACHE_KEY, null);
-      if (cached && Array.isArray(cached.items) && Date.now() - Number(cached.savedAt || 0) < 7*24*60*60*1000) {
+      const hasCachedIndex = cached && Array.isArray(cached.items) && cached.items.length > 0;
+      const cacheIsFresh = hasCachedIndex && Date.now() - Number(cached.savedAt || 0) < 7*24*60*60*1000;
+      if (hasCachedIndex) {
         globalLogoIndex = indexGlobalLogoTree(cached.items);
-        globalLogoLoaded = true;
-        return true;
+        globalLogoLoaded = globalLogoIndex.size > 0;
+        if (cacheIsFresh && globalLogoLoaded) return true;
       }
       try {
         const response = await fetch(GLOBAL_LOGO_TREE_URL, {headers:{'Accept':'application/vnd.github+json'},cache:'force-cache'});
@@ -1336,7 +1432,11 @@ const BROADCASTER_ALIAS_GROUPS = [
         writeStore(GLOBAL_LOGO_CACHE_KEY,{savedAt:Date.now(),items});
         return true;
       } catch (error) {
-        console.warn('NicoValBolaLibre: não foi possível carregar o índice mundial de escudos:',error);
+        console.warn('NicoValBolaLibre: não foi possível atualizar o índice mundial de escudos:',error);
+        if (globalLogoLoaded) {
+          console.warn('NicoValBolaLibre: usando o índice GitHub em cache, mesmo desatualizado.');
+          return true;
+        }
         return false;
       }
     })();
@@ -1346,28 +1446,12 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function globalLogoUrl(name, countryHint='') {
     if (!globalLogoLoaded) return '';
-    const raw = teamKey(name);
-    const alias = GLOBAL_LOGO_ALIASES[raw];
-    const variants = [alias, raw,
-      raw.replace(/\b(club|football|futbol|futebol|sport|de|the)\b/g,' ').replace(/\s+/g,' ').trim(),
-      raw.replace(/\b(fc|cf|sc|ac|afc|fk|sv|bk)\b/g,' ').replace(/\s+/g,' ').trim(),
-      raw.replace(/\b(fc|cf|sc|ac|afc|fk|sv|bk|club|football|futbol|futebol|sport|de|the)\b/g,' ').replace(/\s+/g,' ').trim()
-    ].filter(Boolean);
-    const country = countrySlugHint(countryHint);
-    for (const variant of [...new Set(variants)]) {
-      const matches = globalLogoIndex.get(variant);
-      if (!matches || !matches.length) continue;
-      let selected = matches;
-      if (country) {
-        const countryMatches = matches.filter(item => item.country === country || item.country.includes(country));
-        if (!countryMatches.length) continue;
-        selected = countryMatches;
-      }
-      if (selected.length === 1) {
-        return GLOBAL_LOGO_RAW_BASE + selected[0].path.split('/').map(encodeURIComponent).join('/');
-      }
-    }
-    return '';
+    return window.NVBTeamLogoIndex.findExactLogo(name, countryHint, globalLogoIndex, {
+      normalizeName: teamKey,
+      normalizeCountry: countrySlugHint,
+      aliases: GLOBAL_LOGO_ALIASES,
+      rawBase: GLOBAL_LOGO_RAW_BASE
+    });
   }
   function footyLogoUrl(name,countryHint='') {
     const key=teamKey(name);
@@ -1391,7 +1475,11 @@ const BROADCASTER_ALIAS_GROUPS = [
   function logoMarkup(name,apiUrl,countryHint='',teamId='') {
     const hint=countryHint || leagueCountryHint(state.selected?.league || '');
     const override=teamLogoOverrides[teamRegistryKey(name,hint)] || teamLogoOverrides[teamRegistryKey(name,'')];
-    const candidates=[override,footyLogoUrl(name,hint),globalLogoUrl(name,hint),safeLogoUrl(apiUrl)].filter(Boolean);
+    const candidates=window.NVBTeamLogoIndex.uniqueHttpsCandidates([
+      override,
+      globalLogoUrl(name,hint),
+      footyLogoUrl(name,hint)
+    ]);
     const unique=[...new Set(candidates)];
     if(unique.length) {
       return `<img class="crest" loading="lazy" data-team="${escapeHtml(name)}" data-fallbacks="${escapeHtml(JSON.stringify(unique.slice(1)))}" src="${escapeHtml(unique[0])}" alt="Escudo ${escapeHtml(name)}" title="${escapeHtml(name)}">`;
@@ -1470,17 +1558,14 @@ const BROADCASTER_ALIAS_GROUPS = [
     const raw = String(event?.league || 'Outras competições').trim() || 'Outras competições';
     return foldLabel(raw) || 'outras competicoes';
   }
-  function renderGroupedGameCards(events) {
+  function buildCompetitionGroups(events) {
     const grouped = new Map();
     for (const event of events || []) {
       const key = competitionGroupKey(event);
-      if (!grouped.has(key)) grouped.set(key, { name:String(event.league || 'Outras competições').trim() || 'Outras competições', items:[] });
+      if (!grouped.has(key)) grouped.set(key, { key, name:String(event.league || 'Outras competições').trim() || 'Outras competições', items:[] });
       grouped.get(key).items.push(event);
     }
-    const groups = [...grouped.values()];
-    // Ordena as competições pelo primeiro horário da lista, mantendo os jogos
-    // de cada competição em ordem cronológica dentro do respetivo bloco.
-    for (const group of groups) {
+    for (const group of grouped.values()) {
       group.items.sort((a,b) => {
         const ta = a.start instanceof Date ? a.start.getTime() : Date.parse(a.start || `${a.dateEvent || ''}T${a.timeText || '23:59'}`);
         const tb = b.start instanceof Date ? b.start.getTime() : Date.parse(b.start || `${b.dateEvent || ''}T${b.timeText || '23:59'}`);
@@ -1488,14 +1573,65 @@ const BROADCASTER_ALIAS_GROUPS = [
       });
       group.firstTime = group.items[0]?.start instanceof Date ? group.items[0].start.getTime() : Date.parse(group.items[0]?.start || `${group.items[0]?.dateEvent || ''}T${group.items[0]?.timeText || '23:59'}`);
     }
-    groups.sort((a,b) => (Number.isFinite(a.firstTime) ? a.firstTime : 0) - (Number.isFinite(b.firstTime) ? b.firstTime : 0));
-    return groups.map(group => {
+    return [...grouped.values()];
+  }
+  function orderedCompetitionGroups(events) {
+    const groups = buildCompetitionGroups(events);
+    return window.NVBCompetitionRanking
+      ? window.NVBCompetitionRanking.sort(groups, competitionOrder)
+      : groups.sort((a,b)=>(a.firstTime||0)-(b.firstTime||0));
+  }
+  function renderGroupedGameCards(events) {
+    const groups = orderedCompetitionGroups(events);
+    return groups.map((group, index) => {
       const count = group.items.length;
       const label = count === 1 ? '1 partida' : `${count} partidas`;
-      const divider = `<div class="competition-divider" role="separator" aria-label="Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-mark">🏆</span><span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></div>`;
+      const position = String(index + 1).padStart(2, '0');
+      const divider = `<div class="competition-divider" role="separator" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span><span class="competition-divider-mark">🏆</span><span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></div>`;
       return divider + group.items.map(cardMarkup).join('');
     }).join('');
   }
+  function moveCompetitionRanking(key, direction) {
+    const visibleGroups = orderedCompetitionGroups(state.events);
+    if (!visibleGroups.length || !window.NVBCompetitionRanking) return;
+    const next = window.NVBCompetitionRanking.move(competitionOrder, visibleGroups, key, direction);
+    if (next.length === competitionOrder.length && next.every((value,index)=>value===competitionOrder[index])) return;
+    competitionOrder = next;
+    writeStore(COMPETITION_ORDER_KEY, competitionOrder);
+    render();
+    toast('Ranking das competições atualizado.');
+  }
+  function resetCompetitionRanking() {
+    competitionOrder = [];
+    try { localStorage.removeItem(COMPETITION_ORDER_KEY); } catch {}
+    render();
+    toast('Ordem automática restaurada.');
+  }
+  function renderCompetitionRanking() {
+    const root = $('#competitionRankingList');
+    if (!root) return;
+    const groups = orderedCompetitionGroups(state.events);
+    const resetButton = $('#resetCompetitionRanking');
+    if (resetButton && !resetButton.dataset.bound) {
+      resetButton.dataset.bound = '1';
+      resetButton.addEventListener('click', resetCompetitionRanking);
+    }
+    if (!groups.length) {
+      root.innerHTML = '<div class="admin-empty">Carregue a agenda para identificar as competições disponíveis.</div>';
+      return;
+    }
+    root.innerHTML = groups.map((group,index) => {
+      const count = group.items.length;
+      const matchLabel = count === 1 ? '1 partida nesta agenda' : `${count} partidas nesta agenda`;
+      return `<div class="competition-rank-row"><span class="competition-rank-position">${String(index+1).padStart(2,'0')}</span><div class="competition-rank-copy"><div class="competition-rank-name">${escapeHtml(group.name)}</div><div class="competition-rank-count">${matchLabel}</div></div><div class="competition-rank-actions"><button class="btn secondary small" type="button" data-competition-move="-1" data-competition-key="${escapeHtml(group.key)}" aria-label="Mover para cima" title="Mover para cima" ${index===0?'disabled':''}>↑</button><button class="btn secondary small" type="button" data-competition-move="1" data-competition-key="${escapeHtml(group.key)}" aria-label="Mover para baixo" title="Mover para baixo" ${index===groups.length-1?'disabled':''}>↓</button></div></div>`;
+    }).join('');
+    root.querySelectorAll('[data-competition-move]').forEach(button => button.addEventListener('click', () => moveCompetitionRanking(button.dataset.competitionKey, Number(button.dataset.competitionMove))));
+    const status = $('#competitionRankingStatus');
+    if (status) status.textContent = competitionOrder.length
+      ? 'Ordem personalizada ativa. Ela fica salva somente neste computador; novos campeonatos entram depois das competições já ordenadas.'
+      : 'Ordem automática por prioridade da competição ativa. Competições principais aparecem primeiro; as demais usam o horário como desempate. Use as setas para personalizar a ordem.';
+  }
+
   function render() {
     const isAdmin=state.view==='admin';
     $('#scheduleView').hidden=isAdmin;
@@ -1573,6 +1709,172 @@ const BROADCASTER_ALIAS_GROUPS = [
     }
     return `<div class="player-placeholder"><div class="big">▣</div><strong>Nenhuma emissora ou fonte identificada</strong><p>Esta partida não trouxe uma emissora reconhecida. O painel Admin pode receber uma fonte cadastrada quando houver uma disponível.</p></div>`;
   }
+  function apiFootballStatusFromCode(code) {
+    const value=String(code||'').toUpperCase();
+    if(['1H','HT','2H','ET','P','LIVE','BT'].includes(value)) return 'live';
+    if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
+    return 'upcoming';
+  }
+  function apiFootballStatsRows(snapshot) {
+    const teams=Array.isArray(snapshot?.statistics)?snapshot.statistics:[];
+    const home=teams[0]?.values||[]; const away=teams[1]?.values||[];
+    const get=(arr,names)=>{const row=arr.find(item=>names.includes(String(item.type||'').toLowerCase()));return row?.value??'—';};
+    const specs=[
+      ['Posse de bola',['ball possession']],['Finalizações',['total shots']],['No gol',['shots on goal']],
+      ['Escanteios',['corner kicks']],['Faltas',['fouls']],['Amarelos',['yellow cards']],
+      ['Vermelhos',['red cards']],['Passes',['total passes','passes']],['Precisão dos passes',['passes %','pass accuracy']]
+    ];
+    return specs.map(([label,names])=>({label,home:get(home,names),away:get(away,names)})).filter(row=>row.home!=='—'||row.away!=='—');
+  }
+  function renderApiFootballSnapshot(snapshot) {
+    if(!snapshot) return '<div class="apifootball-message">Ainda não há dados estatísticos salvos para esta partida.</div>';
+    const rows=apiFootballStatsRows(snapshot);
+    const homeName=snapshot.fixture?.home?.name||snapshot.home||'Mandante';
+    const awayName=snapshot.fixture?.away?.name||snapshot.away||'Visitante';
+    const stats=rows.length?`<div class="apifootball-section-title">Estatísticas da partida</div><div class="apifootball-stats">${rows.map(row=>`<div class="apifootball-stat-row"><span class="home-value">${escapeHtml(row.home)}</span><span class="apifootball-stat-label">${escapeHtml(row.label)}</span><span class="away-value">${escapeHtml(row.away)}</span></div>`).join('')}</div>`:'<div class="apifootball-message">As estatísticas detalhadas ainda não estão disponíveis para esta partida.</div>';
+    const lineups=Array.isArray(snapshot.lineups)?snapshot.lineups:[];
+    const lineupMarkup=lineups.length?`<div class="apifootball-section-title">Escalações</div><div class="apifootball-lineups">${lineups.map(lineup=>{
+      const starters=Array.isArray(lineup.startXI)?lineup.startXI:[];
+      const subs=Array.isArray(lineup.substitutes)?lineup.substitutes:[];
+      const renderPlayers=(players)=>players.length?players.map(player=>`<div class="apifootball-player"><b>${Number(player.number)||'·'}</b><span>${escapeHtml(player.name||'Jogador')}</span></div>`).join(''):'<div class="apifootball-lineup-empty">Ainda não divulgada.</div>';
+      return `<article class="apifootball-lineup"><h4>${escapeHtml(lineup.team?.name||'Equipe')}</h4><div class="formation">${escapeHtml(lineup.formation||'Formação não informada')}</div>${lineup.coach?.name?`<div class="apifootball-muted">Técnico: ${escapeHtml(lineup.coach.name)}</div>`:''}<div class="apifootball-player-list">${renderPlayers(starters)}</div>${subs.length?`<details style="margin-top:9px"><summary class="apifootball-muted">Reservas (${subs.length})</summary><div class="apifootball-player-list">${renderPlayers(subs)}</div></details>`:''}</article>`;
+    }).join('')}</div>`:'<div class="apifootball-message">A escalação ainda não foi divulgada ou a competição não oferece esse dado.</div>';
+    const fetched=snapshot.fetchedAt?new Date(snapshot.fetchedAt).toLocaleString():'horário desconhecido';
+    const status=String(snapshot.fixture?.statusLong||snapshot.fixture?.status||'');
+    const homeGoals=snapshot.fixture?.goals?.home; const awayGoals=snapshot.fixture?.goals?.away;
+    const homeScoreText=homeGoals===null||homeGoals===undefined?'—':String(homeGoals);
+    const awayScoreText=awayGoals===null||awayGoals===undefined?'—':String(awayGoals);
+    const errors=Array.isArray(snapshot.detailErrors)?snapshot.detailErrors:[];
+    const errorMarkup=errors.length?`<div class="apifootball-message">Alguns dados não puderam ser carregados: ${errors.map(item=>escapeHtml(item.message||item.section)).join(' · ')}. A cota e os últimos dados permanecem protegidos.</div>`:'';
+    return `<div class="apifootball-scoreline"><span>${escapeHtml(homeScoreText)}</span><small>${escapeHtml(status)}</small><span>${escapeHtml(awayScoreText)}</span></div><div class="apifootball-muted">${escapeHtml(homeName)} · ${escapeHtml(awayName)} · Atualizado em ${escapeHtml(fetched)}</div>${errorMarkup}${stats}${lineupMarkup}`;
+  }
+  function renderApiFootballStandings(snapshot) {
+    if(!snapshot?.rows?.length) return '';
+    return `<div class="apifootball-section-title">Classificação · ${escapeHtml(snapshot.leagueName||'Competição')}</div><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>SG</th><th>Forma</th></tr></thead><tbody>${snapshot.rows.map(row=>`<tr><td>${Number(row.rank)||'—'}</td><td>${escapeHtml(row.team||'')}</td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.played)||0}</td><td>${Number(row.goalsDiff)||0}</td><td>${escapeHtml(row.form||'—')}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  function renderApiFootballMatchPanel(event) {
+    const snapshot=apiFootballMatchCache[String(event.id)]||null;
+    const leagueId=Number(snapshot?.fixture?.league?.id||0);
+    const season=Number(snapshot?.fixture?.league?.season||0);
+    const standingsKey=leagueId&&season?`${leagueId}:${season}`:'';
+    const standings=standingsKey?apiFootballStandingsCache[standingsKey]:null;
+    const desktop=Boolean(window.nvbDesktop?.isDesktop);
+    const canQuery=desktop&&apiFootballLocalKeyConfigured;
+    const actionLabel=snapshot?'Atualizar dados da partida':(apiFootballNoMatchLookup.has(String(event.id))?'Tentar novamente (nova consulta)':'Buscar dados da API-Football');
+    return `<section class="apifootball-panel" id="apiFootballMatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">DADOS ESPORTIVOS</div><h3>⚽ API-Football</h3><div class="apifootball-muted">A agenda continua sendo exclusivamente do Rei dos Canais e PelotaLibre. Esta fonte só complementa a partida selecionada.</div></div><span class="api-football-status-pill ${snapshot?'ok':'warn'}">${snapshot?'Dados disponíveis':'Complemento opcional'}</span></div><div class="apifootball-actions">${canQuery?`<button class="btn small" id="apiFootballLoadMatchData" type="button" ${apiFootballBusy?'disabled':''}>${apiFootballBusy?'Consultando…':actionLabel}</button>`:''}${canQuery&&snapshot&&leagueId&&season?'<button class="btn secondary small" id="apiFootballLoadStandings" type="button">Buscar classificação</button>':''}</div><div id="apiFootballMatchStatus" class="apifootball-key-note">${snapshot?'Dados armazenados localmente e compartilhados quando o computador administrador consegue publicar.':canQuery?'A consulta é feita somente quando você solicita. Atualizar ou tentar novamente ignora o cache e pode usar até 2 chamadas; evite clicar repetidamente.':desktop?'Este computador está em modo somente leitura. Aguarde os dados publicados pelo administrador.':'Disponível na versão desktop após configurar a chave no Painel Admin.'}</div><div class="apifootball-result">${renderApiFootballSnapshot(snapshot)}${renderApiFootballStandings(standings)}</div></section>`;
+  }
+  function updateApiFootballUsage(usage) {
+    const host=$('#apiFootballUsage'); if(!host||!usage) return;
+    const used=Number(usage.requestsUsedByApp||0); const cap=Number(usage.appSoftLimit||70); const remain=Number(usage.effectiveRemaining??Math.max(0,cap-used));
+    host.hidden=false;
+    host.innerHTML=`<div class="api-football-usage-card"><strong>${used}/${cap}</strong><span>Chamadas usadas pelo app</span></div><div class="api-football-usage-card"><strong>${remain}</strong><span>Disponíveis antes da pausa</span></div><div class="api-football-usage-card"><strong>${usage.providerDailyRemaining===null?'—':Number(usage.providerDailyRemaining)}</strong><span>Restantes segundo a API</span></div>`;
+  }
+  async function refreshApiFootballAdminStatus() {
+    const badge=$('#apiFootballConfiguredBadge'); const status=$('#apiFootballKeyStatus');
+    try {
+      const [keyInfoResponse,apiStatusResponse]=await Promise.all([
+        window.nvbDesktop?.getApiFootballKeyStatus?window.nvbDesktop.getApiFootballKeyStatus():Promise.resolve({configured:false,encryptedAtRest:false}),
+        fetch('/api/apifootball/status',{cache:'no-store'})
+      ]);
+      apiFootballLocalKeyConfigured=Boolean(keyInfoResponse?.configured);
+      if(badge){badge.textContent=apiFootballLocalKeyConfigured?'Chave configurada':'Não configurada';badge.classList.toggle('ok',apiFootballLocalKeyConfigured);badge.classList.toggle('warn',!apiFootballLocalKeyConfigured);}
+      if(status) status.textContent=apiFootballLocalKeyConfigured?'Chave protegida neste perfil do Windows. O segredo não é exibido nem enviado ao navegador.':(window.nvbDesktop?.isDesktop?'Configure a chave gratuita da API-Football neste computador administrador.':'A configuração da chave está disponível no aplicativo Windows.');
+      if(apiStatusResponse.ok){const body=await apiStatusResponse.json();updateApiFootballUsage(body.usage);}
+    } catch(error) { if(status) status.textContent=`Não foi possível consultar o estado da API: ${error.message}`; }
+  }
+  async function initApiFootballPanel() {
+    const desktop=window.nvbDesktop;
+    const input=$('#apiFootballKeyInput'); const save=$('#saveApiFootballKey'); const test=$('#testApiFootballKey'); const clear=$('#clearApiFootballKey');
+    if(!desktop?.isDesktop){if(input)input.disabled=true;if(save)save.disabled=true;if(test)test.disabled=true;if(clear)clear.disabled=true;}
+    save?.addEventListener('click',async()=>{
+      const value=String(input?.value||'').trim(); if(!value){toast('Cole sua API Key antes de salvar.');return;}
+      try { const result=await desktop.saveApiFootballKey(value); if(input)input.value=''; toast(result?.ok?'Chave criptografada e salva somente neste Windows.':'Não foi possível salvar a chave.'); await refreshApiFootballAdminStatus(); }
+      catch(error){toast(error.message||'Falha ao salvar a chave.');}
+    });
+    test?.addEventListener('click',async()=>{
+      if(!apiFootballLocalKeyConfigured){toast('Salve primeiro a chave da API-Football neste computador.');return;}
+      if(test)test.disabled=true;
+      try {
+        const response=await fetch('/api/apifootball/test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        const result=await response.json();
+        if(!response.ok||!result.ok)throw new Error(result.error||'A API-Football não aceitou a conexão.');
+        toast(`API-Football conectada. Plano: ${result.subscription?.plan||'ativo'}. O teste não consumiu a cota diária.`);
+        updateApiFootballUsage(result.usage);
+      } catch(error){toast(error.message||'Não foi possível testar a API-Football.');}
+      finally{if(test)test.disabled=false;await refreshApiFootballAdminStatus();}
+    });
+    clear?.addEventListener('click',async()=>{
+      if(!confirm('Apagar a chave API-Football criptografada deste computador?'))return;
+      try{await desktop.clearApiFootballKey();toast('Chave local apagada.');await refreshApiFootballAdminStatus();}
+      catch(error){toast(error.message||'Não foi possível apagar a chave.');}
+    });
+    await refreshApiFootballAdminStatus();
+  }
+  async function shareApiFootballSnapshot(snapshot, type='match') {
+    const settings=readCloudSyncSettings();
+    if(settings.adminToken.length<24||!settings.url) return {shared:false,reason:'Este computador não possui a chave administrativa de publicação.'};
+    const body={url:settings.url,adminToken:settings.adminToken}; body[type]=snapshot;
+    const response=await fetch('/api/apifootball/share',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)});
+    const result=await response.json();
+    if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível compartilhar os dados esportivos.');
+    if(result.revision)writeStore(CLOUD_SYNC_REVISION_KEY,Number(result.revision));
+    return {shared:true,...result};
+  }
+  async function loadApiFootballMatchData(event, options={}) {
+    if(apiFootballBusy)return;
+    if(!apiFootballLocalKeyConfigured){toast('Somente o computador administrador com a chave salva pode consultar a API-Football.');return;}
+    apiFootballBusy=true;
+    if(state.selected?.id===event.id)renderModal();
+    try {
+      const response=await fetch('/api/apifootball/match-data',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({event:{id:event.id,home:event.home,away:event.away,dateEvent:event.dateEvent,timeText:event.timeText},refreshMatch:Boolean(options.refresh),forceDetails:Boolean(options.refresh)})});
+      const result=await response.json();
+      if(result.usage)updateApiFootballUsage(result.usage);
+      if(!response.ok||!result.ok)throw new Error(result.error||'Falha ao consultar dados da partida.');
+      if(!result.matched){apiFootballNoMatchLookup.add(String(event.id));toast(result.message||'A API-Football não encontrou esta partida. A agenda foi mantida.');return;}
+      apiFootballNoMatchLookup.delete(String(event.id));
+      const snapshot=result.snapshot;
+      apiFootballMatchCache[String(event.id)]=snapshot;
+      writeStore(API_FOOTBALL_MATCH_CACHE_KEY,apiFootballMatchCache);
+      const goals=snapshot.fixture?.goals;
+      const target=state.events.find(item=>String(item.id)===String(event.id))||event;
+      if(goals&&goals.home!==null&&goals.away!==null){target.homeScore=goals.home;target.awayScore=goals.away;}
+      const status=apiFootballStatusFromCode(snapshot.fixture?.status);
+      target.status=status;
+      if(state.selected&&String(state.selected.id)===String(event.id))state.selected=target;
+      let shareMessage='';
+      try { const shared=await shareApiFootballSnapshot(snapshot,'match'); shareMessage=shared.shared?' Dados compartilhados com o Val.':' Dados salvos neste computador; o envio compartilhado exige a chave administrativa.'; }
+      catch(error){shareMessage=` Dados locais salvos; sincronização estatística pendente: ${error.message}`;}
+      const partialMessage=result.partial?' Alguns dados (escalação ou estatísticas) ainda não estão disponíveis para esta partida.':'';
+      toast(`Dados da API-Football atualizados.${partialMessage}${shareMessage}`);
+      if(state.selected?.id===event.id)renderModal(); else render();
+    } catch(error) {
+      const status=$('#apiFootballMatchStatus'); if(status)status.textContent=error.message||'Erro ao consultar a API-Football.';
+      toast(error.message||'Erro ao consultar a API-Football.');
+    } finally {
+      apiFootballBusy=false;
+      if(state.selected?.id===event.id)renderModal();
+      refreshApiFootballAdminStatus();
+    }
+  }
+  async function loadApiFootballStandings(snapshot) {
+    const league=snapshot?.fixture?.league||{}; const leagueId=Number(league.id||0); const season=Number(league.season||0);
+    if(!leagueId||!season){toast('A API não informou o ID e a temporada desta competição.');return;}
+    if(!apiFootballLocalKeyConfigured){toast('A classificação atualizada só pode ser consultada no computador administrador.');return;}
+    try {
+      const response=await fetch('/api/apifootball/standings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leagueId,season})});
+      const result=await response.json(); if(result.usage)updateApiFootballUsage(result.usage);
+      if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação.');
+      const leagueData=result.data?.[0]?.league||{};
+      const rows=(leagueData.standings||[]).flat().slice(0,40).map(row=>({rank:Number(row.rank||0),team:String(row.team?.name||''),points:Number(row.points||0),goalsDiff:Number(row.goalsDiff||0),played:Number(row.all?.played||0),form:String(row.form||'')}));
+      const standingSnapshot={leagueId,season,leagueName:String(leagueData.name||league.name||''),rows,fetchedAt:new Date().toISOString()};
+      apiFootballStandingsCache[`${leagueId}:${season}`]=standingSnapshot;
+      writeStore(API_FOOTBALL_STANDINGS_CACHE_KEY,apiFootballStandingsCache);
+      try { await shareApiFootballSnapshot(standingSnapshot,'standings'); } catch(error) { console.warn('Classificação salva localmente, mas não foi compartilhada:',error.message); }
+      if(state.selected)renderModal();
+      toast(`Classificação de ${standingSnapshot.leagueName||'competição'} atualizada.`);
+    } catch(error){toast(error.message||'Não foi possível consultar a classificação.');}
+    finally{refreshApiFootballAdminStatus();}
+  }
   function renderModal() {
     const e=state.selected; if(!e) return;
     // Recalcula o vínculo ao abrir/re-renderizar a partida.
@@ -1582,8 +1884,12 @@ const BROADCASTER_ALIAS_GROUPS = [
     const catalogMatches=active?[]:catalogStationsForEvent(e);
     $('#modalTitle').textContent=`${e.home} x ${e.away}`;
     const status=statusLabel(e.status);
-    const hasScore=e.homeScore!==null && e.homeScore!=='' && e.awayScore!==null && e.awayScore!=='';
-    const score=hasScore?`${escapeHtml(e.homeScore)} <span>:</span> ${escapeHtml(e.awayScore)}`:'<span>VS</span>';
+    const apiSnapshot=apiFootballMatchCache[String(e.id)]||null;
+    const apiGoals=apiSnapshot?.fixture?.goals;
+    const displayHomeScore=apiGoals&&apiGoals.home!==null?apiGoals.home:e.homeScore;
+    const displayAwayScore=apiGoals&&apiGoals.away!==null?apiGoals.away:e.awayScore;
+    const hasScore=displayHomeScore!==null && displayHomeScore!=='' && displayAwayScore!==null && displayAwayScore!=='';
+    const score=hasScore?`${escapeHtml(displayHomeScore)} <span>:</span> ${escapeHtml(displayAwayScore)}`:'<span>VS</span>';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
     const matchTime=e.timeText || 'Horário a confirmar';
     const round=e.round?`Rodada: ${escapeHtml(e.round)}`:'';
@@ -1614,6 +1920,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
       </section>
       <section class="broadcast-panel match-broadcast-panel"><div class="broadcast-heading"><span class="broadcast-label">📺 ONDE ASSISTIR</span><small>${(e.tvNetworks||[]).length} emissora(s) identificada(s)</small></div><div class="broadcast-list">${broadcastChipsMarkup(e)}</div></section>
+      ${renderApiFootballMatchPanel(e)}
       <section class="player-shell match-player-card">
         <div class="player-section-head"><div><div class="eyebrow">TRANSMISSÃO</div><h3>Assistir à partida</h3><p>${active?`Player selecionado: ${escapeHtml(active.name)}`:'Confira as fontes disponíveis para esta partida.'}</p></div><div class="player-section-action">${playerOpen || '<span class="player-count-empty">Player ainda não vinculado</span>'}</div></div>
         ${sourceSelector}
@@ -1624,6 +1931,8 @@ const BROADCASTER_ALIAS_GROUPS = [
       <div class="match-bottom-note"><span>⚽ NicoValBolaLibre Match Center</span><span>Dados fornecidos pelas agendas selecionadas</span></div>`;
     $('#modalContent').querySelectorAll('[data-source-index]').forEach(btn=>btn.addEventListener('click',()=>{state.sourceIndex=Number(btn.dataset.sourceIndex);renderModal();}));
     $('#favoriteToggle').addEventListener('click',()=>toggleFavorite(e.id));
+    $('#apiFootballLoadMatchData')?.addEventListener('click',()=>loadApiFootballMatchData(e,{refresh:Boolean(apiFootballMatchCache[String(e.id)])||apiFootballNoMatchLookup.has(String(e.id))}));
+    $('#apiFootballLoadStandings')?.addEventListener('click',()=>loadApiFootballStandings(apiFootballMatchCache[String(e.id)]));
     const copyDiag=$('#copyPlayerDiag');
     if(copyDiag) copyDiag.addEventListener('click',async()=>{
       const report=buildPlayerDiagnostic(e,catalogMatches,active);
@@ -2295,6 +2604,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(!formLinkPicker) mountFormLinkPicker();
     renderStationCompletionStats();
     renderTeamLogoRegistry();
+    renderCompetitionRanking();
     renderChannelDirectory();
     loadReiChannelDirectory(false);
     const list=$('#stationList');
@@ -2415,7 +2725,8 @@ const BROADCASTER_ALIAS_GROUPS = [
       schemaVersion:1,
       stations:stationCatalog,
       sources:sourcesStore,
-      teamLogoOverrides
+      teamLogoOverrides,
+      apiFootballData:{provider:'API-Football',updatedAt:new Date().toISOString(),matches:Object.values(apiFootballMatchCache).slice(-80),standings:Object.values(apiFootballStandingsCache).slice(-40)}
     };
   }
   function applyCloudSyncConfig(config) {
@@ -2461,11 +2772,29 @@ const BROADCASTER_ALIAS_GROUPS = [
       }
       writeStore('futeblox_team_logo_overrides',teamLogoOverrides);
     }
+    const incomingSports=config.apiFootballData&&typeof config.apiFootballData==='object'?config.apiFootballData:{};
+    let sportsMatchesAdded=0;
+    if(Array.isArray(incomingSports.matches)) {
+      for(const snapshot of incomingSports.matches.slice(-80)) {
+        if(!snapshot?.eventId || !Number(snapshot.fixtureId)) continue;
+        const key=String(snapshot.eventId);
+        const existing=apiFootballMatchCache[key];
+        if(!existing || String(snapshot.fetchedAt||'')>=String(existing.fetchedAt||'')) { apiFootballMatchCache[key]=snapshot; sportsMatchesAdded++; }
+      }
+      writeStore(API_FOOTBALL_MATCH_CACHE_KEY,apiFootballMatchCache);
+    }
+    if(Array.isArray(incomingSports.standings)) {
+      for(const snapshot of incomingSports.standings.slice(-40)) {
+        const key=`${Number(snapshot.leagueId)}:${Number(snapshot.season)}`;
+        if(Number(snapshot.leagueId)>0 && Number(snapshot.season)>0) apiFootballStandingsCache[key]=snapshot;
+      }
+      writeStore(API_FOOTBALL_STANDINGS_CACHE_KEY,apiFootballStandingsCache);
+    }
     autoLinkCatalogStations(state.events);
     renderAdmin();
     render();
     if (state.selected) renderModal();
-    return {stationAdded,linksAdded,logosAdded};
+    return {stationAdded,linksAdded,logosAdded,sportsMatchesAdded};
   }
   async function pullCloudSyncConfig({silent=false,force=false}={}) {
     if (cloudSyncInFlight) return;
@@ -2617,7 +2946,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.17.2',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.0',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -2683,6 +3012,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   $('#exportConfig').addEventListener('click',exportConfig);
   $('#importConfigFile').addEventListener('change',e=>importConfig(e.target.files?.[0]));
   initCloudSyncPanel();
+  initApiFootballPanel();
   initDesktopUpdatePanel();
   // V0.15: filtros (Todos / Ao vivo / Próximos / Encerrados / Favoritos) no topo da lista.
   document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.filter)));

@@ -1,6 +1,6 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.17.2",
+  "version": "0.18.0",
   "description": "Central de partidas NicoValBolaLibre para Windows",
   "private": true,
   "main": "electron/main.js",
@@ -10,7 +10,11 @@
     "test:navigation": "node scripts/test-navigation-guard.js",
     "start": "electron .",
     "dist:win": "electron-builder --config build/electron-builder.config.js --win nsis",
-    "release:win": "electron-builder --config build/electron-builder.config.js --win nsis --publish always"
+    "release:win": "electron-builder --config build/electron-builder.config.js --win nsis --publish always",
+    "test:competition-ranking": "node scripts/test-competition-ranking.js",
+    "test:team-logos": "node scripts/test-team-logo-index.js",
+    "test:apifootball": "node scripts/test-apifootball.js",
+    "test:cloud-sports-sync": "node scripts/test-cloudflare-sports-data.js"
   },
   "devDependencies": {
     "electron": "^38.0.0",

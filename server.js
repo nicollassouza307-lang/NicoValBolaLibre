@@ -7,6 +7,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { URL } = require('node:url');
+const { ApiFootballService } = require('./apifootball-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -26,6 +27,12 @@ function loadEnvFile() {
   }
 }
 loadEnvFile();
+
+const API_FOOTBALL_DATA_DIR = process.env.NVB_USER_DATA_DIR || path.join(__dirname, '.nvb-data');
+const apiFootballService = new ApiFootballService({
+  dataDir: API_FOOTBALL_DATA_DIR,
+  getApiKey: () => String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()
+});
 
 const REQUESTED_PORT = Number(process.env.PORT || 8787);
 let ACTIVE_PORT = REQUESTED_PORT;
@@ -854,6 +861,42 @@ async function fetchSportsApi(endpoint) {
   }
 }
 
+function buildApiFootballSnapshot(event, resolved, details) {
+  const fixture = details?.fixture && Number(details.fixture.id) === Number(resolved.fixture.id) ? details.fixture : resolved.fixture;
+  const lineups = Array.isArray(details.lineups) ? details.lineups.slice(0, 2).map(team => ({
+    team: { id: Number(team?.team?.id || 0), name: String(team?.team?.name || '').slice(0, 100) },
+    formation: String(team?.formation || '').slice(0, 20),
+    coach: { id: Number(team?.coach?.id || 0), name: String(team?.coach?.name || '').slice(0, 100) },
+    startXI: (Array.isArray(team?.startXI) ? team.startXI : []).slice(0, 11).map(row => ({
+      id: Number(row?.player?.id || 0), name: String(row?.player?.name || '').slice(0, 100),
+      number: Number(row?.player?.number || 0), pos: String(row?.player?.pos || '').slice(0, 12), grid: String(row?.player?.grid || '').slice(0, 12)
+    })),
+    substitutes: (Array.isArray(team?.substitutes) ? team.substitutes : []).slice(0, 20).map(row => ({
+      id: Number(row?.player?.id || 0), name: String(row?.player?.name || '').slice(0, 100),
+      number: Number(row?.player?.number || 0), pos: String(row?.player?.pos || '').slice(0, 12)
+    }))
+  })) : [];
+  const statistics = Array.isArray(details.statistics) ? details.statistics.slice(0, 2).map(team => ({
+    team: { id: Number(team?.team?.id || 0), name: String(team?.team?.name || '').slice(0, 100) },
+    values: (Array.isArray(team?.statistics) ? team.statistics : []).slice(0, 35).map(row => ({
+      type: String(row?.type || '').slice(0, 80),
+      value: row?.value === null || row?.value === undefined ? null : String(row.value).slice(0, 40)
+    }))
+  })) : [];
+  return {
+    provider: 'API-Football', eventId: String(event.id || '').slice(0, 180),
+    date: String(event.dateEvent || '').slice(0, 10), home: String(event.home || '').slice(0, 100), away: String(event.away || '').slice(0, 100),
+    fixtureId: Number(fixture.id),
+    fixture: {
+      date: fixture.date, status: fixture.status, statusLong: fixture.statusLong, elapsed: fixture.elapsed,
+      venue: fixture.venue, referee: fixture.referee, goals: fixture.goals,
+      league: fixture.league, home: fixture.home, away: fixture.away
+    },
+    lineups, statistics, detailErrors: Array.isArray(details.errors) ? details.errors.slice(0, 2).map(item => ({ section: String(item.section || ''), message: String(item.message || '').slice(0, 240), code: String(item.code || '').slice(0, 60) })) : [],
+    fetchedAt: new Date().toISOString()
+  };
+}
+
 function safeStaticPath(pathname) {
   let decoded;
   try { decoded = decodeURIComponent(pathname); } catch { return null; }
@@ -906,6 +949,81 @@ const requestHandler = async (req, res) => {
       });
       return json(res, 200, result);
     } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message }); }
+  }
+
+  if (pathname === '/api/apifootball/status' && req.method === 'GET') {
+    return json(res, 200, {
+      configured: Boolean(String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()),
+      provider: 'API-Football', keyNeverSentToBrowser: true,
+      usage: apiFootballService.getUsage()
+    });
+  }
+
+  if (pathname === '/api/apifootball/test' && req.method === 'POST') {
+    try {
+      const result = await apiFootballService.testConnection();
+      return json(res, 200, { ...result, configured: true, keyNeverSentToBrowser: true });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível testar a API-Football.', code: error.code || '' });
+    }
+  }
+
+  if (pathname === '/api/apifootball/match-data' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 64 * 1024);
+      const event = body.event || {};
+      if (!event.id || !event.home || !event.away || !event.dateEvent) {
+        return json(res, 400, { ok: false, error: 'A partida da agenda não contém os dados mínimos para cruzamento.' });
+      }
+      const resolved = await apiFootballService.resolveMatch(event, { force: Boolean(body.refreshMatch) });
+      if (!resolved.matched) return json(res, 200, { ok: true, matched: false, message: resolved.reason, usage: apiFootballService.getUsage() });
+      let details;
+      try {
+        details = await apiFootballService.getMatchDetails(resolved.fixture.id, resolved.fixture.status, { force: Boolean(body.forceDetails) });
+      } catch (error) {
+        return json(res, error.status || 502, {
+          ok: false, matched: true, fixture: resolved.fixture,
+          error: error.message || 'A partida foi identificada, mas não foi possível buscar os detalhes.',
+          code: error.code || '', usage: apiFootballService.getUsage()
+        });
+      }
+      const snapshot = buildApiFootballSnapshot(event, resolved, details);
+      return json(res, 200, {
+        ok: true, matched: true, fixture: resolved.fixture, snapshot,
+        partial: details.errors?.length > 0, detailErrors: details.errors || [],
+        usage: apiFootballService.getUsage()
+      });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Falha ao consultar a API-Football.', code: error.code || '', usage: apiFootballService.getUsage() });
+    }
+  }
+
+  if (pathname === '/api/apifootball/standings' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const result = await apiFootballService.getStandings(body.leagueId, body.season);
+      return json(res, 200, { ok: true, ...result });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível consultar a classificação.', code: error.code || '', usage: apiFootballService.getUsage() });
+    }
+  }
+
+  if (pathname === '/api/apifootball/share' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 512 * 1024);
+      const base = normalizeCloudSyncBase(body.url);
+      const adminToken = String(body.adminToken || '').trim();
+      if (adminToken.length < 24) return json(res, 403, { ok: false, error: 'Este computador está em modo somente leitura. Apenas o administrador pode compartilhar dados estatísticos.' });
+      if ((!body.match || typeof body.match !== 'object') && (!body.standings || typeof body.standings !== 'object')) return json(res, 400, { ok: false, error: 'Snapshot estatístico inválido.' });
+      const published = await cloudSyncFetch(`${base}/v1/sports-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ match: body.match, standings: body.standings })
+      });
+      return json(res, 200, { ok: true, ...published });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível compartilhar os dados estatísticos.' });
+    }
   }
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -1129,7 +1247,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.17.2 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.0 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

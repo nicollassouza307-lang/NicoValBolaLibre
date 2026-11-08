@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, safeStorage } = require('electron');
 const path = require('node:path');
 const net = require('node:net');
 const { autoUpdater } = require('electron-updater');
@@ -11,6 +11,29 @@ let mainWindow = null;
 let localServer = null;
 let updateDownloaded = false;
 let checkingForUpdates = false;
+let apiFootballKeyEncryptedAtRest = false;
+
+function apiFootballKeyPath() {
+  return path.join(app.getPath('userData'), 'apifootball-key.bin');
+}
+
+function loadEncryptedApiFootballKey() {
+  try {
+    const file = apiFootballKeyPath();
+    if (!require('node:fs').existsSync(file) || !safeStorage.isEncryptionAvailable()) {
+      apiFootballKeyEncryptedAtRest = false;
+      return false;
+    }
+    const encrypted = require('node:fs').readFileSync(file);
+    const key = safeStorage.decryptString(encrypted).trim();
+    if (key) process.env.NVB_APIFOOTBALL_KEY = key;
+    apiFootballKeyEncryptedAtRest = Boolean(key);
+    return Boolean(key);
+  } catch (error) {
+    console.error('Não foi possível carregar a chave local da API-Football:', error.message);
+    return false;
+  }
+}
 
 app.setAppUserModelId(APP_ID);
 process.env.NVB_APP_VERSION = app.getVersion();
@@ -138,8 +161,35 @@ ipcMain.handle('nvb:update-install', () => {
   return { ok: updateDownloaded };
 });
 
+ipcMain.handle('nvb:apifootball-key-status', () => {
+  const configured = Boolean(String(process.env.NVB_APIFOOTBALL_KEY || '').trim());
+  return { configured, encryptedAtRest: configured && apiFootballKeyEncryptedAtRest };
+});
+ipcMain.handle('nvb:apifootball-key-save', (_event, rawKey) => {
+  const key = String(rawKey || '').trim();
+  if (!/^[A-Za-z0-9_-]{20,128}$/.test(key)) throw new Error('A chave parece inválida. Confira se você copiou a API Key completa do painel da API-Football.');
+  if (!safeStorage.isEncryptionAvailable()) throw new Error('O Windows não disponibilizou a criptografia segura do sistema. A chave não foi salva.');
+  const fs = require('node:fs');
+  const file = apiFootballKeyPath();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const encrypted = safeStorage.encryptString(key);
+  fs.writeFileSync(file, encrypted, { mode: 0o600 });
+  process.env.NVB_APIFOOTBALL_KEY = key;
+  apiFootballKeyEncryptedAtRest = true;
+  return { ok: true, configured: true, encryptedAtRest: true };
+});
+ipcMain.handle('nvb:apifootball-key-clear', () => {
+  try { require('node:fs').rmSync(apiFootballKeyPath(), { force: true }); } catch {}
+  delete process.env.NVB_APIFOOTBALL_KEY;
+  apiFootballKeyEncryptedAtRest = false;
+  return { ok: true, configured: false, encryptedAtRest: false };
+});
+
 app.whenReady().then(async () => {
   try {
+    // Segredos e cache da API ficam no perfil local do Windows, nunca na pasta do app/GitHub.
+    process.env.NVB_USER_DATA_DIR = app.getPath('userData');
+    loadEncryptedApiFootballKey();
     const url = await startLocalServer();
     createWindow(url);
     configureAutoUpdater();
