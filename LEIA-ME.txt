@@ -1,31 +1,25 @@
-NICOVALBOLALIBRE V0.17.1
+NICOVALBOLALIBRE V0.17.2
 ========================
 
 NOVIDADES
-- Ícone provisório do gato com VR no aplicativo, instalador, desinstalador e atalhos do Windows.
-- O endereço do Cloudflare e a chave de leitura são configurados automaticamente no instalador.
-- O Val só precisa instalar e abrir; não precisa colar endereço nem tokens.
-- A publicação continua disponível somente no computador que tem a chave administrativa salva localmente.
+- Bloqueia pop-ups/janelas abertas por players e páginas de terceiros.
+- Bloqueia redirecionamentos externos que tentem substituir a janela principal.
+- Links externos clicados na interface do aplicativo continuam abrindo no navegador padrão.
+- Mantém navegações internas dos iframes dos players para não interferir no carregamento de vídeos.
+- Inclui teste automatizado da proteção de navegação.
+- Mantém o ícone do gato VR e a sincronização automática Cloudflare.
 
-PARA PUBLICAR A V0.17.1 NO GITHUB
-1. No repositório, abra Settings > Secrets and variables > Actions.
-2. Clique New repository secret.
-3. Name: NVB_SYNC_READ_TOKEN
-4. Secret: cole somente o valor da chave SYNC_READ_TOKEN (sem o nome da variável e sem sinal de igual).
-5. Salve. Nunca cadastre SYNC_ADMIN_TOKEN no GitHub.
-6. Copie os arquivos da V0.17.1 para a pasta local do repositório, faça Commit e Push origin.
-7. Crie a tag v0.17.1 no commit novo e faça Push origin para enviar a tag.
-8. O GitHub Actions compila e publica dist/NicoValBolaLibre-0.17.1-Setup.exe em Releases.
+LIMITAÇÃO SOBRE BANNERS DENTRO DO PLAYER
+A proteção não remove automaticamente anúncios desenhados dentro do próprio iframe do provedor (por exemplo, um banner/caixa com botão X). Regras genéricas poderiam esconder controles ou partes do vídeo. Esse tipo de elemento exige identificação e teste específico por provedor.
 
-USO
-- Nico: feche o app, instale a atualização sem apagar os dados do perfil e abra novamente. A chave administrativa local da V0.17.0 deve continuar disponível.
-- Val: instale o mesmo Setup.exe e abra. URL e chave de leitura vêm pré-configuradas; não é necessário preencher nada.
+PARA PUBLICAR A V0.17.2 NO GITHUB
+1. Copie os arquivos desta pasta para a pasta local do repositório, substituindo os antigos e preservando .git.
+2. Confirme que NVB_SYNC_READ_TOKEN continua cadastrado em Settings > Secrets and variables > Actions.
+3. Faça Commit e Push origin.
+4. Crie a tag v0.17.2 no commit novo e faça Push origin para enviar a tag.
+5. O GitHub Actions executa os testes e compila NicoValBolaLibre-0.17.2-Setup.exe.
 
-SEGURANÇA
-- O token somente-leitura é incorporado ao instalador para facilitar a conexão e poderá ser extraído por alguém com conhecimento técnico. Ele não permite publicar.
-- SYNC_ADMIN_TOKEN nunca entra no repositório, no workflow, no instalador ou no computador do Val.
-- O Worker Cloudflare deve ter as Secrets SYNC_READ_TOKEN e SYNC_ADMIN_TOKEN e o binding D1 DB.
-- A API já configurada: https://nicoval-sync.tracker-mps.workers.dev
-
-ÍCONE
-O arquivo build/icon.ico usa o favicon atual de 64x64 como ícone provisório. Quando a imagem original em alta resolução estiver disponível, substitua build/icon.ico e publique uma nova versão.
+CUIDADOS
+- Nunca cadastre SYNC_ADMIN_TOKEN no GitHub nem inclua essa chave no instalador.
+- Não remova os dados do perfil do aplicativo ao atualizar.
+- O token compartilhado no instalador é somente de leitura.

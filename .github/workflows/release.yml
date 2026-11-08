@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
+      - name: Test popup and redirect protection
+        run: node scripts/test-navigation-guard.js
       - name: Inject automatic read-only Cloud Sync settings
         env:
           NVB_SYNC_READ_TOKEN: ${{ secrets.NVB_SYNC_READ_TOKEN }}

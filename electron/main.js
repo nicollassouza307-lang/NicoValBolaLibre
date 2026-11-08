@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const net = require('node:net');
 const { autoUpdater } = require('electron-updater');
+const { attachNavigationGuards } = require('./navigation-guard');
 
 const APP_ID = 'com.nicovalbolalibre.desktop';
 let mainWindow = null;
@@ -110,22 +111,7 @@ function createWindow(url) {
     }
   });
 
-  mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
-    try {
-      const parsed = new URL(target);
-      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') shell.openExternal(target);
-    } catch {}
-    return { action: 'deny' };
-  });
-  mainWindow.webContents.on('will-navigate', (event, target) => {
-    if (!target.startsWith(url)) {
-      event.preventDefault();
-      try {
-        const parsed = new URL(target);
-        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') shell.openExternal(target);
-      } catch {}
-    }
-  });
+  attachNavigationGuards(mainWindow.webContents, { appUrl: url, shell });
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
   mainWindow.loadURL(url);

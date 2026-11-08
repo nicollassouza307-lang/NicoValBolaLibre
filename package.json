@@ -1,12 +1,13 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Central de partidas NicoValBolaLibre para Windows",
   "private": true,
   "main": "electron/main.js",
   "author": "NicoValBolaLibre",
   "license": "UNLICENSED",
   "scripts": {
+    "test:navigation": "node scripts/test-navigation-guard.js",
     "start": "electron .",
     "dist:win": "electron-builder --config build/electron-builder.config.js --win nsis",
     "release:win": "electron-builder --config build/electron-builder.config.js --win nsis --publish always"
