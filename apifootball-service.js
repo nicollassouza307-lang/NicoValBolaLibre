@@ -311,7 +311,7 @@ class ApiFootballService {
         elapsed: fixture.status?.elapsed ?? null,
         venue: String(fixture.venue?.name || ''),
         referee: String(fixture.referee || ''),
-        league: { id: Number(league.id), name: String(league.name || ''), country: String(league.country || ''), season: Number(league.season || 0), round: String(league.round || '') },
+        league: { id: Number(league.id), name: String(league.name || ''), country: String(league.country || ''), logo: String(league.logo || ''), season: Number(league.season || 0), round: String(league.round || '') },
         home: { id: Number(item.teams?.home?.id || 0), name: String(item.teams?.home?.name || event.home), logo: String(item.teams?.home?.logo || '') },
         away: { id: Number(item.teams?.away?.id || 0), name: String(item.teams?.away?.name || event.away), logo: String(item.teams?.away?.logo || '') },
         goals: { home: item.goals?.home ?? null, away: item.goals?.away ?? null }
@@ -392,7 +392,7 @@ class ApiFootballService {
         status: String(latestFixture.status?.short || statusShort || ''), statusLong: String(latestFixture.status?.long || ''),
         elapsed: latestFixture.status?.elapsed ?? null, venue: String(latestFixture.venue?.name || ''),
         referee: String(latestFixture.referee || ''),
-        league: { id: Number(latestLeague.id || 0), name: String(latestLeague.name || ''), country: String(latestLeague.country || ''), season: Number(latestLeague.season || 0), round: String(latestLeague.round || '') },
+        league: { id: Number(latestLeague.id || 0), name: String(latestLeague.name || ''), country: String(latestLeague.country || ''), logo: String(latestLeague.logo || ''), season: Number(latestLeague.season || 0), round: String(latestLeague.round || '') },
         home: { id: Number(latestTeams.home?.id || 0), name: String(latestTeams.home?.name || ''), logo: String(latestTeams.home?.logo || '') },
         away: { id: Number(latestTeams.away?.id || 0), name: String(latestTeams.away?.name || ''), logo: String(latestTeams.away?.logo || '') },
         goals: { home: fixture.goals?.home ?? null, away: fixture.goals?.away ?? null }

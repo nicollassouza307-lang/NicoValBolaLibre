@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('nvbDesktop', {
   isDesktop: true,
   version: process.versions.electron ? 'Desktop' : 'Web',
+  getVersion: () => ipcRenderer.invoke('nvb:version'),
   checkForUpdates: () => ipcRenderer.invoke('nvb:update-check'),
   downloadUpdate: () => ipcRenderer.invoke('nvb:update-download'),
   installUpdate: () => ipcRenderer.invoke('nvb:update-install'),

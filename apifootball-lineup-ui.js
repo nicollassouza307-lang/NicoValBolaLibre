@@ -54,17 +54,41 @@
       if (!byDepth.has(player.__depth)) byDepth.set(player.__depth, []);
       byDepth.get(player.__depth).push(player);
     }
+
+    // Faixas com espaçamento de campo real, em vez de distribuir tudo igualmente.
+    // A coluna do grid da API-Football preserva a ordem quando vem preenchida.
+    const lanePresets = {
+      1: [50],
+      2: [26, 74],
+      3: [13, 50, 87],
+      4: [8, 36, 64, 92],
+      5: [6, 28, 50, 72, 94]
+    };
     const positions = [];
     for (const depth of [...byDepth.keys()].sort((a, b) => a - b)) {
       const group = byDepth.get(depth);
       const count = group.length;
+      const preset = lanePresets[count] || group.map((_, index) => count === 1 ? 50 : 7 + (index / (count - 1)) * 86);
+      const gridRows = group.map(player => player.__row).filter(Number.isFinite);
+      const maxGridRow = gridRows.length ? Math.max(...gridRows) : 0;
       group.forEach((player, index) => {
-        const xForward = 12 + ((depth - minDepth) / depthRange) * 76;
-        const y = count === 1 ? 50 : 18 + (index / (count - 1)) * 64;
+        const lane = Number.isFinite(player.__row) && maxGridRow > 1
+          ? 7 + ((player.__row - 1) / (maxGridRow - 1)) * 86
+          : preset[index];
+        let xForward = 10 + ((depth - minDepth) / depthRange) * 80;
+        const wideLane = lane <= 28 || lane >= 72;
+        const position = String(player.pos || '').toUpperCase();
+        // Laterais dão amplitude e avançam um pouco. Pontas ficam mais abertos
+        // e alguns passos à frente, criando o desenho assimétrico de um FC/FIFA.
+        if (count >= 3 && wideLane && depth === minDepth + 1) xForward += 2.5;
+        if (position.startsWith('F') && wideLane) xForward += 5;
+        if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1.5 : 4;
+        xForward = Math.min(94, xForward);
         positions.push({
           player,
           left: Number((side === 'away' ? 100 - xForward : xForward).toFixed(2)),
-          top: Number(y.toFixed(2))
+          top: Number(lane.toFixed(2)),
+          depth: Number(xForward.toFixed(2))
         });
       });
     }
@@ -100,13 +124,11 @@
     const player = entry.player || {};
     const name = String(player.name || 'Jogador');
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
-    const position = String(player.pos || '').toUpperCase();
     const label = `${name}, camisa ${number}`;
-    return `<div class="apifootball-pitch-player" style="left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+    return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
       ${renderPhoto(player)}
-      <span class="apifootball-pitch-number">${escapeHtml(number)}</span>
       <span class="apifootball-pitch-name">${escapeHtml(name)}</span>
-      ${position ? `<span class="apifootball-pitch-position">${escapeHtml(position)}</span>` : ''}
+      <span class="apifootball-pitch-number">${escapeHtml(number)}</span>
     </div>`;
   }
 

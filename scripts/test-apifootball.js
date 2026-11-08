@@ -11,7 +11,7 @@ let now = Date.parse('2026-11-08T12:00:00Z');
 const calls = [];
 const fixture = {
   fixture: { id: 900001, date: '2026-11-08T15:00:00-03:00', timezone: 'America/Sao_Paulo', status: { short: 'NS', long: 'Not Started', elapsed: null }, venue: { name: 'Estádio Teste' }, referee: null },
-  league: { id: 71, name: 'Brasileirão', country: 'Brazil', season: 2026, round: 'Regular Season - 30' },
+  league: { id: 71, name: 'Brasileirão', country: 'Brazil', logo: 'https://media.api-sports.io/football/leagues/71.png', season: 2026, round: 'Regular Season - 30' },
   teams: { home: { id: 123, name: 'Palmeiras', logo: 'https://example.test/pal.png' }, away: { id: 456, name: 'Remo', logo: 'https://example.test/rem.png' } },
   goals: { home: null, away: null }
 };
@@ -67,6 +67,8 @@ async function fakeFetch(url, options = {}) {
   const resolved = await service.resolveMatch({ id: 'agenda-1', home: 'Palmeiras', away: 'Remo', dateEvent: '2026-11-08', timeText: '15:00' });
   assert.equal(resolved.matched, true, 'A partida existente na agenda deve ser identificada.');
   assert.equal(resolved.fixture.id, 900001);
+  assert.equal(resolved.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png', 'O logo da competição deve acompanhar o fixture encontrado.');
+  assert.equal(resolved.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png', 'O logo da competição precisa acompanhar o snapshot da partida.');
   const beforeDetails = service.getUsage().requestsUsedByApp;
   assert.equal(beforeDetails, 1, 'A lista de partidas por data deve consumir uma chamada.');
   assert.equal(calls.filter(item => item.startsWith('/fixtures?date=')).length, 1, 'A lista diária deve ser consultada uma única vez.');
@@ -75,6 +77,8 @@ async function fakeFetch(url, options = {}) {
   const details = await service.getMatchDetails(900001, 'NS');
   assert.equal(details.lineups.length, 2);
   assert.equal(details.fixture.status, '1H');
+  assert.equal(details.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png');
+  assert.equal(details.fixture.league.logo, 'https://media.api-sports.io/football/leagues/71.png');
   assert.equal(details.fixture.goals.home, 1, 'O endpoint combinado deve atualizar o placar/status mais recente.');
   assert.equal(details.lineups[0].startXI[0].player.id, 1);
   assert.equal(details.statistics[0].statistics[0].value, '62%');

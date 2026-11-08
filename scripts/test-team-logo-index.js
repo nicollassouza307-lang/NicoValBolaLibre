@@ -15,6 +15,7 @@ function countrySlugHint(value) {
 const aliases = { 'man utd': 'manchester united', 'barca': 'barcelona' };
 const tree = [
   { type: 'blob', path: 'logos/england/Arsenal.svg' },
+  { type: 'blob', path: 'logos/england/Liverpool.svg' },
   { type: 'blob', path: 'logos/england/Manchester United.svg' },
   { type: 'blob', path: 'logos/spain/Barcelona.svg' },
   { type: 'blob', path: 'logos/brazil/Flamengo.svg' },
@@ -28,7 +29,7 @@ const tree = [
 const index = logoIndex.indexTree(tree, teamKey);
 const options = { normalizeName: teamKey, normalizeCountry: countrySlugHint, aliases };
 
-assert.equal(index.size, 5, 'Indexa apenas arquivos SVG dentro de logos/<país>.');
+assert.equal(index.size, 6, 'Indexa apenas arquivos SVG dentro de logos/<país>.');
 assert.equal(
   logoIndex.findExactLogo('Arsenal FC', 'England', index, options),
   `${logoIndex.DEFAULT_RAW_BASE}logos/england/Arsenal.svg`,
@@ -45,6 +46,12 @@ assert.equal(
   'Usa país para separar clubes homônimos.'
 );
 assert.equal(logoIndex.findExactLogo('Flamengo', 'Spain', index, options), '', 'Nunca usa escudo de país incompatível.');
+assert.equal(
+  logoIndex.findClosestLogo('Liverpool FC', 'England', index, { ...options, minimumScore:0.82, minimumGap:0.055 }),
+  `${logoIndex.DEFAULT_RAW_BASE}logos/england/Liverpool.svg`,
+  'Usa a competição para inferir o país e encontrar uma grafia próxima sem buscar em outros países.'
+);
+assert.equal(logoIndex.findClosestLogo('Liverpool FC', 'LaLiga', index, options), '', 'Não usa busca aproximada fora do país inferido pela competição.');
 assert.equal(logoIndex.findExactLogo('United', '', index, options), '', 'Recusa nomes ambíguos quando não há país.');
 assert.equal(logoIndex.findExactLogo('Time que não existe', 'Brasil', index, options), '', 'Não inventa correspondência para clube ausente.');
 

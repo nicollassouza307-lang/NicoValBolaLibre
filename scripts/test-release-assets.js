@@ -7,7 +7,7 @@ const workflow = fs.readFileSync(path.join(root, '.github/workflows/release.yml'
 const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'build/electron-builder.config.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.18.3');
+assert.equal(pkg.version, '0.18.4');
 assert.match(workflow, /Verify Windows installer and updater manifest/);
 assert.match(workflow, /dist\/latest\.yml/);
 assert.match(workflow, /dist\/\*-Setup\.exe/);
