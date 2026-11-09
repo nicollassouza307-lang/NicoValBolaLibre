@@ -1,3 +1,15 @@
+# NicoValBolaLibre V0.19.2
+
+## V0.19.2 · Correção de correspondências da 365Scores
+
+- Corrigida a interpretação de datas/horários da 365Scores sem offset, usando America/Sao_Paulo em vez do fuso do servidor.
+- Reconhecidos timestamps em segundos/milisegundos e datas no formato brasileiro durante a comparação.
+- Melhorada a normalização de nomes curtos/oficiais, sufixos de clubes e abreviações comuns (ex.: Corinthians x Corinthians Paulista; Botafogo x Botafogo FR).
+- A comparação agora considera jogos da data local e, apenas para revisão manual, partidas no dia vizinho quando os clubes e o horário indicam possível diferença de fuso.
+- A associação automática continua bloqueada para nomes aproximados ou data vizinha.
+- Quando não há candidato, o Admin mostra quantos jogos da 365Scores foram recebidos, quantos são da mesma data e qual foi a melhor semelhança encontrada, facilitando o diagnóstico.
+- O comparador aceita aliases/sufixos oficiais de clubes, datas ISO locais sem offset e timestamps em segundos/milisegundos; a data vizinha só entra como sugestão manual se horário e clubes indicarem uma virada real da meia-noite.
+
 # NicoValBolaLibre V0.19.1
 
 ## V0.19.1 · Migração esportiva para 365Scores, agenda compacta e filtro de emissoras
@@ -22,8 +34,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.19.1` e `Push origin`.
-3. Crie e envie a tag `v0.19.1`.
+2. Faça commit `NicoValBolaLibre V0.19.2` e `Push origin`.
+3. Crie e envie a tag `v0.19.2`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
@@ -31,7 +43,7 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração u
 ## Testes
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
-- `npm run test:365scores-agenda-match`: aliases, data, competição, horário, segurança de inversão e bloqueio de candidatas ambíguas.
+- `npm run test:365scores-agenda-match`: aliases, nomes curtos/oficiais, fuso local, virada de data, competição, horário, segurança de inversão e bloqueio de candidatas ambíguas.
 - `npm run test:agenda-market`: filtro de emissoras brasileiras, argentinas, pan-regionais e desconhecidas.
 - Os demais testes cobrem interface, agenda, escudos, sincronização e compatibilidade dos módulos legados.
 - A bateria automatizada não substitui teste visual e consulta real em partida disponível na 365Scores.

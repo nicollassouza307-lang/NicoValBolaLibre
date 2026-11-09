@@ -50,4 +50,41 @@ const laLiga = matchAgendaEvents(
   [{ gameId: 557, startTime: '2026-11-09T22:00:00Z', home: { name: 'Flamengo' }, away: { name: 'Palmeiras' }, competition: { id: 101, name: 'La Liga' } }]
 );
 assert.equal(laLiga[0].candidates[0].autoEligible, true, 'Alias estrito da LaLiga deve permitir associação segura.');
-console.log('PASSOU: correspondência por clubes, data, competição, horário, alias e revisão de mandante/visitante invertidos.');
+
+// Nomes curtos/oficiais usados por feeds diferentes não podem ser descartados.
+const shortNames = matchAgendaEvents(
+  [{ id: 'agenda-short', dateEvent: '2026-11-09', timeText: '20:00', home: 'Corinthians', away: 'Botafogo', league: 'Brasileirão Série A' }],
+  [{ gameId: 700, startTime: '2026-11-09T20:00:00', home: { name: 'Corinthians Paulista' }, away: { name: 'Botafogo FR' }, competition: { name: 'Brasileirao' } }]
+);
+assert.equal(shortNames[0].candidates[0].gameId, 700, 'Nome oficial/curto com sufixos não deve resultar em Sem candidato.');
+assert.equal(shortNames[0].candidates[0].autoEligible, true, 'Sufixos oficiais removidos de forma inequívoca podem permitir vínculo automático.');
+assert.equal(shortNames[0].diagnostics.sameDateGames, 1);
+
+// O dia local é considerado explicitamente mesmo quando o servidor opera em UTC.
+const localWallTime = matchAgendaEvents(
+  [{ id: 'agenda-wall-time', dateEvent: '2026-11-09', timeText: '21:30', home: 'Flamengo', away: 'Palmeiras', league: 'Brasileirão Série A' }],
+  [{ gameId: 701, startTime: '2026-11-09T21:30:00', home: { name: 'Flamengo' }, away: { name: 'Palmeiras' }, competition: { name: 'Brasileirao' } }]
+);
+assert.equal(localWallTime[0].candidates[0].gameId, 701, 'Data/hora sem offset deve ser interpretada em America/Sao_Paulo.');
+assert.equal(localWallTime[0].candidates[0].autoEligible, true);
+
+// Partidas perto da meia-noite podem atravessar a data UTC, mas continuam em revisão.
+const adjacentDate = matchAgendaEvents(
+  [{ id: 'agenda-near-midnight', dateEvent: '2026-11-09', timeText: '23:50', home: 'Flamengo', away: 'Palmeiras', league: 'Brasileirão Série A' }],
+  [{ gameId: 702, startTime: '2026-11-10T00:10:00-03:00', home: { name: 'Flamengo' }, away: { name: 'Palmeiras' }, competition: { name: 'Brasileirao' } }]
+);
+assert.equal(adjacentDate[0].candidates[0].gameId, 702, 'Data vizinha deve ser considerada quando os clubes e horário batem.');
+assert.equal(adjacentDate[0].candidates[0].autoEligible, false, 'Data vizinha nunca pode gerar vínculo automático.');
+assert.equal(adjacentDate[0].diagnostics.adjacentDateGames, 1);
+
+
+const noCandidate = matchAgendaEvents(
+  [{ id: 'agenda-no-candidate', dateEvent: '2026-11-09', timeText: '20:00', home: 'Time A', away: 'Time B', league: 'Competição X' }],
+  [{ gameId: 799, startTime: '2026-11-09T20:00:00-03:00', home: { name: 'Outro Clube' }, away: { name: 'Mais Outro' }, competition: { name: 'Outra Liga' } }]
+);
+assert.equal(noCandidate[0].candidates.length, 0);
+assert.equal(noCandidate[0].diagnostics.sourceGames, 1, 'O diagnóstico deve mostrar quantos jogos foram recebidos.');
+assert.equal(noCandidate[0].diagnostics.sameDateGames, 1, 'O diagnóstico deve separar os jogos na mesma data.');
+assert.ok(noCandidate[0].diagnostics.bestTeamScore >= 0, 'O diagnóstico deve registrar a melhor semelhança encontrada.');
+
+console.log('PASSOU: correspondência por clubes, aliases, sufixos oficiais, fuso local, virada de data, competição, horário, diagnóstico e revisão de ambiguidades.');

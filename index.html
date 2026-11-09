@@ -549,7 +549,7 @@ img.crest.crest-github {
 .match-center-panel .apifootball-stat-card .home { background: var(--stat-home-color, #2563eb); }
 .match-center-panel .apifootball-stat-card .away { background: var(--stat-away-color, #dc2626); }
 
-/* V0.19.1: cartões compactos em lista, inspirados na leitura rápida de apps de resultados. */
+/* V0.19.2: diagnósticos de associação em lista, inspirados na leitura rápida de apps de resultados. */
 .games-grid{grid-template-columns:minmax(0,1fr);gap:7px}
 .competition-section-cards{grid-template-columns:minmax(0,1fr);gap:7px;margin-top:7px}
 .game-card{padding:9px 12px;border-radius:12px;background:linear-gradient(100deg,#122238,#0d1727)}
@@ -830,7 +830,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.19.1 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB (escudos)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.19.2 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB (escudos)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -3043,7 +3043,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         return `<div class="multi-api-provider" style="margin-top:7px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>${escapeHtml(candidate.home)} x ${escapeHtml(candidate.away)}</strong><em class="planned">${escapeHtml(confidence)} · ${Number(candidate.score)||0}% · gameId ${Number(candidate.gameId)||'—'}</em></div><span>${escapeHtml(candidate.competition||'Competição não informada')} · ${escapeHtml(scores365DateTimeLabel(candidate.startTime))}${candidate.competitionMatch===false?' · competição diferente':''}${candidate.reversed?' · ordem invertida':''}</span><span>${escapeHtml(reasons)}</span><div class="modal-actions" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px"><button class="btn secondary small" type="button" data-scores365-agenda-test="${index}-${candidateIndex}">Testar dados</button><button class="btn small" type="button" data-scores365-agenda-save="${index}-${candidateIndex}" ${linked?'disabled':''}>Vincular manualmente</button></div></div>`;
       }).join('');
       const unlink=linked?`<button class="btn danger small" type="button" data-scores365-agenda-unlink="${index}">Desvincular gameId ${Number(linked.gameId)||'—'}</button>`:'';
-      return `<div class="admin-panel"><div class="section-head"><div><h4>${escapeHtml(row.home||'Mandante')} x ${escapeHtml(row.away||'Visitante')}</h4><p>${escapeHtml(row.competition||'Competição não informada')} · ${escapeHtml(row.date||'Data não informada')}</p></div>${status}</div>${linked?`<div class="admin-small">Vínculo local salvo em ${escapeHtml(linked.linkedAt||'data não registrada')}. ${unlink}</div>`:''}${candidateMarkup||'<div class="admin-small">Nenhuma candidata com times e data suficientemente semelhantes foi encontrada.</div>'}</div>`;
+      return `<div class="admin-panel"><div class="section-head"><div><h4>${escapeHtml(row.home||'Mandante')} x ${escapeHtml(row.away||'Visitante')}</h4><p>${escapeHtml(row.competition||'Competição não informada')} · ${escapeHtml(row.date||'Data não informada')}</p></div>${status}</div>${linked?`<div class="admin-small">Vínculo local salvo em ${escapeHtml(linked.linkedAt||'data não registrada')}. ${unlink}</div>`:''}${candidateMarkup||`<div class="admin-small">Nenhuma candidata passou pelo filtro de semelhança. A 365Scores devolveu ${Number(row.diagnostics?.sourceGames)||0} jogos; ${Number(row.diagnostics?.sameDateGames)||0} na mesma data local e ${Number(row.diagnostics?.adjacentDateGames)||0} no dia vizinho. Melhor compatibilidade entre times: ${Number(row.diagnostics?.bestTeamScore)||0}%${row.diagnostics?.bestGame?` (${escapeHtml(row.diagnostics.bestGame)})`:''}.`}</div>`;
     }).join('');
     root.querySelectorAll('[data-scores365-agenda-test]').forEach(button=>button.addEventListener('click',()=>{
       const [rowIndex,candidateIndex]=String(button.dataset.scores365AgendaTest||'').split('-').map(Number);
@@ -4374,7 +4374,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.19.1',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.19.2',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -4440,9 +4440,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   $('#exportConfig').addEventListener('click',exportConfig);
   $('#importConfigFile').addEventListener('change',e=>importConfig(e.target.files?.[0]));
   initCloudSyncPanel();
-  // V0.19.1: API-Football saiu do fluxo principal de dados esportivos.
+  // V0.19.2: API-Football segue fora do fluxo principal de dados esportivos.
   init365ScoresPanel();
-  // V0.19.1: football-data.org saiu do fluxo principal de dados esportivos.
+  // V0.19.2: football-data.org segue fora do fluxo principal de dados esportivos.
   initTheSportsDBPanel();
   initDesktopUpdatePanel();
   // V0.15: filtros (Todos / Ao vivo / Próximos / Encerrados / Favoritos) no topo da lista.

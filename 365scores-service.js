@@ -391,6 +391,9 @@ const MATCH_TEAM_ALIASES = new Map([
   ['sporting cp', 'sporting'], ['sporting clube de portugal', 'sporting'], ['benfica lisbon', 'benfica'], ['porto fc', 'porto'],
   ['junior', 'junior barranquilla'], ['atletico junior', 'junior barranquilla'],
   ['river plate', 'river plate'], ['ca river plate', 'river plate'], ['boca juniors', 'boca juniors'],
+  ['nottm forest', 'nottingham forest'], ['nott forest', 'nottingham forest'], ['nottingham forest', 'nottingham forest'],
+  ['athletico pr', 'athletico paranaense'], ['athletico paranaense', 'athletico paranaense'], ['atletico pr', 'athletico paranaense'],
+  ['atletico go', 'atletico goianiense'], ['atletico goianiense', 'atletico goianiense'],
   ['club atletico boca juniors', 'boca juniors'], ['flamengo crf', 'flamengo'], ['cr flamengo', 'flamengo'],
   ['palmeiras se', 'palmeiras'], ['se palmeiras', 'palmeiras'], ['sao paulo fc', 'sao paulo'], ['spfc', 'sao paulo'],
   ['atletico mg', 'atletico mineiro'], ['atletico mineiro mg', 'atletico mineiro'], ['galo', 'atletico mineiro'],
@@ -400,9 +403,27 @@ const MATCH_TEAM_ALIASES = new Map([
 function normalizeMatchTeam(value) {
   let key = foldMatchText(value);
   if (MATCH_TEAM_ALIASES.has(key)) return MATCH_TEAM_ALIASES.get(key);
-  key = key.replace(/^(?:fc|cf|ac|as|ssc|ss|sc|cd|ca|afc|rcd|rc|ud|vfb|ec)\s+/, '');
-  key = key.replace(/\b(?:football club|fc|cf|club|deportivo|futbol club)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  key = key.replace(/^(?:fc|cf|ac|as|ssc|ss|sc|cd|ca|afc|rcd|rc|ud|vfb|ec|cr|se)\s+/, '');
+  key = key.replace(/\b(?:football club|fc|cf|club|deportivo|futbol club|football|soccer|clube)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  // Sufixos comuns de escudos/fontes brasileiras (RJ, MG, SP, RS etc.) não
+  // fazem parte do nome principal do clube.
+  key = key.replace(/\s+(?:rj|mg|sp|rs|pr|ba|sc|pe|ce|go|mt|ms|df|pb|rn|al|se|pi|to|fr|paulista|carioca)$/i, '').trim();
   return MATCH_TEAM_ALIASES.get(key) || key;
+}
+function editDistance(left, right) {
+  const a = String(left), b = String(right);
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    previous = current;
+  }
+  return previous[b.length];
 }
 function teamNameSimilarity(left, right) {
   const a = normalizeMatchTeam(left), b = normalizeMatchTeam(right);
@@ -410,29 +431,70 @@ function teamNameSimilarity(left, right) {
   if (a === b) return 1;
   if ((a.length >= 5 && b.includes(a)) || (b.length >= 5 && a.includes(b))) return Math.min(a.length, b.length) / Math.max(a.length, b.length) * 0.92;
   const aa = new Set(a.split(' ')), bb = new Set(b.split(' '));
-  const intersection = [...aa].filter(token => bb.has(token)).length;
-  return intersection ? (2 * intersection) / (aa.size + bb.size) : 0;
+  const shared = [...aa].filter(token => bb.has(token));
+  if (shared.length) {
+    const shorter = aa.size <= bb.size ? aa : bb;
+    // Muitos feeds usam nome curto de TV (ex.: Corinthians) e outros o nome
+    // oficial (ex.: Corinthians Paulista). Se todos os tokens do nome curto
+    // estiverem presentes no longo, isso é uma correspondência forte.
+    if ([...shorter].every(token => (aa.size <= bb.size ? bb : aa).has(token))) return 0.92;
+    const dice = (2 * shared.length) / (aa.size + bb.size);
+    if (dice >= 0.5) return dice;
+  }
+  // Erros pequenos de grafia e abreviações não devem zerar um par que já está
+  // dentro da data consultada. Exige distância relativa razoável para evitar
+  // associar nomes curtos e genéricos por acidente.
+  const maxLength = Math.max(a.length, b.length);
+  const editScore = maxLength >= 7 ? 1 - editDistance(a, b) / maxLength : 0;
+  return editScore >= 0.72 ? editScore * 0.9 : 0;
+}
+function dateValueInSaoPaulo(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number' || (typeof value === 'string' && /^\d{10,13}$/.test(value.trim()))) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    const epochMs = numeric >= 100000000000 ? numeric : numeric >= 1000000000 ? numeric * 1000 : NaN;
+    return Number.isFinite(epochMs) ? new Date(epochMs) : null;
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  // O endpoint pode devolver somente a data ou uma data/hora local sem offset.
+  // Nunca deixe o fuso do servidor (Railway/Windows) decidir o dia da partida.
+  const localDateTime = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(raw);
+  const normalized = localDateTime ? `${raw.replace(' ', 'T')}-03:00` : raw;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 function localDateInSaoPaulo(value) {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+  if (value === null || value === undefined || value === '') return '';
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const brDate = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brDate) return `${brDate[3]}-${brDate[2]}-${brDate[1]}`;
+  const date = dateValueInSaoPaulo(value);
+  if (!date) return '';
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
   const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
 function localMinutesInSaoPaulo(value) {
   if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
+  const date = dateValueInSaoPaulo(value);
+  if (!date) return null;
   const parts = new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date);
   const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return Number(values.hour) * 60 + Number(values.minute);
 }
 function parseAgendaDate(row) {
   const direct = firstText(row.dateEvent, row.date, row.startDate);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) return direct;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(direct) || /^\d{2}\/\d{2}\/\d{4}$/.test(direct)) return localDateInSaoPaulo(direct);
   return localDateInSaoPaulo(row.start || row.startTime || row.start_time || '');
+}
+function calendarDayDistance(left, right) {
+  if (!left || !right) return null;
+  const a = Date.parse(`${left}T12:00:00Z`), b = Date.parse(`${right}T12:00:00Z`);
+  return Number.isFinite(a) && Number.isFinite(b) ? Math.round(Math.abs(a - b) / 86400000) : null;
 }
 function parseAgendaMinutes(row) {
   const direct = firstText(row.timeText, row.time, row.horario, row.start_time);
@@ -472,34 +534,49 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
     const away = firstText(event.away, event.awayName, event.awayTeam?.name, event.teams?.away?.name);
     const date = parseAgendaDate(event);
     const competition = firstText(event.league, event.competition, event.competitionName);
-    if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
+    const diagnostics = { sourceGames: games.length, sameDateGames: 0, adjacentDateGames: 0, gamesWithoutDate: 0, bestTeamScore: 0, bestGame: '' };
+    if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], diagnostics, reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
     const candidates = [];
     for (const game of games) {
       const item = asObject(game);
-      const gameDate = localDateInSaoPaulo(item.startTime);
-      if (!gameDate || gameDate !== date) continue;
+      const gameDate = localDateInSaoPaulo(item.startTime || item.startDate || item.date || item.startTimestamp || item.timestamp);
+      if (!gameDate) { diagnostics.gamesWithoutDate++; continue; }
+      const dayDistance = calendarDayDistance(date, gameDate);
+      if (dayDistance === 0) diagnostics.sameDateGames++;
+      else if (dayDistance === 1) diagnostics.adjacentDateGames++;
+      else continue;
+
       const gameHome = firstText(item.home?.name), gameAway = firstText(item.away?.name);
+      if (!gameHome || !gameAway) continue;
       const directHome = teamNameSimilarity(home, gameHome);
       const directAway = teamNameSimilarity(away, gameAway);
       const reverseHome = teamNameSimilarity(home, gameAway);
       const reverseAway = teamNameSimilarity(away, gameHome);
       const direct = Math.min(directHome, directAway);
-      const reversed = Math.min(reverseHome, reverseAway);
-      const isReversed = reversed > direct;
-      const teamScore = Math.max(direct, reversed);
-      if (teamScore < 0.68) continue;
+      const reversedScore = Math.min(reverseHome, reverseAway);
+      const isReversed = reversedScore > direct;
+      const teamScore = Math.max(direct, reversedScore);
+      if (teamScore > diagnostics.bestTeamScore) {
+        diagnostics.bestTeamScore = Math.round(teamScore * 100);
+        diagnostics.bestGame = `${gameHome} x ${gameAway} (${gameDate})`;
+      }
+      const agendaMinutes = parseAgendaMinutes(event);
+      const gameMinutes = localMinutesInSaoPaulo(item.startTime || item.startDate || item.date || item.startTimestamp || item.timestamp);
+      const rawTimeDiff = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
+      const timeDiffMinutes = rawTimeDiff === null ? null : dayDistance === 1 ? Math.min(rawTimeDiff, 1440 - rawTimeDiff) : rawTimeDiff;
+      // Aceita variações de nome oficial/curto. Uma data vizinha só é plausível
+      // se a diferença de relógio indicar cruzamento da meia-noite (ex.: 23:50/00:10).
+      if (teamScore < 0.50 || (dayDistance === 1 && (teamScore < 0.88 || rawTimeDiff === null || rawTimeDiff < 1380 || timeDiffMinutes > 90))) continue;
       const gameCompetition = firstText(item.competition?.name);
       const competitionMatch = compareCompetitionNames(competition, gameCompetition);
       const strictCompetitionMatch = competitionAutoMatch(competition, gameCompetition);
-      const agendaMinutes = parseAgendaMinutes(event);
-      const gameMinutes = localMinutesInSaoPaulo(item.startTime);
-      const timeDiffMinutes = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
       const timeScore = timeDiffMinutes === null ? 0.45 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 30 ? 0.9 : timeDiffMinutes <= 60 ? 0.72 : timeDiffMinutes <= 90 ? 0.5 : timeDiffMinutes <= 180 ? 0.2 : 0;
       const competitionScore = competitionMatch === true ? 0.13 : competitionMatch === false ? 0 : 0.07;
       const orientationScore = isReversed ? 0.015 : 0.075;
       const score = Math.max(0, Math.min(100, Math.round(teamScore * 0.72 * 100 + timeScore * 10 + competitionScore * 100 + orientationScore * 100)));
       const exactOriented = directHome >= 0.98 && directAway >= 0.98 && !isReversed;
-      const confidence = exactOriented && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : 'revisar';
+      const sameLocalDate = dayDistance === 0;
+      const confidence = exactOriented && sameLocalDate && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : 'revisar';
       candidates.push({
         gameId: positiveId(item.gameId), startTime: item.startTime, home: gameHome, away: gameAway,
         homeId: positiveId(item.home?.id), awayId: positiveId(item.away?.id),
@@ -507,26 +584,26 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
         status: firstText(item.status), competition: gameCompetition, competitionId: positiveId(item.competition?.id),
         score, confidence, autoEligible: false, reversed: isReversed, exactOriented,
         teamScore: Math.round(teamScore * 100), competitionMatch,
-        competitionAutoMatch: strictCompetitionMatch, timeDiffMinutes,
-        reasons: [exactOriented ? 'times correspondentes' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes aproximados', 'mesma data', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
+        competitionAutoMatch: strictCompetitionMatch, timeDiffMinutes, dateDiffDays: dayDistance,
+        reasons: [exactOriented ? 'times correspondentes' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes curtos/oficiais compatíveis', sameLocalDate ? 'mesma data local' : 'data vizinha: conferir fuso ou adiamento', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
       });
     }
-    candidates.sort((a, b) => b.score - a.score);
+    candidates.sort((a, b) => b.score - a.score || b.teamScore - a.teamScore);
     const first = candidates[0];
     const runnerUp = candidates[1];
-    // Associação automática exige times exatos após aliases, competição idêntica,
-    // horário muito próximo e margem clara sobre a segunda candidata.
+    // Associação automática permanece muito conservadora. Sugestões de data
+    // vizinha, nomes aproximados e competição não canônica exigem confirmação.
     if (first) {
       const margin = runnerUp ? first.score - runnerUp.score : 100;
       first.autoEligible = Boolean(
-        first.gameId && first.exactOriented && first.competitionAutoMatch === true &&
+        first.gameId && first.exactOriented && first.dateDiffDays === 0 && first.competitionAutoMatch === true &&
         first.timeDiffMinutes !== null && first.timeDiffMinutes <= 45 &&
         first.score >= 95 && margin >= 12
       );
       first.autoMargin = margin;
       if (first.autoEligible) first.reasons.push('correspondência inequívoca: apta para vínculo automático');
     }
-    return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3) };
+    return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3), diagnostics };
   });
 }
 
