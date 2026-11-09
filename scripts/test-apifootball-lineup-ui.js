@@ -26,9 +26,10 @@ const snapshot = {
         { id: 201, name: 'Atacante 2', number: 9, pos: 'F', grid: '4:2' },
         { id: 202, name: 'Goleiro Visitante', number: 1, pos: 'G', grid: '1:1' },
         { id: 203, name: 'Defensor 1', number: 3, pos: 'D', grid: '2:1' },
-        { id: 204, name: 'Atacante 1', number: 11, pos: 'F', grid: '4:1' }
+        { id: 204, name: 'Atacante 1', number: 11, pos: 'F', grid: '4:1' },
+        { id: 208, name: 'Atacante que saiu', number: 17, pos: 'F', grid: '4:3' }
       ],
-      substitutes: [{ id: 205, name: 'Reserva Visitante', number: 18, pos: 'M' }]
+      substitutes: [{ id: 205, name: 'Reserva Visitante', number: 18, pos: 'M' }, { id: 209, name: 'Atacante que entrou', number: 23, pos: 'F' }]
     },
     {
       team: { id: 10, name: 'Palmeiras' }, formation: '4-2-3-1', coach: { name: 'Técnico Mandante' },
@@ -37,7 +38,7 @@ const snapshot = {
         { id: 102, name: 'Goleiro Mandante', number: 21, pos: 'G', grid: '1:1' },
         { id: 103, name: 'Centroavante', number: 9, pos: 'F', grid: '4:1' }
       ],
-      substitutes: [{ id: 104, name: 'Reserva Mandante', number: 30, pos: 'F' }]
+      substitutes: [{ id: 104, name: 'Reserva Mandante', number: 30, pos: 'F' }, { id: 109, name: 'Meia Criador', number: 14, pos: 'M' }]
     }
   ],
   statistics: [
@@ -51,7 +52,7 @@ assert.equal(ui.playerPhotoUrl(0), '');
 assert.equal(ui.playerPhotoUrl({ id: 321, photoUrl: 'https://imagecache.365scores.com/image/upload/v1/Athletes/321' }), 'https://imagecache.365scores.com/image/upload/v1/Athletes/321', 'A foto fornecida pela 365Scores deve ter prioridade sobre o fallback API-Football.');
 assert.equal(ui.playerPhotoUrl({ id: 321, photoUrl: 'javascript:alert(1)' }), 'https://media.api-sports.io/football/players/321.png', 'URLs de foto fora dos hosts permitidos devem ser rejeitadas.');
 assert.deepEqual(ui.sortLineupPlayers(snapshot.lineups[0].startXI).map(player => player.name), [
-  'Goleiro Visitante', 'Defensor 1', 'Atacante 1', 'Atacante 2'
+  'Goleiro Visitante', 'Defensor 1', 'Atacante 1', 'Atacante 2', 'Atacante que saiu'
 ]);
 assert.equal(ui.resolveLineups(snapshot)[0].team.name, 'Palmeiras', 'Mandante deve aparecer primeiro mesmo se a API devolver visitante primeiro.');
 assert.equal(ui.resolveLineups(snapshot)[1].team.name, 'Flamengo');
@@ -72,6 +73,18 @@ const fallbackFormation = ui.playerPlacements([
 ], 'home');
 assert.equal(new Set(fallbackFormation.map(entry => entry.depth)).size, 4, 'Sem coordenadas válidas, goleiro, defesa, meio e ataque devem ocupar linhas diferentes.');
 assert.ok(fallbackFormation.every(entry => entry.left >= 0 && entry.left <= 100 && entry.top >= 0 && entry.top <= 100), 'Todos os marcadores devem permanecer dentro do campo.');
+const tacticalRoster = [
+  { name: 'GK', number: 1, pos: 'G' },
+  ...['D1','D2','D3'].map((name, index) => ({ name, number: index + 2, pos: 'D' })),
+  ...['M1','M2','M3','M4','AM1','AM2'].map((name, index) => ({ name, number: index + 5, pos: 'M' })),
+  { name: 'ST', number: 9, pos: 'F' }
+].map(player => ({ player }));
+const tacticalHome = ui.playerPlacements(tacticalRoster, 'home', '3-4-2-1');
+const tacticalLayers = new Map();
+for (const entry of tacticalHome) tacticalLayers.set(entry.depth, (tacticalLayers.get(entry.depth) || 0) + 1);
+assert.deepEqual([...tacticalLayers.values()], [1, 3, 4, 2, 1], 'A formação 3-4-2-1 deve distribuir os 11 jogadores em cinco linhas táticas.');
+const tacticalAway = ui.playerPlacements(tacticalRoster, 'away', '3-4-2-1');
+assert.ok(tacticalHome[0].left < tacticalAway[0].left, 'Os dois times devem atacar em direções opostas no campo horizontal.');
 assert.match(lineupHtml, /Palmeiras/);
 assert.match(lineupHtml, /Flamengo/);
 assert.match(lineupHtml, /4-2-3-1/);
@@ -86,6 +99,9 @@ assert.match(lineupHtml, /Técnico Mandante/);
 assert.match(lineupHtml, /Reserva Mandante/);
 assert.ok(lineupHtml.indexOf('apifootball-pitch') < lineupHtml.indexOf('apifootball-support-grid'), 'Técnico e banco devem ficar fora e abaixo do campo.');
 assert.match(lineupHtml, /apifootball-photo-fallback/);
+assert.match(lineupHtml, /apifootball-player-event-badge/, 'Eventos da partida devem aparecer como marcadores ao redor das fotos dos titulares.');
+assert.match(lineupHtml, /substitution-out|substitution-in/, 'Substituições devem identificar atletas que saíram ou entraram.');
+assert.match(lineupHtml, /apifootball-player-event-badge assist/, 'O autor da assistência também deve receber um marcador na foto.');
 
 const apiShapeLineups = {
   ...snapshot,
@@ -139,8 +155,14 @@ assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('cl
 assert.match(index, /bindApiFootballPanelEvents\(e\)/);
 assert.match(index, /renderScores365MatchPanel\(e\)/, 'Partidas com vínculo confirmado devem exibir o painel da 365Scores.');
 assert.match(index, /scores365LineupAsApiSnapshot/, 'Escalações 365Scores devem ser adaptadas ao campo tático existente.');
-assert.match(index, /Number\.isInteger\(line\)&&line>=1&&line<=6&&Number\.isInteger\(row\)&&row>=1&&row<=5/, 'Coordenadas proporcionais ou fora da grade tática devem acionar o posicionamento por função.');
-assert.match(index, /addShotCount\(h,homeName\);addShotCount\(a,awayName\)/, 'Finalizações do gráfico devem aparecer no comparativo coletivo quando a fonte não trouxer o total por equipe.');
+assert.match(index, /grid:''/, 'Coordenadas brutas inconsistentes da 365Scores não devem empurrar todos os atletas para o mesmo canto.');
+const lineupUiSource = fs.readFileSync(path.join(__dirname, '..', 'apifootball-lineup-ui.js'), 'utf8');
+assert.match(lineupUiSource, /playerPlacements\(players, side, lineup\.formation\)/, 'O posicionamento deve usar a formação como fallback quando faltarem coordenadas confiáveis.');
+assert.match(lineupUiSource, /formationFallback/, 'A formação deve substituir coordenadas ausentes ou inválidas.');
+assert.match(lineupUiSource, /playerEventMarkers/, 'Gols, cartões e substituições devem ser associados às fotos dos atletas.');
+assert.match(index, /scores365CanonicalStatName/, 'As estatísticas coletivas devem ser normalizadas para nomes consistentes.');
+assert.match(index, /Finalizações.*No gol.*Para fora.*Bloqueadas/, 'Finalizações e seus desdobramentos devem aparecer na categoria de ataque.');
+assert.match(index, /scores365-stat-category/, 'As estatísticas devem ser agrupadas em categorias visuais.');
 assert.match(index, /scores365LoadStandings/, 'A classificação 365Scores deve poder ser solicitada na central da partida.');
 // O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.
 // Encontramos a declaração pelo nome e isolamos o trecho até emptyMarkup.
@@ -165,5 +187,8 @@ assert.match(index, /data-competition-logo/, 'A agenda deve aceitar o logo da co
 assert.match(index, /competition-divider-mark/, 'Se o logo da competição falhar, a agenda deve voltar ao ícone de troféu.');
 assert.match(index, /--pitch-depth/, 'O campo deve adaptar a profundidade dos jogadores quando a tela fica estreita.');
 assert.match(index, /apifootball-pitch-half\.away \.apifootball-pitch-player/, 'O time visitante deve atacar na direção oposta no campo vertical.');
+assert.match(index, /position:absolute;left:0;width:100%;height:50%/, 'No celular, as duas metades do campo devem ficar alinhadas em uma quadra vertical contínua.');
+assert.match(index, /match-facts-enriched/, 'O cabeçalho deve apresentar os detalhes de estádio, rodada e árbitro recebidos pela fonte.');
+assert.match(index, /scores365Details\?\.venue/, 'O local do 365Scores deve alimentar o cabeçalho da partida.');
 
 console.log('PASSOU: escalações; wrappers originais da API; fotos; campo ampliado/compactado; gols, assistências, substituições e pênaltis; placar na agenda e central; estatísticas; escape HTML.');

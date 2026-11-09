@@ -39,19 +39,66 @@
       const gridMatch = String(record?.grid || player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
       const position = String(record?.pos || player?.pos || '').toUpperCase();
       const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : 2;
-      return {
-        ...player,
-        __player: record,
-        __index: index,
-        __depth: gridMatch ? Number(gridMatch[1]) : fallbackDepth,
-        __row: gridMatch ? Number(gridMatch[2]) : null
-      };
-    }).sort((a, b) => a.__depth - b.__depth ||
-      (a.__row ?? Number.MAX_SAFE_INTEGER) - (b.__row ?? Number.MAX_SAFE_INTEGER) || a.__index - b.__index);
+      return { ...player, __player: record, __index: index, __depth: gridMatch ? Number(gridMatch[1]) : fallbackDepth, __row: gridMatch ? Number(gridMatch[2]) : null };
+    }).sort((a, b) => a.__depth - b.__depth || (a.__row ?? Number.MAX_SAFE_INTEGER) - (b.__row ?? Number.MAX_SAFE_INTEGER) || a.__index - b.__index);
   }
 
-  function playerPlacements(players, side = 'home') {
-    const ordered = sortLineupPlayers(players);
+  function formationFallback(players, formation) {
+    const source = Array.isArray(players) ? players : [];
+    const lines = String(formation || '').split(/[-–—/]/).map(Number).filter(value => Number.isInteger(value) && value > 0 && value <= 6);
+    if (!lines.length || source.length < 7) return source;
+    const current = source.map((item, index) => {
+      const record = item?.player && typeof item.player === 'object' ? item.player : item;
+      const gridMatch = String(record?.grid || item?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
+      return { item, index, depth: gridMatch ? Number(gridMatch[1]) : null, row: gridMatch ? Number(gridMatch[2]) : null, pos: String(record?.pos || item?.pos || '').toUpperCase() };
+    });
+    const distinctDepths = new Set(current.map(item => item.depth).filter(Number.isFinite));
+    if (distinctDepths.size > 1) return source;
+    const goalkeeper = current.filter(item => item.pos.startsWith('G'));
+    const defenders = current.filter(item => item.pos.startsWith('D'));
+    const midfielders = current.filter(item => item.pos.startsWith('M'));
+    const forwards = current.filter(item => item.pos.startsWith('F'));
+    const unclassified = current.filter(item => !/^(G|D|M|F)/.test(item.pos));
+    const orderedOutfield = [...defenders, ...midfielders, ...forwards, ...unclassified].filter(item => !goalkeeper.includes(item));
+    const hasUsableRoles = defenders.length + midfielders.length + forwards.length >= Math.min(7, source.length - goalkeeper.length);
+    let buckets = [];
+    if (hasUsableRoles) {
+      const expectedDefenders = lines[0] || 4;
+      const expectedForwards = lines[lines.length - 1] || 1;
+      const mids = [...midfielders];
+      const backs = [...defenders];
+      const front = [...forwards];
+      const middleCounts = lines.slice(1, -1);
+      buckets.push(backs.splice(0, expectedDefenders));
+      if (middleCounts.length) {
+        for (const count of middleCounts) buckets.push(mids.splice(0, count));
+      }
+      buckets.push(front.splice(0, expectedForwards));
+      const leftovers = [...backs, ...mids, ...front, ...unclassified];
+      if (leftovers.length) {
+        let target = Math.max(0, buckets.length - 1);
+        buckets[target] = [...(buckets[target] || []), ...leftovers];
+      }
+    } else {
+      const outfield = orderedOutfield.length ? orderedOutfield : current.filter(item => !goalkeeper.includes(item));
+      let offset = 0;
+      buckets = lines.map(count => { const group = outfield.slice(offset, offset + count); offset += count; return group; });
+      if (offset < outfield.length) buckets[buckets.length - 1].push(...outfield.slice(offset));
+    }
+    const result = [];
+    const allBuckets = [...(goalkeeper.length ? [goalkeeper] : []), ...buckets];
+    allBuckets.forEach((group, depthIndex) => {
+      group.forEach((player, rowIndex) => {
+        const record = player.item?.player && typeof player.item.player === 'object' ? player.item.player : player.item;
+        result.push({ ...player.item, grid: `${depthIndex + 1}:${rowIndex + 1}`, player: player.item?.player && typeof player.item.player === 'object' ? { ...record } : player.item });
+      });
+    });
+    return result.length === source.length ? result : source;
+  }
+
+  function playerPlacements(players, side = 'home', formation = '') {
+    const prepared = formationFallback(players, formation);
+    const ordered = sortLineupPlayers(prepared);
     if (!ordered.length) return [];
     const depths = ordered.map(player => player.__depth);
     const minDepth = Math.min(...depths);
@@ -62,43 +109,23 @@
       if (!byDepth.has(player.__depth)) byDepth.set(player.__depth, []);
       byDepth.get(player.__depth).push(player);
     }
-
-    // Faixas com espaçamento de campo real, em vez de distribuir tudo igualmente.
-    // A coluna do grid da API-Football preserva a ordem quando vem preenchida.
-    const lanePresets = {
-      1: [50],
-      2: [36, 64],
-      3: [24, 50, 76],
-      4: [19, 40, 60, 81],
-      5: [15, 32.5, 50, 67.5, 85]
-    };
     const positions = [];
     for (const depth of [...byDepth.keys()].sort((a, b) => a - b)) {
       const group = byDepth.get(depth);
       const count = group.length;
-      const preset = lanePresets[count] || group.map((_, index) => count === 1 ? 50 : 7 + (index / (count - 1)) * 86);
-      const gridRows = group.map(player => player.__row).filter(Number.isFinite);
-      const maxGridRow = gridRows.length ? Math.max(...gridRows) : 0;
       group.forEach((player, index) => {
-        const lane = Number.isFinite(player.__row) && maxGridRow > 1
-          ? 18 + ((player.__row - 1) / (maxGridRow - 1)) * 64
-          : preset[index];
-        let xForward = 23 + ((depth - minDepth) / depthRange) * 54;
-        const wideLane = lane <= 28 || lane >= 72;
+        const presetLane = count === 1 ? 50 : count === 2 ? [34, 66][index] : count === 3 ? [23, 50, 77][index] : 9 + (index / (count - 1)) * 82;
+        const rowValues = group.map(item => item.__row).filter(Number.isFinite);
+        const minRow = rowValues.length ? Math.min(...rowValues) : 0;
+        const maxRow = rowValues.length ? Math.max(...rowValues) : 0;
+        const lane = Number.isFinite(player.__row) && maxRow > minRow
+          ? 12 + ((player.__row - minRow) / (maxRow - minRow)) * 76
+          : presetLane;
+        let xForward = 20 + ((depth - minDepth) / depthRange) * 60;
         const position = String(player.__player?.pos || player.pos || '').toUpperCase();
-        // Laterais dão amplitude e avançam um pouco. Pontas ficam mais abertos
-        // e alguns passos à frente, criando o desenho assimétrico de um FC/FIFA.
-        if (count >= 3 && wideLane && depth === minDepth + 1) xForward += 2;
-        if (position.startsWith('F')) xForward += 3.5;
-        if (position.startsWith('F') && wideLane) xForward += 2;
-        if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1 : 2.5;
-        xForward = Math.min(82, xForward);
-        positions.push({
-          player,
-          left: Number((side === 'away' ? 100 - xForward : xForward).toFixed(2)),
-          top: Number(lane.toFixed(2)),
-          depth: Number(xForward.toFixed(2))
-        });
+        if (position.startsWith('F')) xForward += 3;
+        xForward = Math.max(14, Math.min(86, xForward));
+        positions.push({ player, left: Number((side === 'away' ? 100 - xForward : xForward).toFixed(2)), top: Number(lane.toFixed(2)), depth: Number(xForward.toFixed(2)) });
       });
     }
     return positions;
@@ -121,33 +148,76 @@
     return [take(homeId, homeName, 0), take(awayId, awayName, 1)];
   }
 
-  function renderPhoto(player, compact = false) {
-    const record = player?.player && typeof player.player === 'object' ? player.player : player;
-    const id = safeId(record?.id);
-    const name = String(record?.name || 'Jogador');
-    const photo = playerPhotoUrl(record);
-    const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
-    return `<div class="apifootball-photo-frame${photo ? '' : ' is-fallback'}" aria-hidden="true">${photo ? `<img class="apifootball-player-photo" data-apifootball-player-photo src="${photo}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}<span class="apifootball-photo-fallback">${escapeHtml(initials(name))}</span></div>`;
+  function normalizedPlayerName(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
-  function renderPitchPlayer(entry) {
+  function eventPlayer(event, secondary = false) {
+    const raw = secondary ? (event?.secondaryPlayer ?? event?.assist ?? event?.inPlayer) : (event?.player ?? event?.athlete);
+    const object = raw && typeof raw === 'object' ? raw : null;
+    return { id: safeId(secondary ? (event?.secondaryPlayerId || object?.id) : (event?.playerId || object?.id)), name: String(object?.name || object?.displayName || raw || (secondary ? event?.assistName : event?.playerName) || '') };
+  }
+
+  function playerEventMarkers(player, teamName, snapshot, role = 'starter') {
+    const id = safeId(player?.id || player?.athleteId);
+    const name = normalizedPlayerName(player?.name);
+    const teamKey = normalizedPlayerName(teamName);
+    const samePlayer = candidate => {
+      if (id && candidate.id && id === candidate.id) return true;
+      return Boolean(name && candidate.name && name === normalizedPlayerName(candidate.name));
+    };
+    const markers = [];
+    for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
+      const eventTeam = normalizedPlayerName(event?.team?.name || event?.team || '');
+      if (teamKey && eventTeam && teamKey !== eventTeam) continue;
+      const type = String(event?.type || event?.eventType || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const primary = eventPlayer(event, false);
+      const secondary = eventPlayer(event, true);
+      const minute = String(event?.minute || event?.time?.elapsed || '').trim();
+      if (/substitution|substituicao|\bsubst\b/.test(type)) {
+        if (samePlayer(primary)) markers.push({ icon: role === 'starter' ? '↓' : '⇄', label: role === 'starter' ? 'Saiu' : 'Substituição', minute, kind: 'substitution-out' });
+        if (samePlayer(secondary)) markers.push({ icon: role === 'bench' ? '↑' : '⇄', label: role === 'bench' ? 'Entrou' : 'Substituição', minute, kind: 'substitution-in' });
+      } else if (samePlayer(primary)) {
+        if (/own goal|gol contra/.test(type)) markers.push({ icon: '⚽↩', label: 'Gol contra', minute, kind: 'own-goal' });
+        else if (/goal|gol/.test(type)) markers.push({ icon: '⚽', label: 'Gol', minute, kind: 'goal' });
+        else if (/yellow|amarelo/.test(type)) markers.push({ icon: '🟨', label: 'Cartão amarelo', minute, kind: 'yellow' });
+        else if (/red|vermelho|expulsion/.test(type)) markers.push({ icon: '🟥', label: 'Cartão vermelho', minute, kind: 'red' });
+        else if (/penalty missed|missed penalty|penalti perdido/.test(type)) markers.push({ icon: '✕', label: 'Pênalti perdido', minute, kind: 'missed-penalty' });
+      } else if (samePlayer(secondary) && /goal|gol/.test(type) && !/own goal|gol contra/.test(type)) {
+        markers.push({ icon: 'A', label: 'Assistência', minute, kind: 'assist' });
+      }
+    }
+    return markers.slice(0, 3);
+  }
+
+  function renderPhoto(player, compact = false, markers = []) {
+    const record = player?.player && typeof player.player === 'object' ? player.player : player;
+    const name = String(record?.name || 'Jogador');
+    const photo = playerPhotoUrl(record);
+    const badges = (Array.isArray(markers) ? markers : []).map(marker => `<span class="apifootball-player-event-badge ${escapeHtml(marker.kind || '')}" title="${escapeHtml(`${marker.label || ''}${marker.minute ? ` · ${marker.minute}` : ''}`)}">${escapeHtml(marker.icon || '•')}${marker.minute ? `<small>${escapeHtml(marker.minute)}</small>` : ''}</span>`).join('');
+    return `<span class="apifootball-player-avatar-wrap${compact ? ' compact' : ''}"><span class="apifootball-photo-frame${photo ? '' : ' is-fallback'}" aria-hidden="true">${photo ? `<img class="apifootball-player-photo" data-apifootball-player-photo src="${escapeHtml(photo)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}<span class="apifootball-photo-fallback">${escapeHtml(initials(name))}</span></span>${badges}</span>`;
+  }
+
+  function renderPitchPlayer(entry, snapshot, teamName) {
     const player = entry.__player || (entry.player?.player && typeof entry.player.player === 'object' ? entry.player.player : entry.player) || {};
     const name = String(player.name || 'Jogador');
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
     const label = `${name}, camisa ${number}`;
+    const markers = playerEventMarkers(player, teamName, snapshot, 'starter');
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
-      ${renderPhoto(player)}
+      ${renderPhoto(player, false, markers)}
       <span class="apifootball-pitch-name">${escapeHtml(name)}</span>
       <span class="apifootball-pitch-number">${escapeHtml(number)}</span>
     </div>`;
   }
 
-  function renderBenchPlayer(player) {
+  function renderBenchPlayer(player, snapshot, teamName) {
     const record = player?.player && typeof player.player === 'object' ? player.player : player;
     const name = String(record?.name || 'Jogador');
     const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
     const position = String(record?.pos || player?.pos || '').toUpperCase();
-    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}</div>`;
+    const markers = playerEventMarkers(record, teamName, snapshot, 'bench');
+    return `<div class="apifootball-bench-player">${renderPhoto(player, true, markers)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}</div>`;
   }
 
   function renderTeamHead(lineup, fixtureTeam, label) {
@@ -157,15 +227,18 @@
     return `<div class="apifootball-pitch-team-head"><div class="apifootball-team-head-crest">${logo ? `<img src="${escapeHtml(logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span>${escapeHtml(initials(name))}</span>`}</div><div class="apifootball-team-head-info"><strong>${escapeHtml(name)}</strong><small>${escapeHtml(formation)}</small></div></div>`;
   }
 
-  function renderSupportCard(lineup, fixtureTeam, label) {
+  function renderSupportCard(lineup, fixtureTeam, label, snapshot = null) {
     const name = String(lineup?.team?.name || fixtureTeam?.name || label);
-    const coach = String(lineup?.coach?.name || 'Técnico não informado');
+    const coachRecord = lineup?.coach && typeof lineup.coach === 'object' ? lineup.coach : { name: lineup?.coach };
+    const coach = String(coachRecord.name || 'Técnico não informado');
+    const coachPhoto = typeof coachRecord.photoUrl === 'string' ? coachRecord.photoUrl : '';
+    const coachAvatar = coachPhoto ? renderPhoto({ name: coach, photoUrl: coachPhoto }, true, []) : '';
     const substitutes = Array.isArray(lineup?.substitutes) ? lineup.substitutes : [];
     return `<article class="apifootball-support-card">
       <div class="apifootball-support-head"><div><span class="apifootball-support-kicker">COMISSÃO TÉCNICA</span><h5>${escapeHtml(name)}</h5></div><span class="apifootball-support-count">${substitutes.length} reservas</span></div>
-      <div class="apifootball-coach-row"><span class="apifootball-coach-icon">T</span><div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>
+      <div class="apifootball-coach-row">${coachPhoto ? coachAvatar : `<span class="apifootball-coach-icon">${escapeHtml(initials(coach))}</span>`}<div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>
       <div class="apifootball-section-title">Banco de reservas</div>
-      ${substitutes.length ? `<div class="apifootball-bench-list">${substitutes.map(renderBenchPlayer).join('')}</div>` : '<div class="apifootball-lineup-empty">Reservas não informados.</div>'}
+      ${substitutes.length ? `<div class="apifootball-bench-list">${substitutes.map(player => renderBenchPlayer(player, snapshot, name)).join('')}</div>` : '<div class="apifootball-lineup-empty">Reservas não informados.</div>'}
     </article>`;
   }
 
@@ -179,8 +252,9 @@
     const renderHalf = (lineup, side) => {
       if (!lineup) return `<div class="apifootball-pitch-half ${side} apifootball-pitch-half-empty"><div class="apifootball-half-empty-label">Escalação não disponível</div></div>`;
       const players = Array.isArray(lineup.startXI) ? lineup.startXI : [];
-      const placed = playerPlacements(players, side);
-      return `<div class="apifootball-pitch-half ${side}">${placed.map(renderPitchPlayer).join('')}</div>`;
+      const teamName = String(lineup.team?.name || (side === 'home' ? fixtureHome.name : fixtureAway.name) || '');
+      const placed = playerPlacements(players, side, lineup.formation);
+      return `<div class="apifootball-pitch-half ${side}">${placed.map(entry => renderPitchPlayer(entry, snapshot, teamName)).join('')}</div>`;
     };
     return `<div class="apifootball-lineups-view">
       <div class="apifootball-pitch-team-heads">${renderTeamHead(home, fixtureHome, 'Mandante')}${renderTeamHead(away, fixtureAway, 'Visitante')}</div>
@@ -188,7 +262,7 @@
         <div class="apifootball-pitch-outline"></div><div class="apifootball-pitch-center-line"></div><div class="apifootball-pitch-center-circle"></div><div class="apifootball-pitch-box home"></div><div class="apifootball-pitch-box away"></div>
         ${renderHalf(home, 'home')}${renderHalf(away, 'away')}
       </div></div>
-      <div class="apifootball-support-grid">${renderSupportCard(home, fixtureHome, 'Mandante')}${renderSupportCard(away, fixtureAway, 'Visitante')}</div>
+      <div class="apifootball-support-grid">${renderSupportCard(home, fixtureHome, 'Mandante', snapshot)}${renderSupportCard(away, fixtureAway, 'Visitante', snapshot)}</div>
       <div class="apifootball-muted apifootball-lineup-footnote">Fotos obtidas pela fonte de dados do jogador quando disponível. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.</div>
     </div>`;
   }
@@ -322,5 +396,5 @@
     return `<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela fonte esportiva selecionada. Um traço indica dado não informado.</div></div>`;
   }
 
-  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };
+  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, formationFallback, playerPlacements, resolveLineups, playerEventMarkers, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };
 });

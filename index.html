@@ -519,6 +519,82 @@ img.crest.crest-github {
 .match-center-panel .apifootball-stat-team-labels strong:last-child { color: var(--stat-away-color, #dc2626); }
 .match-center-panel .apifootball-stat-card .home { background: var(--stat-home-color, #2563eb); }
 .match-center-panel .apifootball-stat-card .away { background: var(--stat-away-color, #dc2626); }
+
+/* V0.18.21: Match Center renovado, leitura tática, eventos nos atletas e estatísticas por categoria. */
+.match-hero{border:1px solid #ffffff16;border-radius:20px;padding:clamp(14px,2vw,22px);background:radial-gradient(circle at 50% 0%,#25476755,transparent 50%),linear-gradient(145deg,#102236,#0b1624);box-shadow:0 18px 45px #0003}
+.match-league-name{font-size:clamp(15px,2vw,18px);letter-spacing:-.025em}
+.match-facts-enriched{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:4px}
+.match-facts-enriched .match-fact{min-height:76px;background:linear-gradient(145deg,#ffffff0b,#ffffff04);border-color:#8ca6c32b}
+.match-facts-enriched .match-fact strong{font-size:11px}
+.match-center-panel{margin-top:15px;border:1px solid #7fa0c42a;border-radius:17px;background:linear-gradient(145deg,#12263a,#0a1625);box-shadow:0 12px 30px #0002;overflow:hidden}
+.match-center-panel .apifootball-panel-head{padding:15px 17px;background:#ffffff06;border-bottom:1px solid #ffffff10}
+.match-center-panel .apifootball-tabs{padding:10px 12px 0;gap:7px}
+.match-center-panel .apifootball-tab{border-radius:10px;font-size:10px;font-weight:850}
+.match-center-panel .apifootball-tab-content{padding:13px}
+.apifootball-pitch-scroll{padding:3px;background:#081521;border:1px solid #ffffff12}
+.apifootball-pitch{min-height:520px;border-radius:13px;box-shadow:inset 0 0 40px #001b12a3;background:repeating-linear-gradient(90deg,#145b3b 0,#145b3b 8.33%,#176941 8.33%,#176941 16.66%)}
+.apifootball-pitch-outline{inset:11px;border-color:#ecfff08c}
+.apifootball-pitch-half{height:100%;min-height:520px}
+.apifootball-pitch-half.home{border-right:1px solid #d9f7e377}
+.apifootball-pitch-player{width:84px;gap:3px}
+.apifootball-pitch-player .apifootball-photo-frame{width:45px;height:45px;flex-basis:45px;border:2px solid #f4fff6;box-shadow:0 3px 12px #001b15b8}
+.apifootball-player-avatar-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:max-content;min-width:30px;min-height:30px}
+.apifootball-player-event-badge{position:absolute;right:-9px;top:-7px;z-index:5;display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 4px;border:1px solid #0c1824;border-radius:99px;background:#e5f7ef;color:#073223;font-size:10px;font-weight:950;box-shadow:0 2px 7px #0008;white-space:nowrap}
+.apifootball-player-event-badge small{font-size:7px;margin-left:1px}
+.apifootball-player-event-badge.goal{background:#f5fff9;color:#087343}
+.apifootball-player-event-badge.assist{background:#a9d8ff;color:#083d68}
+.apifootball-player-event-badge.own-goal{background:#ffe4b4;color:#8a4d00}
+.apifootball-player-event-badge.yellow{background:#ffe16e;color:#6b4a00}
+.apifootball-player-event-badge.red{background:#ff747e;color:#5b0710}
+.apifootball-player-event-badge.substitution-out,.apifootball-player-event-badge.substitution-in{background:#8be8d3;color:#06473c}
+.apifootball-pitch-number{background:#f0faf6;color:#102b29;border-radius:5px;box-shadow:0 1px 3px #001b1580}
+.apifootball-pitch-name{font-size:9px;max-width:84px;text-shadow:0 2px 4px #00140e,0 1px 2px #00140e}
+.apifootball-support-card{border-color:#8ca6c32b;background:linear-gradient(145deg,#142a40,#0c1929);box-shadow:0 8px 20px #0002}
+.apifootball-bench-player{position:relative;grid-template-columns:34px 20px minmax(0,1fr);padding:7px;background:#ffffff07;border:1px solid #ffffff09}
+.apifootball-bench-player .apifootball-photo-frame{width:32px;height:32px;flex-basis:32px}
+.apifootball-bench-player .apifootball-player-event-badge{right:-6px;top:-5px;min-width:16px;height:16px;font-size:8px}
+.apifootball-coach-row{background:linear-gradient(90deg,#1d3c50,#ffffff05);border-color:#7fa0c426}
+.apifootball-coach-row .apifootball-photo-frame{width:36px;height:36px;flex-basis:36px}
+.scores365-stat-categories{display:grid;gap:14px}
+.scores365-stat-category{padding:12px;border:1px solid #ffffff12;border-radius:13px;background:linear-gradient(145deg,#122238,#0c1827)}
+.scores365-stat-category h4{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:#6ce0d3;font-size:9px;font-weight:950;letter-spacing:.14em}
+.scores365-stat-category h4:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#6ce0d355,transparent)}
+.scores365-stat-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.scores365-stat-card{border:1px solid #ffffff0d;border-radius:10px;padding:10px;background:#0715247d;min-width:0}
+.scores365-stat-values{display:grid;grid-template-columns:minmax(34px,.6fr) minmax(0,1.5fr) minmax(34px,.6fr);align-items:center;gap:6px;text-align:center}
+.scores365-stat-values strong{font-size:13px;font-weight:950;font-variant-numeric:tabular-nums;color:#f3f8ff}
+.scores365-stat-values span{font-size:9px;color:#9db2ca;font-weight:750;line-height:1.25}
+.scores365-stat-bar{height:5px;margin-top:9px;background:#ffffff12;border-radius:99px;overflow:hidden;display:flex;gap:2px}
+.scores365-stat-bar i.home{background:var(--stat-home-color,#38c6b7)}
+.scores365-stat-bar i.away{background:var(--stat-away-color,#6c91f1)}
+.scores365-player-stats{margin-top:13px;border:1px solid #ffffff13;border-radius:12px;background:#ffffff05;overflow:hidden}
+.scores365-player-stats summary{padding:12px 14px;color:#c7d8eb;font-size:10px;font-weight:850;cursor:pointer}
+.scores365-player-stats .apifootball-standings-wrap{padding:0 10px 10px}
+.match-fact small{color:#8ea5c0}
+@media(max-width:900px){.match-facts-enriched{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+  .match-facts-enriched{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .match-facts-enriched .match-fact:last-child{grid-column:1/-1}
+  .apifootball-pitch-scroll{overflow:hidden}
+  .apifootball-pitch{display:block!important;position:relative;min-width:0!important;min-height:650px!important;height:650px!important;background:repeating-linear-gradient(0deg,#145b3b 0,#145b3b 8.33%,#176941 8.33%,#176941 16.66%)}
+  .apifootball-pitch-half{position:absolute;left:0;width:100%;height:50%!important;min-height:0!important;flex:none!important}
+  .apifootball-pitch-half.away{top:0;order:initial;border:0;border-bottom:1px solid #d9f7e377}
+  .apifootball-pitch-half.home{top:50%;order:initial;border:0;border-top:1px solid #d9f7e377}
+  .apifootball-pitch-center-line{left:10px;right:10px;top:50%;bottom:auto;width:auto;height:1px}
+  .apifootball-pitch-center-circle{width:72px;height:72px}
+  .apifootball-pitch-box{top:auto;left:34%;right:34%;width:auto;height:13%;border:1px solid #d9f7e38a}
+  .apifootball-pitch-box.home{bottom:0;border-bottom:0;border-left:1px solid #d9f7e38a}
+  .apifootball-pitch-box.away{top:0;right:34%;border-top:0;border-right:1px solid #d9f7e38a}
+  .apifootball-pitch-player{width:70px;left:var(--pitch-lane)!important;top:calc(100% - var(--pitch-depth))!important}
+  .apifootball-pitch-half.away .apifootball-pitch-player{top:var(--pitch-depth)!important}
+  .apifootball-pitch-player .apifootball-photo-frame{width:37px;height:37px;flex-basis:37px}
+  .apifootball-pitch-name{font-size:7px;max-width:70px}
+  .apifootball-pitch-number{font-size:7px}
+  .scores365-stat-category-grid{grid-template-columns:1fr}
+  .apifootball-support-grid{grid-template-columns:1fr}
+}
+@media(max-width:390px){.apifootball-pitch{height:620px!important;min-height:620px!important}.apifootball-pitch-player{width:62px}.apifootball-pitch-player .apifootball-photo-frame{width:33px;height:33px;flex-basis:33px}.apifootball-pitch-name{font-size:6px;max-width:62px}.match-facts-enriched .match-fact{padding:9px 10px}}
+
 </style>
 </head>
 <body>
@@ -2237,27 +2313,29 @@ const BROADCASTER_ALIAS_GROUPS = [
     const teamLogo=id=>Number(id)>0?`https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${Number(id)}`:'';
     const mapTeam=(team,lineup)=>{
       const members=Array.isArray(lineup?.members)?lineup.members:[];
-      const mapPlayer=member=>{
-        const formation=member.formationPosition||{};
-        const line=Number(formation.line||0), row=Number(formation.fieldLine||formation.fieldSide||0);
-        // Só usa a coordenada bruta quando ela parece uma linha/coluna tática.
-        // Algumas respostas da 365Scores trazem coordenadas proporcionais ou vazias.
-        const grid=Number.isInteger(line)&&line>=1&&line<=6&&Number.isInteger(row)&&row>=1&&row<=5?`${line}:${row}`:'';
-        return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),photoUrl:String(member.photoUrl||'')},grid};
-      };
+      const mapPlayer=member=>({player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),role:String(member.position||''),photoUrl:String(member.photoUrl||'')},grid:''});
+      const rawCoach=lineup?.coach&&typeof lineup.coach==='object'?lineup.coach:{name:String(lineup?.coach||'')};
       return {
         team:{id:Number(team?.id)||0,name:String(team?.name||'Equipe'),logo:teamLogo(team?.id)},
         formation:String(lineup?.formation||''),
         startXI:members.filter(member=>Number(member.status)===1).map(mapPlayer),
         substitutes:members.filter(member=>Number(member.status)===2).map(mapPlayer),
-        coach:{name:String(lineup?.coach||'')}
+        coach:{id:Number(rawCoach.id)||0,name:String(rawCoach.name||''),photoUrl:String(rawCoach.photoUrl||'')}
       };
     };
+    const events=(Array.isArray(details.events)?details.events:[]).map(event=>({
+      type:String(event.type||''),player:{id:Number(event.playerId)||0,name:String(event.player||'')},
+      assist:{id:Number(event.secondaryPlayerId)||0,name:String(event.secondaryPlayer||'')},
+      playerId:Number(event.playerId)||0,secondaryPlayerId:Number(event.secondaryPlayerId)||0,
+      team:{name:String(event.team||'')},minute:String(event.minute||''),detail:String(event.detail||''),score:String(event.score||'')
+    }));
     return {
       fixture:{home:{id:Number(details.home?.id)||0,name:String(details.home?.name||'Mandante'),logo:teamLogo(details.home?.id)},away:{id:Number(details.away?.id)||0,name:String(details.away?.name||'Visitante'),logo:teamLogo(details.away?.id)}},
-      lineups:[mapTeam(details.home,details.lineups?.home),mapTeam(details.away,details.lineups?.away)]
+      lineups:[mapTeam(details.home,details.lineups?.home),mapTeam(details.away,details.lineups?.away)],
+      events
     };
   }
+
   function scores365EventMinute(value) {
     const raw=String(value||'').trim();
     if(!raw)return '—';
@@ -2267,10 +2345,18 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderScores365Events(details) {
     const events=Array.isArray(details?.events)?details.events:[];
     if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
-    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
+    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽↩','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
     const sorted=events.slice().sort((a,b)=>parseInt(String(a.minute||'').match(/\d+/)?.[0]||'0',10)-parseInt(String(b.minute||'').match(/\d+/)?.[0]||'0',10));
-    return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>`<article class="apifootball-event-row"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(event.player||event.type||'Evento')}</strong><small>${escapeHtml(event.type||'')}${event.secondaryPlayer?` · ${escapeHtml(event.secondaryPlayer)}`:''}${event.detail&&event.detail!==event.type?` · ${escapeHtml(event.detail)}`:''}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`).join('')}</div></div>`;
+    return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>{
+      const substitution=event.type==='Substituição';
+      const ownGoal=event.type==='Gol contra';
+      const title=substitution?(event.player?`Saiu: ${event.player}`:event.type):(ownGoal?`Gol contra · ${event.player||'Jogador não informado'}`:(event.player||event.type||'Evento'));
+      const note=substitution?(event.secondaryPlayer?`Entrou: ${event.secondaryPlayer}`:'Substituição'):[event.type,event.detail&&event.detail!==event.type?event.detail:'',event.score?`Placar ${event.score}`:''].filter(Boolean).join(' · ');
+      const kind=ownGoal?'own-goal':substitution?'substitution':/amarelo/.test(event.type)?'card yellow':/vermelho/.test(event.type)?'card red':'goal';
+      return `<article class="apifootball-event-row ${kind}"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(note)}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`;
+    }).join('')}</div></div>`;
   }
+
   function scores365TeamStatRows(row) {
     const source=Array.isArray(row?.stats)?row.stats:(Array.isArray(row?.rows)?row.rows:[]);
     const typeNames=new Map((Array.isArray(row?.statsTypes)?row.statsTypes:[]).map(item=>[Number(item.typeId),String(item.name||'')]));
@@ -2279,39 +2365,116 @@ const BROADCASTER_ALIAS_GROUPS = [
       const statList=Array.isArray(item?.stats)?item.stats:[item];
       for(const stat of statList) {
         const typeId=Number(stat?.typeId||stat?.type?.id||stat?.type||0);
-        const value=stat?.value??stat?.displayValue??null;
+        const value=stat?.value??stat?.displayValue??stat?.val??null;
         const name=String(stat?.name||stat?.typeName||stat?.type?.name||typeNames.get(typeId)||'').trim();
         if(name&&value!==null&&value!==undefined)out.push({name,value});
       }
     }
     return out;
   }
+
+  function scores365CanonicalStatName(rawName) {
+    const name=String(rawName||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[_-]+/g,' ').trim();
+    const rules=[
+      [/shots on target|shots on goal|on target|no gol|finalizacoes no alvo/,'No gol'],
+      [/blocked shots|shots blocked|blocked|bloqueadas/,'Bloqueadas'],
+      [/shots off target|shots off goal|off target|para fora|finalizacoes para fora/,'Para fora'],
+      [/big chances|grandes chances/,'Grandes chances'],
+      [/chances created|chances criadas/,'Chances criadas'],
+      [/shots inside box|inside the box|finalizacoes na area/,'Finalizações na área'],
+      [/shots outside box|outside the box|finalizacoes fora da area/,'Finalizações de fora da área'],
+      [/woodwork|post hit|shots hit post|na trave/,'Na trave'],
+      [/^(total )?(shots|shot attempts|attempts|finalizacoes)( total)?$/,'Finalizações'],
+      [/expected goals|^xg$|gols esperados/,'xG'],
+      [/^(ball )?possession|possession percentage|posse de bola/,'Posse de bola'],
+      [/corner|escanteio/,'Escanteios'],
+      [/key pass|passes decisivos/,'Passes decisivos'],
+      [/accurate long balls|passes longos certos/,'Passes longos certos'],
+      [/passes in final third|passes no ultimo terco/,'Passes no último terço'],
+      [/long pass|passes longos/,'Passes longos'],
+      [/cross|cruzamento/,'Cruzamentos'],
+      [/completed passes|passes completed|successful passes|passes completos/,'Passes completos'],
+      [/pass accuracy|accurate passes percent|passes %|precisao dos passes/,'Precisão dos passes'],
+      [/^total passes$|^passes$|passes tentados/,'Passes'],
+      [/dribble|drible/,'Dribles'],
+      [/save|defesa|defesas do goleiro/,'Defesas'],
+      [/tackle|desarme/,'Desarmes'],
+      [/interception|interceptacao/,'Interceptações'],
+      [/clearance|corte/,'Cortes'],
+      [/recovery|recuperacao/,'Recuperações'],
+      [/possession lost|lost possession|perda de posse|posse perdida/,'Posse perdida'],
+      [/aerial duel|duelo aereo/,'Duelos aéreos'],
+      [/ground duel|duelo no chao/,'Duelos no chão'],
+      [/fouls suffered|fouls drawn|faltas sofridas/,'Faltas sofridas'],
+      [/foul|faltas cometidas/,'Faltas cometidas'],
+      [/yellow card|cartao amarelo/,'Cartões amarelos'],
+      [/red card|cartao vermelho/,'Cartões vermelhos'],
+      [/offside|impedimento/,'Impedimentos']
+    ];
+    const match=rules.find(([pattern])=>pattern.test(name));
+    return match?match[1]:String(rawName||'').trim();
+  }
+
   function renderScores365Statistics(details) {
     const statistics=details?.statistics||{};
     const teams=Array.isArray(statistics.competitorRows)?statistics.competitorRows:[];
     const homeName=String(details.home?.name||'Mandante'),awayName=String(details.away?.name||'Visitante');
-    const homeStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===homeName)||teams[0];
-    const awayStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===awayName)||teams.find(row=>row!==homeStats)||teams[1];
-    const h=scores365TeamStatRows(homeStats),a=scores365TeamStatRows(awayStats);
-    const shots=Array.isArray(details.shots)?details.shots:[];
-    const addShotCount=(rows,teamName)=>{
-      const count=shots.filter(shot=>shot.team===teamName).length;
-      const exists=rows.some(row=>/^(finalizacoes|total shots|shots)$/i.test(String(row.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()));
-      if(count>0&&!exists)rows.push({name:'Finalizações',value:count});
+    const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const homeStats=teams.find(row=>fold(row.team||row.competitor?.name||row.name)===fold(homeName))||teams.find(row=>Number(row.competitorNum)===1)||teams[0];
+    const awayStats=teams.find(row=>fold(row.team||row.competitor?.name||row.name)===fold(awayName))||teams.find(row=>Number(row.competitorNum)===2)||teams.find(row=>row!==homeStats)||teams[1];
+    const toMap=row=>{
+      const map=new Map();
+      for(const stat of scores365TeamStatRows(row)) {
+        const canonical=scores365CanonicalStatName(stat.name);
+        if(canonical&&!map.has(canonical))map.set(canonical,stat.value);
+      }
+      return map;
     };
-    addShotCount(h,homeName);addShotCount(a,awayName);
-    const get=(rows,name)=>rows.find(row=>row.name.toLowerCase()===name.toLowerCase())?.value??'—';
-    const commonNames=[...new Set([...h.map(row=>row.name),...a.map(row=>row.name)])].slice(0,24);
+    const homeMap=toMap(homeStats),awayMap=toMap(awayStats);
+    const shots=Array.isArray(details.shots)?details.shots:[];
+    const shotsFor=(name,side)=>shots.filter(shot=>fold(shot.team)===fold(name)||(!shot.team&&Number(shot.competitorNum)===side));
+    const addIfMissing=(map,key,value)=>{if(value!==null&&value!==undefined&&!map.has(key))map.set(key,value);};
+    for(const [name,map,side] of [[homeName,homeMap,1],[awayName,awayMap,2]]) {
+      const teamShots=shotsFor(name,side);
+      if(teamShots.length) {
+        addIfMissing(map,'Finalizações',teamShots.length);
+        const countBy=(pattern)=>teamShots.filter(shot=>pattern.test(fold(shot.outcome))).length;
+        addIfMissing(map,'No gol',countBy(/goal|saved|save|on target/));
+        addIfMissing(map,'Bloqueadas',countBy(/blocked/));
+        addIfMissing(map,'Para fora',countBy(/off target|wide|off goal|missed/));
+        addIfMissing(map,'Na trave',countBy(/woodwork|post|crossbar/));
+        const xg=teamShots.reduce((sum,shot)=>sum+(Number.isFinite(Number(shot.xg))?Number(shot.xg):0),0);
+        if(teamShots.some(shot=>shot.xg!==null&&shot.xg!==undefined&&Number.isFinite(Number(shot.xg))))addIfMissing(map,'xG',xg.toFixed(2));
+      }
+    }
+    const categories=[
+      ['ATAQUE',['Finalizações','No gol','Para fora','Bloqueadas','Na trave','Finalizações na área','Finalizações de fora da área','xG','Grandes chances','Chances criadas','Escanteios']],
+      ['POSSE E PASSES',['Posse de bola','Passes','Passes completos','Precisão dos passes','Passes longos','Passes longos certos','Passes decisivos','Passes no último terço','Cruzamentos','Dribles']],
+      ['DEFESA',['Defesas','Desarmes','Interceptações','Cortes','Recuperações','Posse perdida','Duelos aéreos','Duelos no chão']],
+      ['DISCIPLINA',['Faltas cometidas','Faltas sofridas','Cartões amarelos','Cartões vermelhos','Impedimentos']]
+    ];
+    const number=value=>{const parsed=Number(String(value??'').replace('%','').replace(',','.').replace(/[^0-9.+-]/g,''));return Number.isFinite(parsed)?Math.max(0,parsed):null;};
+    const format=value=>value===null||value===undefined?'—':String(value);
+    const homeColor=window.NVBLineupUI?.teamPrimaryColor?.(homeName)||'#32c8b5';
+    const awayColor=window.NVBLineupUI?.teamPrimaryColor?.(awayName)||'#688ef0';
+    const categoryMarkup=categories.map(([category,names])=>{
+      const rows=names.filter(name=>homeMap.has(name)||awayMap.has(name));
+      if(!rows.length)return '';
+      return `<section class="scores365-stat-category"><h4>${category}</h4><div class="scores365-stat-category-grid">${rows.map(name=>{
+        const homeValue=homeMap.get(name),awayValue=awayMap.get(name);
+        const h=number(homeValue),a=number(awayValue);
+        const homeShare=h!==null&&a!==null&&h+a>0?h/(h+a)*100:(h!==null&&a===null?100:0);
+        const awayShare=h!==null&&a!==null&&h+a>0?100-homeShare:(a!==null&&h===null?100:0);
+        return `<article class="scores365-stat-card"><div class="scores365-stat-values"><strong>${escapeHtml(format(homeValue))}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(format(awayValue))}</strong></div><div class="scores365-stat-bar"><i class="home" style="width:${homeShare.toFixed(1)}%"></i><i class="away" style="width:${awayShare.toFixed(1)}%"></i></div></article>`;
+      }).join('')}</div></section>`;
+    }).join('');
     const playerRows=Array.isArray(statistics.playerRows)?statistics.playerRows:[];
-    const xgFor=name=>shots.filter(shot=>shot.team===name&&Number.isFinite(shot.xg)).reduce((sum,shot)=>sum+shot.xg,0);
-    const xgHome=xgFor(homeName),xgAway=xgFor(awayName);
-    let content='';
-    if(commonNames.length)content=`<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${commonNames.map(name=>`<article class="apifootball-stat-card"><div class="apifootball-stat-values"><strong>${escapeHtml(get(h,name))}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(get(a,name))}</strong></div></article>`).join('')}</div></div>`;
-    else content='<div class="apifootball-message">Não encontramos estatísticas numéricas por equipe nesta resposta. Isso pode variar conforme a cobertura e os dados fornecidos para cada partida.</div>';
-    const xgMarkup=shots.length?`<div class="multi-api-provider" style="margin-top:10px"><strong>Finalizações · xG somado dos eventos</strong><span>${escapeHtml(homeName)}: ${xgHome.toFixed(2)} · ${escapeHtml(awayName)}: ${xgAway.toFixed(2)} · ${shots.length} finalização(ões) no gráfico.</span></div>`:'';
-    const playerMarkup=playerRows.length?`<details style="margin-top:10px"><summary class="admin-small">Estatísticas individuais · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,30).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,5).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
-    return `${content}${xgMarkup}${playerMarkup}`;
+    const playerMarkup=playerRows.length?`<details class="scores365-player-stats"><summary>Desempenho individual · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,40).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,6).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
+    const labels=`<div class="apifootball-stat-team-labels" style="--stat-home-color:${escapeHtml(homeColor)};--stat-away-color:${escapeHtml(awayColor)}"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div>`;
+    const content=categoryMarkup?`${labels}<div class="scores365-stat-categories" style="--stat-home-color:${escapeHtml(homeColor)};--stat-away-color:${escapeHtml(awayColor)}">${categoryMarkup}</div>`:'<div class="apifootball-message">A fonte não disponibilizou estatísticas coletivas suficientes para esta partida.</div>';
+    return `${content}${playerMarkup}`;
   }
+
   function scores365StandingsCacheKey(competitionId, seasonNum=0, stageNum=0) {
     const id=Number(competitionId)||0;
     return id?`${id}:${Number(seasonNum)||'current'}:${Number(stageNum)||'all'}`:'';
@@ -3062,6 +3225,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     $('#modalTitle').textContent=`${e.home} x ${e.away}`;
     const status=statusLabel(e.status);
     const apiSnapshot=apiFootballMatchCache[String(e.id)]||null;
+    const scores365Details=scores365MatchCache[String(e.id)]?.details||null;
     const apiGoals=apiSnapshot?.fixture?.goals;
     const externalScore=footballDataScoreFor(e);
     const displayHomeScore=apiGoals?.home ?? e.homeScore ?? externalScore.home;
@@ -3074,9 +3238,14 @@ const BROADCASTER_ALIAS_GROUPS = [
     const hasPenaltyScore=displayPenaltyHome!==null&&displayPenaltyHome!==undefined&&displayPenaltyAway!==null&&displayPenaltyAway!==undefined;
     const penaltyScoreMarkup=hasPenaltyScore?`<div class="match-penalty-score">PÊNALTIS <strong>${escapeHtml(displayPenaltyHome)} × ${escapeHtml(displayPenaltyAway)}</strong></div>`:'';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
-    const matchTime=e.timeText || 'Horário a confirmar';
-    const round=e.round?`Rodada: ${escapeHtml(e.round)}`:'';
-    const venue=e.venue?`Estádio: ${escapeHtml(e.venue)}`:'';
+    const matchTime=e.timeText || (scores365Details?.startTime?scores365DateTimeLabel(scores365Details.startTime):'Horário a confirmar');
+    const roundValue=scores365Details?.round||e.round||externalScore.match?.matchday||'';
+    const round=roundValue?`Rodada: ${escapeHtml(/^\d+$/.test(String(roundValue))?`Rodada ${roundValue}`:roundValue)}`:'';
+    const venueName=scores365Details?.venue||e.venue||'';
+    const venueLocation=[scores365Details?.venueCity,scores365Details?.venueCountry].filter(Boolean).join(' · ');
+    const venue=venueName?`Estádio: ${escapeHtml(venueName)}`:'';
+    const referee=scores365Details?.referee||'';
+    const venueSub=[venueLocation,scores365Details?.venueAddress,scores365Details?.venueCapacity?`Capacidade ${Number(scores365Details.venueCapacity).toLocaleString('pt-BR')}`:''].filter(Boolean).join(' · ');
     const origins=(e.sourceNames||[]).join(' + ') || e.sourceProvider || 'Agenda pública';
     const sourceCount=sources.length;
     const player=active?`<iframe src="${escapeHtml(active.url)}" title="${escapeHtml(active.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>`:renderEmptyPlayerState(e,catalogMatches);
@@ -3087,7 +3256,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     $('#modalContent').innerHTML=`
       <section class="match-hero">
         <div class="match-hero-top">
-          <div class="match-league-block"><div class="eyebrow">CENTRAL DA PARTIDA</div><div class="match-league-name">🏆 ${escapeHtml(e.league)}</div></div>
+          <div class="match-league-block"><div class="eyebrow">CENTRAL DA PARTIDA</div><div class="match-league-name">🏆 ${escapeHtml(scores365Details?.competition?.name||e.league)}</div></div>
           <div class="match-hero-actions"><span class="status ${e.status}">${status}</span><button class="btn secondary small" id="favoriteToggle" type="button">${favoriteLabel}</button></div>
         </div>
         <div class="match-scoreboard">
@@ -3095,10 +3264,12 @@ const BROADCASTER_ALIAS_GROUPS = [
           <div class="match-score-center"><div class="match-score">${score}</div>${penaltyScoreMarkup}<div class="match-kickoff">${escapeHtml(matchTime)}</div></div>
           <div class="match-team-away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '',e.league)}<div class="match-team-name">${escapeHtml(e.away)}</div><div class="match-team-role">VISITANTE</div></div>
         </div>
-        <div class="match-facts">
+        <div class="match-facts match-facts-enriched">
           <div class="match-fact"><span>📅 DATA</span><strong>${escapeHtml(matchDate)}</strong></div>
           <div class="match-fact"><span>🕒 HORÁRIO</span><strong>${escapeHtml(matchTime)}</strong><small>Horário local do evento</small></div>
-          <div class="match-fact"><span>📍 LOCAL</span><strong>${venue?venue.replace(/^Estádio: /,''):'Não informado'}</strong><small>${round || 'Detalhes adicionais não informados'}</small></div>
+          <div class="match-fact"><span>📍 LOCAL</span><strong>${venue?venue.replace(/^Estádio: /,''):'Não informado'}</strong><small>${escapeHtml(venueSub||'Estádio / cidade não informados')}</small></div>
+          <div class="match-fact"><span>🏆 RODADA</span><strong>${round?round.replace(/^Rodada: /,''):'Não informada'}</strong><small>${escapeHtml(scores365Details?.competition?.name||e.league||'Competição')}</small></div>
+          <div class="match-fact"><span>🧑‍⚖️ ÁRBITRO</span><strong>${escapeHtml(referee||'Não informado')}</strong><small>${escapeHtml(scores365Details?.status||status||'')}</small></div>
         </div>
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
       </section>

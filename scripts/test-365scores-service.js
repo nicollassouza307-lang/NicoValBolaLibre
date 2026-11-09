@@ -51,7 +51,8 @@ try {
       { type: 'Substitution', player: 'Saiu', inPlayer: 'Entrou', competitorNum: 2, minute: '80' },
       { type: 3, player: { name: 'Jogador Expulso' }, competitorNum: 2, minute: '90+2' },
       { typeId: 1, eventTypeName: 'Goal', description: 'Own goal', playerName: 'Defensor Teste', competitorNum: 2, gameTime: '48' },
-      { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' }
+      { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' },
+      { typeId: 1, eventTypeName: 'Goal', playerId: 2, playerName: 'Atacante Teste', competitorNum: 2, gameTime: '58' }
     ], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
     stats: {},
     venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste' }]
@@ -123,10 +124,29 @@ try {
   assert.equal(game.details.events[5].type, 'Gol contra', 'A indicação textual de gol contra deve prevalecer sobre typeId=1.');
   assert.equal(game.details.events[5].detail, '', 'Não deve repetir a indicação de gol contra como detalhe redundante.');
   assert.equal(game.details.events[6].type, 'Gol contra', 'A flag isOwnGoal deve prevalecer sobre typeId=1.');
+  assert.equal(game.details.events[7].type, 'Gol contra', 'Um gol creditado ao adversário, marcado por atleta da outra equipe, deve ser identificado como gol contra.');
+  assert.equal(game.details.events[7].isOwnGoal, true);
   assert.equal(game.details.events[0].type, 'Gol', 'Gols normais continuam classificados como gol.');
   assert.equal(game.details.shots[0].xg, 0.3);
   assert.equal(game.details.round, 'Rodada 33');
+  const genericRound = require('../365scores-service').normalizeGameDetails({ game: { id: 456, roundName: 'Rodada', roundNum: 11, homeCompetitor: { id: 1, name: 'A' }, awayCompetitor: { id: 2, name: 'B' } } });
+  assert.equal(genericRound.round, 'Rodada 11', 'Quando roundName vier apenas como rótulo genérico, roundNum deve completar a rodada.');
   assert.equal(game.details.venueCapacity, 78838);
+  const teamStatsFixture = require('../365scores-service').normalizeGameDetails({ game: {
+    id: 321, homeCompetitor: { id: 10, name: 'Flamengo' }, awayCompetitor: { id: 20, name: 'Palmeiras' },
+    stats: { competitorsStats: [{ name: 'Team stats', statsTypes: [{ typeId: 11, name: 'Total shots' }, { typeId: 12, name: 'Shots on target' }, { typeId: 13, name: 'Ball possession' }], rows: [
+      { competitor: { id: 10, name: 'Flamengo' }, stats: [{ typeId: 11, value: 14 }, { typeId: 12, value: 6 }, { typeId: 13, value: '55%' }] },
+      { competitor: { id: 20, name: 'Palmeiras' }, stats: [{ typeId: 11, value: 9 }, { typeId: 12, value: 3 }, { typeId: 13, value: '45%' }] }
+    ] }] }
+  } });
+  assert.equal(teamStatsFixture.statistics.competitorRows.find(row => row.team === 'Flamengo').stats.find(stat => stat.name === 'Total shots').value, 14, 'Blocos statsTypes + rows devem virar estatísticas coletivas por equipe.');
+  assert.equal(teamStatsFixture.statistics.competitorRows.find(row => row.team === 'Palmeiras').stats.find(stat => stat.name === 'Shots on target').value, 3);
+  const coachFixture = require('../365scores-service').normalizeGameDetails({ game: {
+    id: 654, homeCompetitor: { id: 10, name: 'Flamengo', lineups: { members: [{ id: 99, athleteId: 99, status: 4, position: { name: 'Coach' } }] } },
+    awayCompetitor: { id: 20, name: 'Palmeiras', lineups: { members: [] } }, members: [{ id: 99, athleteId: 99, name: 'Técnico Teste', position: { name: 'Coach' } }]
+  } });
+  assert.equal(coachFixture.lineups.home.coach.name, 'Técnico Teste');
+  assert.match(coachFixture.lineups.home.coach.photoUrl, /imagecache\.365scores\.com.*Athletes\/99$/, 'A foto do técnico deve aproveitar a imagem de atleta quando ele estiver no cadastro da fonte.');
   const cachedGame = await service.getGame(12345);
   assert.equal(cachedGame.cached, true);
   assert.equal(urls.length, 3, 'Detalhes do mesmo jogo devem usar cache.');

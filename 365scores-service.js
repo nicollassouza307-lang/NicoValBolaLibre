@@ -159,7 +159,7 @@ function positionCode(value) {
 }
 function extractLineup(team, memberMap, isNationalTeam = false) {
   const source = asObject(team);
-  const lineup = asObject(source.lineups);
+  const lineup = asObject(source.lineups || source.lineup);
   const members = asArray(lineup.members || source.lineup?.members);
   const starters = members.filter(member => Number(member?.status) === 1);
   const coaches = members.filter(member => Number(member?.status) === 4 || member?.isCoach || /coach|t[eé]cnico/i.test(firstText(member?.position?.name, member?.positionName)));
@@ -169,6 +169,7 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
     const position = asObject(detail.position || member?.position);
     const photoId = positiveId(detail.athleteId || detail.id || athleteId);
     const positionName = firstText(position.name, detail.positionName, member?.position?.name, member?.positionName);
+    const explicitPhoto = firstText(detail.photoUrl, detail.imageUrl, member?.photoUrl, member?.imageUrl, member?.image?.url);
     return {
       id: photoId,
       athleteId: photoId,
@@ -178,25 +179,65 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
       positionCode: positionCode(positionName),
       status: Number.isFinite(Number(member?.status)) ? Number(member.status) : null,
       formationPosition: asObject(member?.yardFormation || detail.yardFormation),
-      photoUrl: athleteImageUrl(photoId, isNationalTeam),
+      photoUrl: explicitPhoto || athleteImageUrl(photoId, isNationalTeam),
       stats: normalizeStatRows(member?.stats || detail.stats)
     };
   });
   const coachMember = normalizedMembers.find(member => coaches.some(coach => positiveId(coach?.athleteId || coach?.id) === member.id)) || null;
+  const rawCoach = lineup.coach ?? source.coach ?? lineup.manager ?? source.manager ?? null;
+  const coachObject = asObject(rawCoach);
+  const coachId = positiveId(coachObject.id || coachObject.coachId || coachObject.athleteId || coachObject.memberId);
+  const coachDetail = coachId ? (memberMap.get(coachId) || {}) : {};
+  const coachName = firstText(coachMember?.name, coachDetail.name, coachDetail.displayName, coachObject.name, coachObject.displayName, typeof rawCoach === 'string' ? rawCoach : '');
+  const coachPhotoUrl = firstText(coachMember?.photoUrl, coachDetail.photoUrl, coachDetail.imageUrl, coachObject.photoUrl, coachObject.imageUrl, coachObject.image?.url);
   return {
     formation: firstText(lineup.formation, source.formation),
     total: members.length,
     starters: starters.length,
     substitutes: members.filter(member => Number(member?.status) === 2 && !coaches.includes(member)).length,
     coaches: coaches.length,
-    coach: coachMember?.name || firstText(lineup.coach?.name, source.coach?.name),
+    coach: { id: coachId, name: coachName, photoUrl: coachPhotoUrl },
     members: normalizedMembers.slice(0, 40)
   };
 }
 function isOwnGoalText(value) {
   const text = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[_-]+/g, ' ').trim();
-  return /\bown\s*goal\b|\bautogol\b|\bautogolo\b|\bgol\s+contra\b/.test(text);
+  return /\bown\s*goal\b|\bautogol\b|\bautogolo\b|\bgol\s+contra\b|\bgoal\s+against\b|\bscored\s+against\s+own\b/.test(text);
 }
+function ownGoalSignals(event) {
+  const stack = [{ value: event, depth: 0 }];
+  const seen = new Set();
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || current.depth > 5) continue;
+    const value = current.value;
+    if (!value || typeof value !== 'object' || seen.has(value)) continue;
+    seen.add(value);
+    for (const [key, child] of Object.entries(value)) {
+      const normalizedKey = String(key).replace(/[^a-z]/gi, '').toLowerCase();
+      if (/^(isowngoal|owngoal|isowngoalevent|autogoal|autogol|golcontra)$/.test(normalizedKey) && isTruthyEventFlag(child)) return true;
+      if (typeof child === 'string' && /(type|sub|goal|description|comment|detail|label|text|event|name|note)/i.test(key) && isOwnGoalText(child)) return true;
+      if (child && typeof child === 'object') stack.push({ value: child, depth: current.depth + 1 });
+    }
+  }
+  return false;
+}
+function roundLabel(game) {
+  const direct = firstText(game?.roundName, game?.round?.name, game?.roundLabel, game?.matchdayName, game?.weekName, game?.competitionRound);
+  const number = Number(game?.roundNum ?? game?.round?.num ?? game?.round?.number ?? game?.matchday ?? game?.week ?? 0);
+  if (direct) {
+    const explicit = direct.match(/^(?:rodada|matchday|round|giornata)\s*(\d+)$/i) || direct.match(/^(\d+)$/);
+    if (explicit) return `Rodada ${explicit[1]}`;
+    if (/^(rodada|matchday|round|giornata)$/i.test(direct.trim()) && Number.isFinite(number) && number > 0) return `Rodada ${number}`;
+    return direct;
+  }
+  if (Number.isFinite(number) && number > 0) return `Rodada ${number}`;
+  const stage = firstText(game?.stageName, game?.stage?.name);
+  if (stage) return stage;
+  const stageNumber = Number(game?.stageNum ?? game?.stage?.num ?? 0);
+  return stageNumber > 0 ? `Fase ${stageNumber}` : '';
+}
+
 function isTruthyEventFlag(value) {
   if (value === true || value === 1) return true;
   return ['true', '1', 'yes', 'sim'].includes(String(value ?? '').trim().toLowerCase());
@@ -242,12 +283,14 @@ function normalizeGameEvent(event, memberMap, home, away) {
     item.goal?.isOwnGoal, item.goal?.ownGoal, nestedType.isOwnGoal, nestedType.ownGoal
   ].some(isTruthyEventFlag);
   const ownGoalText = [
-    rawTypeName, item.eventSubType, item.subType, item.subtype, item.goalType,
-    item.eventDescription, item.description, item.Description, item.comment,
-    item.Comment, item.shortText, item.eventName, item.EventName, item.detail,
-    item.Details, item.note, item.message, item.goal?.type, item.goal?.typeName
+    rawTypeName, item.eventSubType, item.eventSubTypeName, item.subType, item.subtype,
+    item.subTypeName, item.goalType, item.goalTypeName, item.eventDescription,
+    item.description, item.Description, item.comment, item.Comment, item.shortText,
+    item.eventName, item.EventName, item.detail, item.Details, item.note, item.message,
+    item.goal?.type, item.goal?.typeName, item.goal?.description, item.goal?.name,
+    nestedType?.subType?.name, nestedType?.subtype?.name
   ].some(isOwnGoalText);
-  const isOwnGoal = ownGoalFlag || ownGoalText;
+  const isOwnGoal = ownGoalFlag || ownGoalText || ownGoalSignals(item);
   const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.PID);
   const rawPlayer = item.player || item.athlete || item.Player;
   const player = (athleteId && memberMap.get(athleteId)) || asObject(rawPlayer);
@@ -263,10 +306,14 @@ function normalizeGameEvent(event, memberMap, home, away) {
     typeId: Number.isInteger(Number(rawTypeId)) && rawTypeId !== null && rawTypeId !== undefined ? Number(rawTypeId) : null,
     type,
     minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime, item.GTD, item.GT),
+    playerId: athleteId,
+    secondaryPlayerId: secondAthleteId,
     player: firstText(player.name, player.displayName, player.longName, player.shortName, typeof rawPlayer === 'string' ? rawPlayer : '', item.playerName, item.PlayerName, item.name, item.Player),
     secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, secondPlayer.longName, secondPlayer.shortName, typeof rawSecondPlayer === 'string' ? rawSecondPlayer : '', item.assistName, item.inPlayerName, item.Player2, item.ExtraPlayers?.[0]),
     team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name, item.teamName, item.TeamName),
+    competitorNum: Number.isFinite(competitorNum) ? competitorNum : null,
     detail: detail && detail !== type ? detail : '',
+    isOwnGoal,
     score: firstText(item.score, item.scoreText, item.S, item.result?.score)
   };
 }
@@ -294,33 +341,117 @@ function aggregateLineupStats(lineup, teamName) {
 }
 function addShotTotalsToCompetitors(rows, shotEvents, teams) {
   const result = asArray(rows).map(row => ({ ...row, stats: asArray(row?.stats || row?.rows).slice() }));
-  for (const [side, team] of [['home', teams.home], ['away', teams.away]]) {
-    const teamShots = asArray(shotEvents).filter(shot => shot.team && shot.team === team.name);
+  const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  for (const team of [teams.home, teams.away]) {
+    const teamShots = asArray(shotEvents).filter(shot => shot.team && fold(shot.team) === fold(team.name));
     if (!teamShots.length) continue;
-    let row = result.find(item => String(item.team || item.competitor?.name || item.name || '') === team.name);
-    if (!row) {
-      row = { team: team.name, stats: [] };
-      result.push(row);
-    }
-    const names = row.stats.map(stat => String(stat?.name || stat?.typeName || stat?.type?.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
-    const hasShots = names.some(name => /^(total shots|shots|finalizacoes|finalizacoes totais)$/.test(name));
+    let row = result.find(item => fold(item.team || item.competitor?.name || item.name || '') === fold(team.name));
+    if (!row) { row = { team: team.name, stats: [] }; result.push(row); }
+    const names = row.stats.map(stat => fold(stat?.name || stat?.typeName || stat?.type?.name || ''));
+    const hasShots = names.some(name => /^(total shots|shots|finalizacoes|finalizacoes totais|total attempts)$/.test(name));
     if (!hasShots) row.stats.push({ typeId: 0, name: 'Finalizações', value: teamShots.length, source: 'chartEvents' });
+    const derived = [
+      ['No gol', shot => /goal|saved|save|on target/.test(fold(shot.outcome))],
+      ['Bloqueadas', shot => /blocked/.test(fold(shot.outcome))],
+      ['Para fora', shot => /off target|wide|missed|off goal/.test(fold(shot.outcome))],
+      ['Na trave', shot => /woodwork|post|crossbar/.test(fold(shot.outcome))]
+    ];
+    for (const [name, predicate] of derived) {
+      const value = teamShots.filter(predicate).length;
+      if (value && !names.some(existing => fold(existing) === fold(name))) row.stats.push({ typeId: 0, name, value, source: 'chartEvents' });
+    }
   }
   return result;
 }
+function normalizeCompetitorStats(rawRows, teams) {
+  const teamRows = new Map();
+  const getTeam = row => {
+    const item = asObject(row);
+    const competitorId = positiveId(item.competitorId || item.competitor?.id || item.team?.id || item.participant?.id);
+    if (competitorId && competitorId === positiveId(teams.home.id)) return teams.home.name;
+    if (competitorId && competitorId === positiveId(teams.away.id)) return teams.away.name;
+    const competitorNum = Number(item.competitorNum ?? item.Comp ?? item.side ?? 0);
+    if (competitorNum === 1) return teams.home.name;
+    if (competitorNum === 2) return teams.away.name;
+    const name = firstText(item.competitor?.name, item.team?.name, item.participant?.name, item.competitorName, item.teamName, item.name, item.label);
+    const folded = foldName(name);
+    if (folded && folded === foldName(teams.home.name)) return teams.home.name;
+    if (folded && folded === foldName(teams.away.name)) return teams.away.name;
+    return '';
+  };
+  const add = (teamName, stat, typeNames) => {
+    const statItem = asObject(stat);
+    const typeId = positiveId(statItem.typeId || statItem.type?.id || (typeof statItem.type === 'number' ? statItem.type : 0));
+    const name = firstText(statItem.name, statItem.typeName, statItem.label, statItem.type?.name, typeNames.get(typeId), typeId && LINEUP_STAT_LABELS[typeId]);
+    const value = statItem.value ?? statItem.displayValue ?? statItem.val ?? statItem.numericValue ?? null;
+    if (!teamName || !name || value === null || value === undefined || value === '') return;
+    if (!teamRows.has(teamName)) teamRows.set(teamName, { team: teamName, stats: [] });
+    const row = teamRows.get(teamName);
+    const key = foldName(name);
+    const existing = row.stats.find(item => foldName(item.name) === key);
+    if (existing) existing.value = value;
+    else row.stats.push({ typeId, name, value });
+  };
+  for (const blockValue of asArray(rawRows)) {
+    const block = asObject(blockValue);
+    const typeRows = [...asArray(block.statsTypes), ...asArray(block.types)];
+    const typeNames = new Map(typeRows.map(item => [positiveId(item.typeId || item.id), firstText(item.name, item.displayName, item.label)]).filter(([id, name]) => id && name));
+    const rows = asArray(block.rows || block.competitors || block.teams);
+    const candidates = rows.length ? rows : [block];
+    for (const rowValue of candidates) {
+      const row = asObject(rowValue);
+      const teamName = getTeam(row) || (candidates.length === 1 ? getTeam(block) : '');
+      if (!teamName) continue;
+      const rawStats = row.stats ?? row.values ?? row.statistics ?? row.metrics ?? row.items ?? [];
+      const stats = Array.isArray(rawStats) ? rawStats : (rawStats && typeof rawStats === 'object' ? Object.values(rawStats) : []);
+      for (const stat of stats) {
+        const nested = asArray(stat?.stats);
+        if (nested.length) nested.forEach(item => add(teamName, item, typeNames));
+        else add(teamName, stat, typeNames);
+      }
+      // Formato alternativo: cada linha representa um tipo, e o bloco contém o nome do indicador.
+      if (!stats.length && (row.value !== undefined || row.displayValue !== undefined)) {
+        const typeId = positiveId(row.typeId || row.id);
+        const statName = firstText(row.statName, row.typeName, row.label, block.name, block.title);
+        add(teamName, { typeId, name: statName, value: row.value ?? row.displayValue }, typeNames);
+      }
+    }
+  }
+  return [...teamRows.values()];
+}
+function mergeCompetitorStats(primaryRows, fallbackRows) {
+  const merged = new Map();
+  for (const source of [...asArray(primaryRows), ...asArray(fallbackRows)]) {
+    const team = firstText(source.team, source.competitor?.name, source.name);
+    if (!team) continue;
+    if (!merged.has(team)) merged.set(team, { team, stats: [] });
+    const target = merged.get(team);
+    for (const stat of asArray(source.stats || source.rows)) {
+      const key = foldName(stat.name || stat.typeName || stat.type?.name);
+      if (!key) continue;
+      const existing = target.stats.find(item => foldName(item.name) === key);
+      if (!existing) target.stats.push({ ...stat, name: firstText(stat.name, stat.typeName, stat.type?.name) });
+    }
+  }
+  return [...merged.values()];
+}
 function normalizeShotEvent(event, home, away) {
   const item = asObject(event);
-  const competitorNum = Number(item.competitorNum);
-  const xg = Number(item.xg);
+  const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.Comp ?? item.side;
+  const competitorNum = Number(competitorRaw);
+  const rawXg = item.xg ?? item.expectedGoals ?? item.expectedGoal;
+  const xg = rawXg === null || rawXg === undefined || rawXg === '' ? NaN : Number(rawXg);
   return {
     xg: Number.isFinite(xg) ? xg : null,
-    outcome: firstText(item.outcome?.name, item.outcome?.displayName, item.outcomeName, item.result?.name),
-    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : '',
+    outcome: firstText(typeof item.outcome === 'string' ? item.outcome : '', item.outcome?.name, item.outcome?.displayName, item.outcomeName, typeof item.result === 'string' ? item.result : '', item.result?.name, item.resultName, item.description),
+    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name, item.teamName),
     minute: firstText(item.gameTime, item.minute, item.timeLabel),
     player: firstText(item.athlete?.name, item.player?.name, item.playerName),
+    playerId: positiveId(item.athleteId || item.playerId || item.athlete?.id || item.player?.id),
     competitorNum: Number.isFinite(competitorNum) ? competitorNum : null
   };
 }
+function foldName(value) { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
 function normalizeGameDetails(payload) {
   const game = extractGame(payload);
   const home = asObject(game.homeCompetitor);
@@ -338,8 +469,24 @@ function normalizeGameDetails(payload) {
   const athleteStatsCount = rawAthleteStats.length || lineupPlayersWithStats.length;
   const aggregatedCompetitors = [aggregateLineupStats(homeLineup, teams.home.name), aggregateLineupStats(awayLineup, teams.away.name)];
   const gameEvents = asArray(game.events).map(event => normalizeGameEvent(event, memberMap, teams.home, teams.away));
+  // Algumas partidas marcam o gol contra apenas pelo lado do placar: o evento
+  // é creditado ao adversário, mas o atleta pertence à equipe que sofreu o gol.
+  // Usa os titulares/reservas identificados nas escalações para reconhecer esse caso.
+  const homeAthletes = new Set(homeLineup.members.map(member => positiveId(member.athleteId || member.id)).filter(Boolean));
+  const awayAthletes = new Set(awayLineup.members.map(member => positiveId(member.athleteId || member.id)).filter(Boolean));
+  for (const event of gameEvents) {
+    if (event.type !== 'Gol' || event.isOwnGoal || !event.playerId) continue;
+    const playerSide = homeAthletes.has(event.playerId) ? 1 : awayAthletes.has(event.playerId) ? 2 : 0;
+    const creditedSide = Number(event.competitorNum) || (foldName(event.team) === foldName(teams.home.name) ? 1 : foldName(event.team) === foldName(teams.away.name) ? 2 : 0);
+    if (playerSide && creditedSide && playerSide !== creditedSide) {
+      event.type = 'Gol contra';
+      event.isOwnGoal = true;
+      if (isOwnGoalText(event.detail)) event.detail = '';
+    }
+  }
   const shotEvents = asArray(game.chartEvents?.events).map(event => normalizeShotEvent(event, teams.home, teams.away));
-  const competitorRows = addShotTotalsToCompetitors(rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors, shotEvents, teams);
+  const normalizedCompetitorStats = normalizeCompetitorStats(rawCompetitorStats, teams);
+  const competitorRows = addShotTotalsToCompetitors(mergeCompetitorStats(normalizedCompetitorStats, aggregatedCompetitors), shotEvents, teams);
   const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
   return {
     gameId: positiveId(game.id || game.gameId),
@@ -350,12 +497,15 @@ function normalizeGameDetails(payload) {
     home: teams.home,
     away: teams.away,
     competition,
-    round: firstText(game.roundName, Number(game.roundNum) > 0 ? `Rodada ${Number(game.roundNum)}` : '', game.stageName, Number(game.stageNum) > 0 ? `Fase ${Number(game.stageNum)}` : ''),
-    roundNum: positiveId(game.roundNum),
-    stageNum: positiveId(game.stageNum),
-    venue: firstText(game.venue?.name),
-    venueCapacity: game.venue?.capacity ?? null,
-    referee: firstText(game.officials?.[0]?.name),
+    round: roundLabel(game),
+    roundNum: positiveId(game.roundNum || game.round?.num || game.round?.number || game.matchday || game.week),
+    stageNum: positiveId(game.stageNum || game.stage?.num),
+    venue: firstText(game.venue?.name, game.venueName, game.stadium?.name),
+    venueCity: firstText(game.venue?.city?.name, game.venue?.cityName, game.venue?.location?.city, game.venueCity, game.stadium?.city),
+    venueCountry: firstText(game.venue?.country?.name, game.venue?.countryName, game.venueCountry),
+    venueAddress: firstText(game.venue?.address, game.venue?.location?.address, game.venueAddress),
+    venueCapacity: game.venue?.capacity ?? game.stadium?.capacity ?? null,
+    referee: firstText(game.officials?.[0]?.name, game.referee?.name, game.refereeName),
     tvNetworks: asArray(game.tvNetworks).map(x => firstText(x.name, x.displayName, x)).filter(Boolean).slice(0, 20),
     lineups: { home: homeLineup, away: awayLineup },
     membersCount: members.length,

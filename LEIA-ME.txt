@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.20
+# NicoValBolaLibre V0.18.21
 
 ## V0.18.19 · Correção de gols contra na linha do tempo
 
@@ -22,7 +22,7 @@
 - Consulta sob demanda e cache local/compartilhado; a agenda original permanece intacta.
 - Integração experimental com endpoints web não oficiais. A permissão de reutilização de dados/imagens ainda precisa ser confirmada com a 365Scores.
 
-## V0.18.20 · Correção do campo tático e estatísticas coletivas
+## V0.18.21 · Correção do campo tático e estatísticas coletivas
 
 - As posições curtas retornadas pela 365Scores (`GK`, `CB`, `CM`, `ST` e equivalentes) agora são normalizadas para goleiro, defesa, meio e ataque. Isso evita que jogadores sem coordenadas táticas válidas sejam agrupados na mesma linha do campo.
 - Coordenadas brutas só são usadas como grade quando estão dentro de uma faixa tática plausível; caso contrário, o campo usa a posição do atleta como fallback.
@@ -32,7 +32,7 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.18.20` e `Push origin`.
+2. Faça commit `NicoValBolaLibre V0.18.21` e `Push origin`.
 3. Crie e envie a tag `v0.18.20`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
@@ -45,3 +45,6 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração 3
 - Os demais testes cobrem integrações anteriores, interface, agenda, logos e sincronização.
 - Testes automatizados não substituem a validação real de uma partida na interface. Após instalar, atualize os dados da partida e confira os eventos e a classificação da temporada correspondente.
 
+
+
+V0.18.21 - Match Center: reorganização da escalação no campo usando a formação como fallback quando as coordenadas da fonte forem inválidas; marcadores de gols, gols contra, cartões e substituições nos atletas; classificação de gol contra também por divergência entre a equipe do atleta e o lado creditado no evento; rodada numérica recuperada mesmo quando a fonte retorna apenas o rótulo genérico; estatísticas coletivas normalizadas e agrupadas por ataque, posse/passes, defesa e disciplina; cabeçalho enriquecido com estádio, cidade, país, capacidade, rodada, competição e árbitro; fotos de técnicos somente quando a fonte fornece uma URL válida. Nenhuma partida externa é adicionada à agenda.
