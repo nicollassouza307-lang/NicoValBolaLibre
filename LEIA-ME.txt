@@ -1,57 +1,37 @@
-# NicoValBolaLibre V0.19.0
+# NicoValBolaLibre V0.19.1
 
-## V0.18.19 · Correção de gols contra na linha do tempo
+## V0.19.1 · Migração esportiva para 365Scores, agenda compacta e filtro de emissoras
 
-- Eventos com código numérico genérico de gol (`typeId=1`) agora verificam também indicadores explícitos de gol contra, incluindo flags booleanas e descrições/subtipos em inglês, português e espanhol.
-- A identificação específica de gol contra tem prioridade sobre o rótulo genérico `Gol`, sem alterar a classificação dos gols normais.
-- Incluídos testes de regressão para gol contra identificado por texto e por flag, além da preservação de gols normais.
+- 365Scores passa a ser a fonte esportiva principal da aplicação. A busca compara partidas já existentes na agenda usando data local, clubes, aliases, competição e horário.
+- Correspondências automáticas são salvas localmente somente quando os clubes correspondem na ordem correta, a competição é compatível, o horário difere no máximo 45 minutos, a confiança é alta e não há candidata concorrente próxima. Casos invertidos ou ambíguos continuam manuais.
+- Placar e status das partidas vinculadas passam a priorizar dados normalizados da 365Scores; a agenda original continua sendo a origem dos jogos e nunca recebe partidas novas da API.
+- API-Football e football-data.org foram retiradas do fluxo ativo de placares, eventos, escalações e classificações. Seus módulos e rotas permanecem temporariamente no código para compatibilidade, mas estão pausados e não são expostos no Admin.
+- TheSportsDB fica limitado ao fallback visual de escudos, sem fornecer dados esportivos.
+- Cartões da agenda ficam compactos em uma lista vertical, com escudos menores, placar central, status e emissoras em espaço reduzido.
+- O filtro Emissoras: Argentina/Brasil agora filtra também os canais após a consolidação das fontes, removendo canais exclusivos do outro mercado e preservando canais pan-regionais ou sem país identificado.
+- O catálogo de canais do Rei preserva metadados de país para melhorar o filtro por mercado.
 
-## V0.18.19 · Eventos mais robustos e classificação vinculada à temporada
-
-- O normalizador de eventos da 365Scores aceita variações comuns de formato/capitalização (`typeId`, `TypeId`, `eventTypeId`, `type.id`, `Type`, `Player`, `GTD`, `Comp` e campos equivalentes), além de nomes de evento em português/inglês.
-- A linha do tempo reconhece também gol contra, pênalti perdido, VAR, intervalo e fim de jogo; códigos desconhecidos são preservados como `Evento (tipo N)` em vez de esconder o código recebido.
-- O parser mantém o nome dos envolvidos, equipe, minuto, jogador secundário e placar quando esses campos existem na resposta.
-- A competição agora mantém `seasonNum` e `stageNum` recebidos junto à partida. A consulta de classificação envia esses parâmetros, e o cache passa a separar competição, temporada e fase para evitar misturar tabelas de temporadas diferentes.
-- Mantida a compatibilidade de leitura com classificações antigas em cache. A agenda não recebe jogos novos, o vínculo continua manual e a API-Football permanece inalterada.
-
-## Versão anterior · 365Scores na central da partida
-
-- Painel 365Scores na página individual da partida, com abas Livescore, Escalações, Estatísticas e Classificação.
-- Escalações convertidas para o campo tático existente, com fotos da CDN da 365Scores quando disponíveis.
-- Estatísticas individuais e agregadas normalizadas a partir dos dados recebidos.
-- Consulta sob demanda e cache local/compartilhado; a agenda original permanece intacta.
-- Integração experimental com endpoints web não oficiais. A permissão de reutilização de dados/imagens ainda precisa ser confirmada com a 365Scores.
-
-## V0.18.20 · Correção do campo tático e estatísticas coletivas
-
-- As posições curtas retornadas pela 365Scores (`GK`, `CB`, `CM`, `ST` e equivalentes) agora são normalizadas para goleiro, defesa, meio e ataque. Isso evita que jogadores sem coordenadas táticas válidas sejam agrupados na mesma linha do campo.
-- Coordenadas brutas só são usadas como grade quando estão dentro de uma faixa tática plausível; caso contrário, o campo usa a posição do atleta como fallback.
-- O total de finalizações é agregado a partir dos eventos do gráfico da 365Scores por equipe e passa a aparecer no comparativo coletivo, sem depender de estatísticas individuais.
-- Os demais dados, eventos, vínculos manuais e agenda original permanecem preservados.
-
-## Como atualizar
-
-1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.19.0` e `Push origin`.
-3. Crie e envie a tag `v0.19.0`.
-4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
-
-O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores continua em migração; esta etapa ainda preserva os fluxos esportivos antigos para evitar regressões até a substituição completa e validada. Os testes automatizados usam respostas simuladas; confirme o campo e as finalizações em uma partida real após a instalação.
-
-## Testes
-
-- `npm run test:365scores`: respostas simuladas para consulta diária, detalhes, escalações, identificação de eventos com formatos alternativos e cache. Não faz chamadas externas.
-- `npm run test:365scores-agenda-match`: comparação por clubes/data/competição/horário e confirmação manual.
-- Os demais testes cobrem integrações anteriores, interface, agenda, logos e sincronização.
-- Testes automatizados não substituem a validação real de uma partida na interface. Após instalar, atualize os dados da partida e confira os eventos e a classificação da temporada correspondente.
-
-## V0.19.0
+## V0.19.0 · Fundação do mega update
 
 - Painel Admin reorganizado em sete abas: Geral, 365Scores, Partidas, Dados, Classificações, Cache e Diagnóstico.
 - Agenda ganhou calendário horizontal de sete dias com navegação direta.
-- Seções de competições agora podem ser recolhidas individualmente; o estado fica salvo localmente.
-- Painel 365Scores atualizado para refletir a função de enriquecer partidas já existentes, sem inserir jogos na agenda.
+- Seções de competições podem ser recolhidas individualmente e o estado fica salvo localmente.
 - Adicionado resumo de cache e diagnóstico rápido com opção de copiar relatório.
 - Mantidas as fontes originais da agenda: Rei dos Canais, LA18HD e PelotaLibre.
 
-Esta versão é a primeira etapa do mega update. A migração completa do Match Center para a 365Scores e a retirada dos fluxos esportivos antigos ainda precisam ser concluídas e testadas em etapas seguintes.
+## Como atualizar
+
+1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
+2. Faça commit `NicoValBolaLibre V0.19.1` e `Push origin`.
+3. Crie e envie a tag `v0.19.1`.
+4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
+
+O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
+
+## Testes
+
+- `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
+- `npm run test:365scores-agenda-match`: aliases, data, competição, horário, segurança de inversão e bloqueio de candidatas ambíguas.
+- `npm run test:agenda-market`: filtro de emissoras brasileiras, argentinas, pan-regionais e desconhecidas.
+- Os demais testes cobrem interface, agenda, escudos, sincronização e compatibilidade dos módulos legados.
+- A bateria automatizada não substitui teste visual e consulta real em partida disponível na 365Scores.

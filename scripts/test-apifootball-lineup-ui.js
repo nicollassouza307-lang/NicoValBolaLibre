@@ -135,8 +135,8 @@ assert.doesNotMatch(index, /\.match-center-panel\s*\{[^}]*background:\s*#(?:fff|
 assert.match(index, /\.match-center-panel \.apifootball-stat-card \.home \{\s*background:\s*var\(--stat-home-color/, 'A barra de estatísticas do mandante deve usar a cor do clube.');
 assert.match(index, /\.match-center-panel \.apifootball-stat-card \.away \{\s*background:\s*var\(--stat-away-color/, 'A barra de estatísticas do visitante deve usar a cor do clube.');
 assert.doesNotMatch(index, /id="competitionsView"|id="competitionsBtn"/, 'A página isolada de Competições deve sair da navegação.');
-assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel esportivo deve aparecer depois do player.');
-assert.match(index, /bindApiFootballPanelEvents\(e\)/);
+assert.ok(index.indexOf('${renderScores365MatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel 365Scores deve aparecer depois do player.');
+assert.match(index, /bindScores365MatchPanelEvents\(e\)/);
 assert.match(index, /renderScores365MatchPanel\(e\)/, 'Partidas com vínculo confirmado devem exibir o painel da 365Scores.');
 assert.match(index, /scores365LineupAsApiSnapshot/, 'Escalações 365Scores devem ser adaptadas ao campo tático existente.');
 assert.match(index, /Number\.isInteger\(line\)&&line>=1&&line<=6&&Number\.isInteger\(row\)&&row>=1&&row<=5/, 'Coordenadas proporcionais ou fora da grade tática devem acionar o posicionamento por função.');

@@ -7,7 +7,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-assert.equal(pkg.version, '0.19.0');
+assert.equal(pkg.version, '0.19.1');
 assert.doesNotMatch(html, /id=["']competitionsBtn["']/,'O botão de Competições não deve mais existir na navegação principal.');
 assert.doesNotMatch(html, /id=["']competitionsView["']/,'A página independente de Competições deve ser removida.');
 assert.match(html, /id="footballDataCompetitionSelect"/,'O Admin continua podendo carregar e escolher competições.');

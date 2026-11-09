@@ -1,7 +1,7 @@
 'use strict';
 
 // Servidor local do NicoValBolaLibre e agregador de agendas públicas.
-// SportsAPI permanece como rota opcional; a agenda principal usa Rei dos Canais e PelotaLibre.
+// Agenda: Rei dos Canais, LA18HD e PelotaLibre. Dados esportivos: 365Scores (experimental; não insere jogos na agenda).
 // Requer Node.js 18+ (usa fetch nativo). Não precisa instalar dependências.
 const http = require('node:http');
 const fs = require('node:fs');
@@ -11,6 +11,7 @@ const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
 const { Scores365Service, matchAgendaEvents } = require('./365scores-service');
+const { filterAgendaByMarkets } = require('./agenda-market-filter');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -173,11 +174,12 @@ function dedupeNetworks(networks) {
   for (const item of networks || []) {
     const name = String(item?.name || '').trim();
     if (!name || /^(servidor|server|mirror|player|embed|fonte|source)\s*\d*$/i.test(name)) continue;
-    const info = broadcasterInfo(name, item.country || '');
+    const country = String(item.country || item.market || item.countryName || item.country_name || '').trim();
+    const info = broadcasterInfo(name, country);
     const folded=foldLabel(name);
     const sameFamilyAlias = info.family==='globo';
     const key = sameFamilyAlias ? 'family:globo' : folded;
-    if (!map.has(key)) map.set(key, { name:info.displayName, displayName:info.displayName, originalName:name!==info.displayName?name:'', country:info.country, family:info.family, brand:info.brand, aliases:info.aliases, logo: String(item.logo || '') });
+    if (!map.has(key)) map.set(key, { name:info.displayName, displayName:info.displayName, originalName:name!==info.displayName?name:'', country:info.country, countryCode:String(item.countryCode || item.country_code || ''), market:String(item.market || ''), family:info.family, brand:info.brand, aliases:info.aliases, logo: String(item.logo || '') });
   }
   return [...map.values()];
 }
@@ -478,6 +480,8 @@ function cleanReiChannel(row) {
     id,
     name,
     description: String(row.description || '').trim(),
+    country: String(row.country || row.market || row.country_name || row.countryName || '').trim(),
+    countryCode: String(row.country_code || row.countryCode || row.isoCountryCode || '').trim(),
     logoUrl: safeHttpsUrl(row.logo_url || row.logoUrl || ''),
     category: String(row.category || 'Outros').trim(),
     epg: {
@@ -549,6 +553,8 @@ function enrichReiEventNetworks(events, channels) {
       return {
         ...network,
         logo: network.logo || channel.logoUrl || '',
+        country: network.country || channel.country || '',
+        countryCode: network.countryCode || channel.countryCode || '',
         channelId: channel.id,
         epgCurrent: channel.epg?.current || null,
         epgNext: channel.epg?.next || null
@@ -752,7 +758,8 @@ async function getCombinedAgenda(date, markets) {
   const pelotaEvents = pelotaResults.flatMap(x=>x.events || []);
   // Prioridade por registro: Rei (100) > LA18HD (80) > PelotaLibre.video (70) > .ar (60).
   // Em caso de duplicata, preserva a partida da fonte prioritária e combina os nomes de canais.
-  const matches = mergeCombinedEvents(reiEvents,[...la18Events,...pelotaEvents]);
+  const mergedMatches = mergeCombinedEvents(reiEvents,[...la18Events,...pelotaEvents]);
+  const matches = filterAgendaByMarkets(mergedMatches, markets);
   return {
     matches, total:matches.length, date, markets,
     sourcePriority:['Rei dos Canais','LA18HD','PelotaLibre.video','PelotaLibre.ar'],
@@ -1144,7 +1151,7 @@ const requestHandler = async (req, res) => {
         agendaCount:agendaEvents.length, sourceGamesCount:result.count,
         matches, candidateCount, cached:Boolean(result.cached || shared), shared:Boolean(shared),
         agendaChanged:false,
-        message:'Correspondências sugeridas para revisão. Nenhum gameId foi vinculado e a agenda permaneceu intacta.'
+        message:'Correspondências calculadas para o cliente. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
       });
     } catch (error) {
       return json(res, error.status || 502, { ok:false, provider:'365Scores', error:error.message || 'Não foi possível comparar a agenda com a 365Scores.', code:error.code || '' });
@@ -1209,9 +1216,11 @@ const requestHandler = async (req, res) => {
 
   if (pathname === '/api/providers/status' && req.method === 'GET') {
     const status = apiFootballService.multiApiEngine.status();
-    status.providers = status.providers.map(provider => provider.id === 'football-data' && footballDataService.isConfigured()
-      ? { ...provider, state: 'active', configured: true, description: 'Resultados, calendário e classificações das competições permitidas pela conta.' }
-      : provider);
+    status.providers = status.providers.map(provider => provider.id === 'football-data'
+      ? { ...provider, state: 'paused', configured: footballDataService.isConfigured(), description: 'Integração antiga preservada no código, mas fora do fluxo esportivo ativo.' }
+      : provider.id === 'api-football'
+        ? { ...provider, state: 'paused', description: 'Integração antiga preservada no código, mas fora do fluxo esportivo ativo.' }
+        : provider);
     return json(res, 200, { ok: true, ...status });
   }
 
@@ -1635,7 +1644,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.11 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.19.1 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

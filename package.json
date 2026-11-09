@@ -1,7 +1,7 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.19.0",
-  "description": "Central de partidas NicoValBolaLibre para Windows",
+  "version": "0.19.1",
+  "description": "Central de partidas NicoValBolaLibre com agenda compacta e integração esportiva 365Scores",
   "private": true,
   "main": "electron/main.js",
   "author": "NicoValBolaLibre",
@@ -27,7 +27,8 @@
     "test:competitions-tabs": "node scripts/test-competitions-tabs.js",
     "test:livescore": "node scripts/test-apifootball-livescore.js",
     "test:logo-priority": "node scripts/test-logo-provider-priority.js",
-    "test:mega-update-foundation": "node scripts/test-mega-update-foundation.js"
+    "test:mega-update-foundation": "node scripts/test-mega-update-foundation.js",
+    "test:agenda-market": "node scripts/test-agenda-market-filter.js"
   },
   "devDependencies": {
     "electron": "^38.0.0",

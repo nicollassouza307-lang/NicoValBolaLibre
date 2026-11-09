@@ -6,21 +6,21 @@ const path = require('node:path');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PROVIDER_CATALOG = Object.freeze([
   {
-    id: 'api-football', name: 'API-Football', role: 'principal', state: 'active',
-    description: 'Escalações, eventos, placares e estatísticas.',
+    id: 'api-football', name: 'API-Football', role: 'legado', state: 'paused',
+    description: 'Integração de dados esportivos anterior, pausada na migração para a 365Scores.',
     quota: { dailyLimit: 100, appSoftLimit: 70, reserve: 30, perMinuteSoftLimit: 8 }
   },
   {
-    id: 'football-data', name: 'football-data.org', role: 'resultados', state: 'active',
-    description: 'Resultados, calendários e classificações das competições cobertas.', quota: null
+    id: 'football-data', name: 'football-data.org', role: 'legado', state: 'paused',
+    description: 'Integração de resultados anterior, pausada na migração para a 365Scores.', quota: null
   },
   {
-    id: 'thesportsdb', name: 'TheSportsDB', role: 'imagens', state: 'active',
-    description: 'Escudos e imagens via API V1 gratuita (chave pública 123 integrada).', quota: { perMinuteLimit: 25, dailyLimit: null }
+    id: 'thesportsdb', name: 'TheSportsDB', role: 'imagens', state: 'available',
+    description: 'Recurso visual legado isolado para busca de escudos; não fornece dados de partidas.', quota: { perMinuteLimit: 25, dailyLimit: null }
   },
   {
-    id: '365scores', name: '365Scores', role: 'experimental', state: 'planned',
-    description: 'Teste manual de endpoints web não oficiais para partidas e competições; uso sujeito a autorização.',
+    id: '365scores', name: '365Scores', role: 'principal', state: 'active',
+    description: 'Fonte esportiva principal para enriquecer partidas da agenda. Integração experimental com endpoints web não oficiais; autorização de reutilização ainda precisa ser confirmada.',
     quota: { perMinuteSoftLimit: 12, dailySoftLimit: 200, note: 'Teto local experimental, não é limite oficial da 365Scores.' }
   },
   {

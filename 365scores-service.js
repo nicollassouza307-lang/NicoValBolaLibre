@@ -382,11 +382,20 @@ function foldMatchText(value) {
 }
 const MATCH_TEAM_ALIASES = new Map([
   ['man utd', 'manchester united'], ['man united', 'manchester united'], ['manchester utd', 'manchester united'],
-  ['man city', 'manchester city'], ['spurs', 'tottenham'], ['paris saint germain', 'psg'],
-  ['inter milan', 'inter'], ['internazionale', 'inter'], ['atletico de madrid', 'atletico madrid'],
-  ['athletic club', 'athletic bilbao'], ['bayern munchen', 'bayern munich'],
-  ['sporting cp', 'sporting'], ['benfica lisbon', 'benfica'], ['porto fc', 'porto'],
-  ['junior', 'junior barranquilla'], ['atletico junior', 'junior barranquilla']
+  ['man city', 'manchester city'], ['spurs', 'tottenham'], ['tottenham hotspur', 'tottenham'],
+  ['paris saint germain', 'psg'], ['paris sg', 'psg'], ['paris saint-germain', 'psg'],
+  ['inter milan', 'inter'], ['internazionale', 'inter'], ['fc internazionale', 'inter'],
+  ['atletico de madrid', 'atletico madrid'], ['atleti', 'atletico madrid'], ['athletic club', 'athletic bilbao'],
+  ['bayern munchen', 'bayern munich'], ['fc bayern', 'bayern munich'], ['bayern munchen fc', 'bayern munich'],
+  ['barca', 'barcelona'], ['fc barcelona', 'barcelona'], ['real madrid cf', 'real madrid'],
+  ['sporting cp', 'sporting'], ['sporting clube de portugal', 'sporting'], ['benfica lisbon', 'benfica'], ['porto fc', 'porto'],
+  ['junior', 'junior barranquilla'], ['atletico junior', 'junior barranquilla'],
+  ['river plate', 'river plate'], ['ca river plate', 'river plate'], ['boca juniors', 'boca juniors'],
+  ['club atletico boca juniors', 'boca juniors'], ['flamengo crf', 'flamengo'], ['cr flamengo', 'flamengo'],
+  ['palmeiras se', 'palmeiras'], ['se palmeiras', 'palmeiras'], ['sao paulo fc', 'sao paulo'], ['spfc', 'sao paulo'],
+  ['atletico mg', 'atletico mineiro'], ['atletico mineiro mg', 'atletico mineiro'], ['galo', 'atletico mineiro'],
+  ['vasco da gama', 'vasco'], ['cr vasco da gama', 'vasco'], ['gremio fbpa', 'gremio'],
+  ['cucuta deportivo', 'cucuta'], ['deportivo cucuta', 'cucuta'], ['cucuta', 'cucuta']
 ]);
 function normalizeMatchTeam(value) {
   let key = foldMatchText(value);
@@ -438,6 +447,22 @@ function compareCompetitionNames(left, right) {
   if (a === b || a.includes(b) || b.includes(a)) return true;
   return teamNameSimilarity(a, b) >= 0.72;
 }
+function canonicalCompetitionForAutoMatch(value) {
+  const raw = foldMatchText(value).replace(/\s+/g, ' ').trim();
+  if (!raw) return '';
+  if (/^(?:campeonato )?brasileirao(?: serie a)?$/.test(raw) || /^(?:campeonato )?brasileiro serie a$/.test(raw) || raw === 'serie a do brasil') return 'brasileirao';
+  if (/^(?:colombia )?primera a$/.test(raw) || raw === 'colombia primera division' || raw === 'liga colombiana primera a') return 'colombia primera a';
+  if (/^(?:english )?premier league$/.test(raw)) return 'premier league';
+  if (/^(?:la liga|laliga|liga espanola|primera division espana)$/.test(raw)) return 'laliga';
+  if (/^(?:uefa )?champions league$/.test(raw)) return 'champions league';
+  if (/^(?:italian )?serie a(?: italy)?$/.test(raw) || raw === 'serie a italia') return 'serie a italy';
+  return raw;
+}
+function competitionAutoMatch(left, right) {
+  const a = canonicalCompetitionForAutoMatch(left);
+  const b = canonicalCompetitionForAutoMatch(right);
+  return Boolean(a && b && a === b);
+}
 function matchAgendaEvents(agendaEvents, scoresGames) {
   const events = asArray(agendaEvents).slice(0, 250);
   const games = asArray(scoresGames).slice(0, 500);
@@ -465,22 +490,42 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       if (teamScore < 0.68) continue;
       const gameCompetition = firstText(item.competition?.name);
       const competitionMatch = compareCompetitionNames(competition, gameCompetition);
+      const strictCompetitionMatch = competitionAutoMatch(competition, gameCompetition);
       const agendaMinutes = parseAgendaMinutes(event);
       const gameMinutes = localMinutesInSaoPaulo(item.startTime);
       const timeDiffMinutes = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
-      const timeScore = timeDiffMinutes === null ? 0.5 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 45 ? 0.8 : timeDiffMinutes <= 90 ? 0.55 : timeDiffMinutes <= 180 ? 0.25 : 0;
-      const score = Math.round((teamScore * 0.72 + 0.15 + (competitionMatch === true ? 0.08 : competitionMatch === false ? 0 : 0.04) + timeScore * 0.05) * 100);
-      const exactOriented = directHome === 1 && directAway === 1;
+      const timeScore = timeDiffMinutes === null ? 0.45 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 30 ? 0.9 : timeDiffMinutes <= 60 ? 0.72 : timeDiffMinutes <= 90 ? 0.5 : timeDiffMinutes <= 180 ? 0.2 : 0;
+      const competitionScore = competitionMatch === true ? 0.13 : competitionMatch === false ? 0 : 0.07;
+      const orientationScore = isReversed ? 0.015 : 0.075;
+      const score = Math.max(0, Math.min(100, Math.round(teamScore * 0.72 * 100 + timeScore * 10 + competitionScore * 100 + orientationScore * 100)));
+      const exactOriented = directHome >= 0.98 && directAway >= 0.98 && !isReversed;
       const confidence = exactOriented && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : 'revisar';
       candidates.push({
         gameId: positiveId(item.gameId), startTime: item.startTime, home: gameHome, away: gameAway,
-        competition: gameCompetition, competitionId: positiveId(item.competition?.id),
-        score, confidence, reversed: isReversed, teamScore: Math.round(teamScore * 100),
-        competitionMatch, timeDiffMinutes,
-        reasons: [exactOriented ? 'times idênticos' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes aproximados', 'mesma data', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
+        homeId: positiveId(item.home?.id), awayId: positiveId(item.away?.id),
+        homeScore: item.home?.score ?? null, awayScore: item.away?.score ?? null,
+        status: firstText(item.status), competition: gameCompetition, competitionId: positiveId(item.competition?.id),
+        score, confidence, autoEligible: false, reversed: isReversed, exactOriented,
+        teamScore: Math.round(teamScore * 100), competitionMatch,
+        competitionAutoMatch: strictCompetitionMatch, timeDiffMinutes,
+        reasons: [exactOriented ? 'times correspondentes' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes aproximados', 'mesma data', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
       });
     }
     candidates.sort((a, b) => b.score - a.score);
+    const first = candidates[0];
+    const runnerUp = candidates[1];
+    // Associação automática exige times exatos após aliases, competição idêntica,
+    // horário muito próximo e margem clara sobre a segunda candidata.
+    if (first) {
+      const margin = runnerUp ? first.score - runnerUp.score : 100;
+      first.autoEligible = Boolean(
+        first.gameId && first.exactOriented && first.competitionAutoMatch === true &&
+        first.timeDiffMinutes !== null && first.timeDiffMinutes <= 45 &&
+        first.score >= 95 && margin >= 12
+      );
+      first.autoMargin = margin;
+      if (first.autoEligible) first.reasons.push('correspondência inequívoca: apta para vínculo automático');
+    }
     return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3) };
   });
 }

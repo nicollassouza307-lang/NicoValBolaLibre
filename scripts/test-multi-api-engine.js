@@ -30,9 +30,11 @@ try {
   assert.equal(restored.getProviderUsage('api-football').requestsUsedByApp, 12);
   const status = restored.status();
   assert.equal(status.engine, 'NicoVal Multi-API Engine');
-  assert.equal(status.activeProviders, 3);
-  assert.equal(status.plannedProviders, 1, 'A integração 365Scores permanece marcada como experimental.');
-  assert.equal(status.providers.find(item => item.id === '365scores').state, 'planned');
+  assert.equal(status.activeProviders, 1);
+  assert.equal(status.plannedProviders, 0, 'A 365Scores já é a fonte principal ativa.');
+  assert.equal(status.providers.find(item => item.id === '365scores').state, 'active');
+  assert.equal(status.providers.find(item => item.id === 'api-football').state, 'paused');
+  assert.equal(status.providers.find(item => item.id === 'football-data').state, 'paused');
   assert.equal(status.providers.find(item => item.id === 'api-football').cacheEntries, 1);
 
   now += 61_000;

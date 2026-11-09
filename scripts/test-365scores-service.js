@@ -141,7 +141,8 @@ try {
   await assert.rejects(() => service.getGamesForDate('2026-02-30'), error => error.code === '365SCORES_INVALID_DATE');
 
   const catalogStatus = engine.status();
-  assert.equal(catalogStatus.providers.find(item => item.id === '365scores').state, 'planned');
+  assert.equal(catalogStatus.providers.find(item => item.id === '365scores').state, 'active');
+  assert.equal(catalogStatus.providers.find(item => item.id === '365scores').role, 'principal');
   console.log('PASSOU: parâmetros base, descoberta diária, detalhes/escalações, eventos em formatos alternativos, classificação por temporada/fase, validação de IDs e cache 365Scores. (Testes com respostas simuladas; sem chamada externa.)');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

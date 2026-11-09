@@ -26,7 +26,7 @@ jobs:
         run: node scripts/test-competition-ranking.js
       - name: Test safe GitHub football crest matching
         run: node scripts/test-team-logo-index.js
-      - name: Test API-Football quota, cache and strict match matching
+      - name: Test legacy API-Football module compatibility (inactive provider)
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
@@ -36,13 +36,15 @@ jobs:
         run: node scripts/test-cloudflare-sports-data.js
       - name: Test Multi-API Engine cache and provider registry
         run: node scripts/test-multi-api-engine.js
-      - name: Test experimental 365Scores adapter (mocked responses)
+      - name: Test primary 365Scores adapter (mocked responses; unofficial endpoints)
         run: node scripts/test-365scores-service.js
-      - name: Test 365Scores agenda matching and manual linking logic
+      - name: Test Argentina/Brazil broadcaster market filtering
+        run: node scripts/test-agenda-market-filter.js
+      - name: Test 365Scores intelligent agenda matching and safe automatic linking
         run: node scripts/test-365scores-agenda-match.js
-      - name: Test football-data.org token storage, results, matching and standings
+      - name: Test legacy football-data.org module compatibility (inactive provider)
         run: node scripts/test-football-data-service.js
-      - name: Test football-data.org interface and agenda integration
+      - name: Test legacy football-data.org UI is not exposed
         run: node scripts/test-football-data-ui.js
       - name: Test in-match competition standings
         run: node scripts/test-competitions-view.js
@@ -56,7 +58,7 @@ jobs:
         run: node scripts/test-logo-provider-priority.js
       - name: Test API-Football live fixtures and cache
         run: node scripts/test-apifootball-livescore.js
-      - name: Test TheSportsDB free V1 badge lookup and cache
+      - name: Test legacy visual-only TheSportsDB badge lookup and cache
         run: node scripts/test-thesportsdb-service.js
       - name: Inject automatic read-only Cloud Sync settings
         env:
