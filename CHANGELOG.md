@@ -1,5 +1,15 @@
 # Changelog
 
+## V0.21.1 · Correções do campo e Match Center
+
+- Placas das logos de competições em #101d30, mantendo a transparência/fundo sem placa branca dos escudos de clubes e seleções.
+- Atribuição dos eventos da 365Scores ao time correto e eventos de substituição refletidos nos jogadores que saem e entram, titulares ou reservas.
+- Titulares e reservas maiores, goleiros posicionados dentro da pequena área, camisa ao lado do nome e nota separada.
+- Símbolos de gols/assistências em badges retangulares com contagem; PNGs opcionais configuráveis no Admin.
+- Estatísticas em coluna única com as cores de cada equipe.
+- Data por extenso, horário, estádio/capacidade, rodada, árbitro e emissoras em blocos separados.
+- Melhor extração do nome/foto do técnico quando a resposta da 365Scores contém esses dados.
+
 ## V0.21.0 · Mega atualização
 
 - Livescore 365Scores com polling silencioso de 30 segundos, sem reconstruir o iframe do player.

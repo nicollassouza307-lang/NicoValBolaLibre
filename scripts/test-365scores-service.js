@@ -32,7 +32,7 @@ try {
   responses.set('/standings/', { standings: [{ seasonNum: 26, stageNum: 1, rows: [{ position: 1, points: 10, gamePlayed: 4 }] }] });
   responses.set('/game/', { game: {
     id: 12345, startTime: '2026-11-09T22:00:00Z', statusText: 'Scheduled',
-    homeCompetitor: { id: 10, name: 'Flamengo', lineups: { formation: '4-3-3', members: [
+    homeCompetitor: { id: 10, name: 'Flamengo', lineups: { formation: '4-3-3', coach: { id: 500, name: 'Técnico Teste', photoUrl: 'https://imagecache.365scores.com/v1/Managers/500.png' }, members: [
       { id: 1, athleteId: 1, status: 1, yardFormation: { line: 1, fieldLine: 1 }, stats: [{ type: 19, name: 'Passes completos', value: 30 }] },
       { id: 2, athleteId: 2, status: 2, stats: [{ type: 54, name: 'Dribles', value: 4 }] }
     ] } },
@@ -51,7 +51,8 @@ try {
       { type: 'Substitution', player: 'Saiu', inPlayer: 'Entrou', competitorNum: 2, minute: '80' },
       { type: 3, player: { name: 'Jogador Expulso' }, competitorNum: 2, minute: '90+2' },
       { typeId: 1, eventTypeName: 'Goal', description: 'Own goal', playerName: 'Defensor Teste', competitorNum: 2, gameTime: '48' },
-      { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' }
+      { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' },
+      { typeName: 'Substitution', substitution: { out: { id: 1, name: 'Goleiro Teste' }, in: { id: 2, name: 'Atacante Teste' } }, competitorNum: 1, gameTime: '88' }
     ], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
     stats: {}, tvNetworks: [{ name: 'Premiere', countryName: 'Brazil' }],
     venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste', role: 'Referee' }]
@@ -116,6 +117,8 @@ try {
   assert.equal(game.details.lineups.home.formation, '4-3-3');
   assert.equal(game.details.lineups.home.starters, 1);
   assert.equal(game.details.lineups.home.substitutes, 1);
+  assert.equal(game.details.lineups.home.coach.name, 'Técnico Teste');
+  assert.match(game.details.lineups.home.coach.photoUrl, /imagecache\.365scores\.com/);
   assert.equal(game.details.lineups.home.members[0].name, 'Goleiro Teste', 'Detalhes do atleta devem ser cruzados com game.members por ID.');
   assert.equal(game.details.lineups.home.members[0].number, 1);
   assert.match(game.details.lineups.home.members[0].photoUrl, /imagecache\.365scores\.com.*Athletes\/1$/);
@@ -141,6 +144,9 @@ try {
   assert.equal(game.details.events[5].type, 'Gol contra', 'A indicação textual de gol contra deve prevalecer sobre typeId=1.');
   assert.equal(game.details.events[5].detail, '', 'Não deve repetir a indicação de gol contra como detalhe redundante.');
   assert.equal(game.details.events[6].type, 'Gol contra', 'A flag isOwnGoal deve prevalecer sobre typeId=1.');
+  assert.equal(game.details.events[7].player, 'Goleiro Teste', 'Substituições devem identificar o jogador que sai por ID aninhado.');
+  assert.equal(game.details.events[7].secondaryPlayer, 'Atacante Teste', 'Substituições devem identificar o jogador que entra por ID aninhado.');
+  assert.equal(game.details.events[7].team, 'Flamengo', 'O evento deve manter a identificação correta do time.');
   assert.equal(game.details.events[0].type, 'Gol', 'Gols normais continuam classificados como gol.');
   assert.equal(game.details.shots[0].xg, 0.3);
   assert.equal(game.details.round, 'Rodada 33');

@@ -158,6 +158,17 @@ function athleteImageUrl(id, isNationalTeam = false) {
   const base = 'https://imagecache.365scores.com/image/upload/f_png,w_34,h_34,c_limit,q_auto:eco,dpr_2,d_Athletes:default.png,r_max,c_thumb,g_face,z_0.65';
   return `${base}/v1/Athletes/${isNationalTeam ? 'NationalTeam/' : ''}${athleteId}`;
 }
+function firstImageUrl(...values) {
+  for (const value of values) {
+    const candidate = typeof value === 'string' ? value : firstText(value?.url, value?.imageUrl, value?.photoUrl, value?.src);
+    if (!candidate) continue;
+    try {
+      const url = new URL(candidate);
+      if (url.protocol === 'https:') return url.toString();
+    } catch {}
+  }
+  return '';
+}
 function normalizeStatRows(rows) {
   return asArray(rows).map(row => {
     const item = asObject(row);
@@ -213,14 +224,23 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
       stats: normalizeStatRows(member?.stats || detail.stats)
     };
   });
-  const coachMember = normalizedMembers.find(member => coaches.some(coach => positiveId(coach?.athleteId || coach?.id) === member.id)) || null;
+  const coachSource = asObject(lineup.coach || source.coach || lineup.manager || source.manager);
+  const coachRaw = coaches[0] || coachSource;
+  const coachId = positiveId(coachRaw?.athleteId || coachRaw?.id || coachSource.athleteId || coachSource.id || coachSource.coachId || coachSource.managerId);
+  const coachMember = normalizedMembers.find(member => coachId && member.id === coachId) || null;
+  const coachName = firstText(coachMember?.name, coachSource.name, coachSource.displayName, coachSource.longName, coachSource.shortName, coachRaw?.name, coachRaw?.displayName, coachRaw?.longName, coachRaw?.shortName);
+  const coachPhotoUrl = firstImageUrl(
+    coachSource.imageUrl, coachSource.photoUrl, coachSource.photo, coachSource.picture, coachSource.image, coachSource.photoPath,
+    coachRaw?.imageUrl, coachRaw?.photoUrl, coachRaw?.photo, coachRaw?.picture, coachRaw?.image, coachRaw?.photoPath,
+    coachMember?.photoUrl
+  ) || (coachId ? `https://imagecache.365scores.com/image/upload/f_png,w_96,h_96,c_limit,q_auto:eco,dpr_2,d_Managers:default.png/v1/Managers/${coachId}` : '');
   return {
     formation: firstText(lineup.formation, source.formation),
     total: members.length,
     starters: starters.length,
     substitutes: members.filter(member => Number(member?.status) === 2 && !coaches.includes(member)).length,
     coaches: coaches.length,
-    coach: coachMember?.name || firstText(lineup.coach?.name, source.coach?.name),
+    coach: { id: coachId, name: coachName, photoUrl: coachPhotoUrl },
     members: normalizedMembers.slice(0, 40)
   };
 }
@@ -280,14 +300,34 @@ function normalizeGameEvent(event, memberMap, home, away) {
     item.Details, item.note, item.message, item.goal?.type, item.goal?.typeName
   ].some(isOwnGoalText);
   const isOwnGoal = ownGoalFlag || ownGoalText;
-  const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.PID);
-  const rawPlayer = item.player || item.athlete || item.Player;
+  const isSubstitution = /substitution|substitu/i.test(rawTypeName) || Number(rawTypeId) === 1000;
+  const athleteId = positiveId(
+    (isSubstitution ? item.outAthleteId || item.outPlayerId || item.playerOutId || item.exitingAthleteId || item.substitutedAthleteId || item.substitution?.out?.id || item.substitution?.playerOut?.id : null) ||
+    item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.Player?.id || item.PID
+  );
+  const rawPlayer = item.outPlayer || item.playerOut || item.substitution?.out || item.substitution?.playerOut || item.player || item.athlete || item.Player;
   const player = (athleteId && memberMap.get(athleteId)) || asObject(rawPlayer);
-  const secondAthleteId = positiveId(item.assistAthleteId || item.assistPlayerId || item.substituteId || item.inAthleteId || item.assist?.id || item.PID2 || item.extraPlayerId);
-  const rawSecondPlayer = item.assist || item.inPlayer || item.secondaryPlayer || item.ExtraPlayers?.[0];
+  const secondAthleteId = positiveId(
+    (isSubstitution ? item.inAthleteId || item.inPlayerId || item.playerInId || item.enteringAthleteId || item.substituteId || item.substitution?.in?.id || item.substitution?.playerIn?.id : null) ||
+    item.assistAthleteId || item.assistPlayerId || item.assist?.id || item.PID2 || item.extraPlayerId
+  );
+  const rawSecondPlayer = item.inPlayer || item.playerIn || item.substitution?.in || item.substitution?.playerIn || item.assist || item.secondaryPlayer || item.ExtraPlayers?.[0];
   const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(rawSecondPlayer);
-  const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.Comp ?? item.side;
+  const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.CompetitorNum ?? item.Comp ?? item.side ?? item.competitorSide ?? item.teamSide;
+  const explicitHome = item.isHome === true || item.isHomeCompetitor === true || String(item.homeAway || item.side || item.teamSide || '').toLowerCase() === 'home';
+  const explicitAway = item.isHome === false || item.isAway === true || item.isAwayCompetitor === true || String(item.homeAway || item.side || item.teamSide || '').toLowerCase() === 'away';
   const competitorNum = Number(competitorRaw);
+  const nestedTeam = asObject(item.team || item.competitor || item.competitorData || item.Team);
+  const teamId = positiveId(item.teamId || item.competitorId || item.competitor?.id || item.team?.id || item.TeamId || item.CompetitorId || nestedTeam.teamId);
+  const rawTeamName = firstText(nestedTeam.name, nestedTeam.shortName, item.teamName, item.TeamName, item.competitorName, item.CompetitorName);
+  const memberTeamNum = Number(player.competitorNum || player.teamNum || player.competitor?.competitorNum || player.team?.competitorNum);
+  const memberTeamId = positiveId(player.competitorId || player.teamId || player.competitor?.id || player.team?.id);
+  const team = (teamId && teamId === home.id) || (memberTeamId && memberTeamId === home.id) || competitorNum === 1 || explicitHome || memberTeamNum === 1
+    ? home.name
+    : (teamId && teamId === away.id) || (memberTeamId && memberTeamId === away.id) || competitorNum === 2 || explicitAway || memberTeamNum === 2
+      ? away.name
+      : rawTeamName;
+  const resolvedTeamId = teamId || memberTeamId || (team === home.name ? home.id : team === away.name ? away.id : null);
   const type = eventTypeLabel(rawTypeId, rawTypeName, isOwnGoal);
   const rawDetail = firstText(item.description, item.Description, item.comment, item.Comment, item.shortText, item.eventName, item.EventName, item.detail, item.Details, rawTypeName);
   const detail = type === 'Gol contra' && isOwnGoalText(rawDetail) ? '' : rawDetail;
@@ -295,9 +335,13 @@ function normalizeGameEvent(event, memberMap, home, away) {
     typeId: Number.isInteger(Number(rawTypeId)) && rawTypeId !== null && rawTypeId !== undefined ? Number(rawTypeId) : null,
     type,
     minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime, item.GTD, item.GT),
+    playerId: athleteId,
     player: firstText(player.name, player.displayName, player.longName, player.shortName, typeof rawPlayer === 'string' ? rawPlayer : '', item.playerName, item.PlayerName, item.name, item.Player),
+    secondaryPlayerId: secondAthleteId,
     secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, secondPlayer.longName, secondPlayer.shortName, typeof rawSecondPlayer === 'string' ? rawSecondPlayer : '', item.assistName, item.inPlayerName, item.Player2, item.ExtraPlayers?.[0]),
-    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name, item.teamName, item.TeamName),
+    team,
+    teamId: resolvedTeamId,
+    competitorNum: Number.isFinite(competitorNum) && [1, 2].includes(competitorNum) ? competitorNum : (team === home.name ? 1 : team === away.name ? 2 : null),
     detail: detail && detail !== type ? detail : '',
     score: firstText(item.score, item.scoreText, item.S, item.result?.score)
   };
@@ -366,10 +410,26 @@ function normalizeGameDetails(payload) {
   const teams = teamsOf(game);
   const rawCompetitorStats = asArray(game.stats?.competitorsStats);
   const rawAthleteStats = asArray(game.stats?.athletesStats);
+  const athleteStatsById = new Map();
+  for (const raw of rawAthleteStats) {
+    const item = asObject(raw);
+    const id = positiveId(item.athleteId || item.playerId || item.id || item.athlete?.id);
+    if (id) athleteStatsById.set(id, normalizeStatRows(item.stats || item.values || item.statistics));
+  }
+  for (const lineup of [homeLineup, awayLineup]) {
+    for (const member of lineup.members) {
+      const externalStats = athleteStatsById.get(member.athleteId) || [];
+      const merged = new Map([...member.stats, ...externalStats].map(stat => [String(stat.typeId || stat.name).toLowerCase(), stat]));
+      member.stats = [...merged.values()];
+      const rating = member.stats.find(stat => /rating|nota|performance score/i.test(String(stat.name || '')));
+      if (rating && rating.value !== null && rating.value !== undefined) member.rating = rating.value;
+    }
+  }
   const lineupPlayersWithStats = [...homeLineup.members, ...awayLineup.members].filter(member => member.stats.length);
   const athleteStatsCount = rawAthleteStats.length || lineupPlayersWithStats.length;
   const aggregatedCompetitors = [aggregateLineupStats(homeLineup, teams.home.name), aggregateLineupStats(awayLineup, teams.away.name)];
-  const gameEvents = asArray(game.events).map(event => normalizeGameEvent(event, memberMap, teams.home, teams.away));
+  const rawEvents = asArray(game.events).length ? asArray(game.events) : asArray(game.events?.events || game.gameEvents || game.incidents || game.timeline);
+  const gameEvents = rawEvents.map(event => normalizeGameEvent(event, memberMap, teams.home, teams.away));
   const shotEvents = asArray(game.chartEvents?.events).map(event => normalizeShotEvent(event, teams.home, teams.away));
   const competitorRows = addShotTotalsToCompetitors(rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors, shotEvents, teams);
   const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
@@ -387,12 +447,12 @@ function normalizeGameDetails(payload) {
     round: firstText(game.roundName, Number(game.roundNum) > 0 ? `Rodada ${Number(game.roundNum)}` : '', game.stageName, Number(game.stageNum) > 0 ? `Fase ${Number(game.stageNum)}` : ''),
     roundNum: positiveId(game.roundNum),
     stageNum: positiveId(game.stageNum),
-    venue: firstText(game.venue?.name, game.venueName, game.stadium?.name),
-    venueAddress: firstText(game.venue?.address, game.venue?.city, game.venue?.location, game.stadium?.address, game.stadium?.city),
-    venueCapacity: game.venue?.capacity ?? game.stadium?.capacity ?? null,
-    referee: firstText(...asArray(game.officials).filter(x => /referee|arbitro|árbitro/i.test(firstText(x.role, x.type, x.position))).map(x => x.name), game.referee?.name, game.refereeName, game.officials?.[0]?.name),
-    officials: asArray(game.officials).map(x => ({ name:firstText(x.name, x.displayName), role:firstText(x.role, x.type, x.position) })).filter(x => x.name).slice(0, 12),
-    tvNetworks: asArray(game.tvNetworks || game.broadcasts || game.tvChannels).map(x => ({ name:firstText(x.name, x.displayName, x), displayName:firstText(x.displayName, x.name, x), country:firstText(x.countryName, x.country?.name), logo:firstText(x.imageUrl, x.logoUrl, x.logo) })).filter(x => x.name).slice(0, 20),
+    venue: firstText(game.venue?.name, game.venue?.stadium?.name, game.venueName, game.stadium?.name, game.ground?.name, game.stadiumName),
+    venueAddress: firstText(game.venue?.address, game.venue?.city, game.venue?.location, game.venue?.countryName, game.stadium?.address, game.stadium?.city, game.ground?.address, game.location?.name),
+    venueCapacity: game.venue?.capacity ?? game.venue?.stadium?.capacity ?? game.stadium?.capacity ?? game.ground?.capacity ?? game.stadiumCapacity ?? game.venueCapacity ?? null,
+    referee: firstText(...asArray(game.officials).filter(x => /referee|arbitro|árbitro/i.test(firstText(x.role, x.type, x.position))).map(x => firstText(x.name,x.displayName)), game.referee?.name, game.refereeName, game.mainReferee?.name),
+    officials: asArray(game.officials || game.referees || game.matchOfficials).map(x => ({ name:firstText(x.name, x.displayName), role:firstText(x.role, x.type, x.position) })).filter(x => x.name).slice(0, 12),
+    tvNetworks: asArray(game.tvNetworks || game.broadcasts || game.tvChannels || game.broadcasters).map(x => ({ name:firstText(x.name, x.displayName, x.channelName, x), displayName:firstText(x.displayName, x.name, x.channelName, x), country:firstText(x.countryName, x.country?.name), logo:firstText(x.imageUrl, x.logoUrl, x.logo) })).filter(x => x.name).slice(0, 20),
     attendance: game.attendance ?? game.attendanceCount ?? null,
     weather: firstText(game.weather?.description, game.weather?.name),
     refereeCount: asArray(game.officials).length,

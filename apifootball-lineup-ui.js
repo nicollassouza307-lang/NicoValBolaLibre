@@ -41,7 +41,7 @@
       const record = player?.player && typeof player.player === 'object' ? player.player : player;
       const gridMatch = String(record?.grid || player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
       const position = String(record?.pos || player?.pos || '').toUpperCase();
-      const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : (formationLines.length ? depthForIndex(index) : 2);
+        const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : (formationLines.length ? depthForIndex(index) : 2);
       return {
         ...player,
         __player: record,
@@ -95,6 +95,8 @@
         if (position.startsWith('F')) xForward += 3.5;
         if (position.startsWith('F') && wideLane) xForward += 2;
         if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1 : 2.5;
+        // Goleiros ficam dentro da pequena área, próximos à linha de fundo.
+        if (position.startsWith('G')) xForward = 7.5;
         xForward = Math.min(82, xForward);
         positions.push({
           player,
@@ -133,7 +135,20 @@
     return `<div class="apifootball-photo-frame${photo ? '' : ' is-fallback'}" aria-hidden="true">${photo ? `<img class="apifootball-player-photo" data-apifootball-player-photo src="${photo}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}<span class="apifootball-photo-fallback">${escapeHtml(initials(name))}</span></div>`;
   }
 
-  function renderPitchPlayer(entry) {
+  function safePngUrl(value) {
+    try {
+      const url = new URL(String(value || ''));
+      return url.protocol === 'https:' && /\.png(?:$|\?)/i.test(url.href) ? url.toString() : '';
+    } catch { return ''; }
+  }
+
+  function renderPlayerEventSymbol(item, eventIcons = {}) {
+    const custom = safePngUrl(eventIcons?.[item.kind]);
+    if (custom) return `<img class="nvb-player-event-image" src="${escapeHtml(custom)}" alt="" loading="lazy" decoding="async">`;
+    return `<span class="nvb-player-event-emoji" aria-hidden="true">${escapeHtml(item.icon || '•')}</span>`;
+  }
+
+  function renderPitchPlayer(entry, eventIcons = {}) {
     const player = entry.__player || (entry.player?.player && typeof entry.player.player === 'object' ? entry.player.player : entry.player) || {};
     const name = String(player.name || 'Jogador');
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
@@ -141,23 +156,36 @@
     const events=Array.isArray(player.events)?player.events:[];
     const left=events.filter(item=>['yellow','red','double-yellow','substitution'].includes(item.kind));
     const right=events.filter(item=>['goal','assist'].includes(item.kind));
-    const badges=(items,side)=>items.map(item=>`<span class="nvb-player-event ${side} ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${escapeHtml(item.icon||'•')}</span>`).join('');
-    const rating=player.rating!==null&&player.rating!==undefined&&player.rating!==''?`<span class="nvb-player-rating" title="Nota 365Scores">${escapeHtml(player.rating)}</span>`:'';
+    const badges=(items,side)=>{
+      const output=[];
+      for(const kind of ['goal','assist']){
+        const grouped=items.filter(item=>item.kind===kind);
+        if(!grouped.length)continue;
+        const title=grouped.map(item=>`${item.label||kind}${item.minute?` · ${item.minute}`:''}`).join(' | ');
+        output.push(`<span class="nvb-player-event ${side} ${kind} nvb-player-event-goal" title="${escapeHtml(title)}"><span class="nvb-player-event-symbol">${renderPlayerEventSymbol(grouped[0],eventIcons)}</span><small>${grouped.length}x</small></span>`);
+      }
+      for(const item of items.filter(item=>!['goal','assist'].includes(item.kind))) {
+        output.push(`<span class="nvb-player-event ${side} ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${renderPlayerEventSymbol(item,eventIcons)}</span>`);
+      }
+      return output.join('');
+    };
+    const rating=player.rating!==null&&player.rating!==undefined&&player.rating!==''?`<span class="apifootball-pitch-number apifootball-pitch-rating" title="Nota 365Scores">${escapeHtml(player.rating)}</span>`:'';
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
       <div class="nvb-player-event-rail left">${badges(left,'left')}</div><div class="nvb-player-event-rail right">${badges(right,'right')}</div>
-      ${renderPhoto(player)}${rating}
-      <span class="apifootball-pitch-name">${escapeHtml(name)}</span>
-      <span class="apifootball-pitch-number">${escapeHtml(number)}</span>
+      ${renderPhoto(player)}
+      <div class="apifootball-pitch-name-row"><span class="apifootball-pitch-shirt-number apifootball-pitch-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-pitch-name">${escapeHtml(name)}</span></div>
+      ${rating}
     </div>`;
   }
 
-  function renderBenchPlayer(player) {
+  function renderBenchPlayer(player, eventIcons = {}) {
     const record = player?.player && typeof player.player === 'object' ? player.player : player;
     const name = String(record?.name || 'Jogador');
     const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
-    const position = String(record?.pos || player?.pos || '').toUpperCase();
     const rating=record?.rating!==null&&record?.rating!==undefined&&record?.rating!==''?`<span class="apifootball-bench-rating">${escapeHtml(record.rating)}</span>`:'';
-    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}${rating}</div>`;
+    const events=Array.isArray(record?.events)?record.events:[];
+    const eventHtml=events.length?`<span class="apifootball-bench-events">${events.map(item=>`<span class="apifootball-bench-event ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${renderPlayerEventSymbol(item,eventIcons)}</span>`).join('')}</span>`:'';
+    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<div class="apifootball-bench-copy"><div class="apifootball-bench-name-row"><span class="apifootball-bench-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${eventHtml}</div>${rating}</div></div>`;
   }
 
   function renderTeamHead(lineup, fixtureTeam, label) {
@@ -169,17 +197,24 @@
 
   function renderSupportCard(lineup, fixtureTeam, label) {
     const name = String(lineup?.team?.name || fixtureTeam?.name || label);
-    const coach = String(lineup?.coach?.name || 'Técnico não informado');
+    const coachData = lineup?.coach && typeof lineup.coach === 'object' ? lineup.coach : { name: lineup?.coach };
+    const coach = String(coachData?.name || 'Técnico não informado');
+    const coachPhoto = safePhotoUrl(coachData?.photoUrl);
     const substitutes = Array.isArray(lineup?.substitutes) ? lineup.substitutes : [];
     return `<article class="apifootball-support-card">
       <div class="apifootball-support-head"><div><span class="apifootball-support-kicker">COMISSÃO TÉCNICA</span><h5>${escapeHtml(name)}</h5></div><span class="apifootball-support-count">${substitutes.length} reservas</span></div>
-      <div class="apifootball-coach-row"><span class="apifootball-coach-icon">T</span><div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>
+      <div class="apifootball-coach-row"><span class="apifootball-coach-photo${coachPhoto?'':' is-fallback'}">${coachPhoto?`<img src="${escapeHtml(coachPhoto)}" data-apifootball-player-photo alt="" loading="lazy" decoding="async">`:escapeHtml(initials(coach))}</span><div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>
       <div class="apifootball-section-title">Banco de reservas</div>
-      ${substitutes.length ? `<div class="apifootball-bench-list">${substitutes.map(renderBenchPlayer).join('')}</div>` : '<div class="apifootball-lineup-empty">Reservas não informados.</div>'}
+      ${substitutes.length ? `<div class="apifootball-bench-list">${substitutes.map(player=>renderBenchPlayer(player,lineup?.eventIcons||{})).join('')}</div>` : '<div class="apifootball-lineup-empty">Reservas não informados.</div>'}
     </article>`;
   }
 
-  function renderLineups(snapshot) {
+  function safePhotoUrl(value) {
+    try { const url=new URL(String(value||'')); return url.protocol==='https:' && ['imagecache.365scores.com','media.api-sports.io'].includes(url.hostname) ? url.toString() : ''; }
+    catch { return ''; }
+  }
+
+  function renderLineups(snapshot, options = {}) {
     const lineups = resolveLineups(snapshot);
     if (!lineups.some(Boolean)) return '<div class="apifootball-message">A escalação ainda não foi divulgada ou não está disponível para esta competição.</div>';
     const fixtureHome = snapshot?.fixture?.home || { name: snapshot?.home || 'Mandante' };
@@ -190,7 +225,7 @@
       if (!lineup) return `<div class="apifootball-pitch-half ${side} apifootball-pitch-half-empty"><div class="apifootball-half-empty-label">Escalação não disponível</div></div>`;
       const players = Array.isArray(lineup.startXI) ? lineup.startXI : [];
       const placed = playerPlacements(players, side, lineup.formation);
-      return `<div class="apifootball-pitch-half ${side}">${placed.map(renderPitchPlayer).join('')}</div>`;
+      return `<div class="apifootball-pitch-half ${side}">${placed.map(entry=>renderPitchPlayer(entry,options.eventIcons||{})).join('')}</div>`;
     };
     return `<div class="apifootball-lineups-view">
       <div class="apifootball-pitch-team-heads">${renderTeamHead(home, fixtureHome, 'Mandante')}${renderTeamHead(away, fixtureAway, 'Visitante')}</div>
@@ -198,7 +233,7 @@
         <div class="apifootball-pitch-outline"></div><div class="apifootball-pitch-center-line"></div><div class="apifootball-pitch-center-circle"></div><div class="apifootball-pitch-box home"></div><div class="apifootball-pitch-box away"></div>
         ${renderHalf(home, 'home')}${renderHalf(away, 'away')}
       </div></div>
-      <div class="apifootball-support-grid">${renderSupportCard(home, fixtureHome, 'Mandante')}${renderSupportCard(away, fixtureAway, 'Visitante')}</div>
+      <div class="apifootball-support-grid">${renderSupportCard({...home,eventIcons:options.eventIcons||{}}, fixtureHome, 'Mandante')}${renderSupportCard({...away,eventIcons:options.eventIcons||{}}, fixtureAway, 'Visitante')}</div>
       <div class="apifootball-muted apifootball-lineup-footnote">Fotos obtidas pela fonte de dados do jogador quando disponível. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.</div>
     </div>`;
   }
