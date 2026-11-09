@@ -7,7 +7,7 @@ const workflow = fs.readFileSync(path.join(root, '.github/workflows/release.yml'
 const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'build/electron-builder.config.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.18.9');
+assert.equal(pkg.version, '0.18.10');
 const electronConfig = require('../build/electron-builder.config.js');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}multi-api-engine.js`)), 'O Multi-API Engine deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}football-data-service.js`)), 'O serviço football-data.org deve ser incluído no instalador Windows.');
@@ -26,6 +26,8 @@ assert.match(server, /\/api\/football-data\/matches-for-agenda/);
 assert.match(server, /\/api\/football-data\/standings/);
 assert.match(html, /footballDataFetchAgenda/);
 assert.match(html, /footballDataLoadStandings/);
+assert.match(html, /id="competitionsView"/);
+assert.match(html, /id="competitionsBtn"/);
 assert.match(html, /Football-Data\.org API/);
 assert.match(workflow, /Verify Windows installer and updater manifest/);
 assert.match(workflow, /dist\/latest\.yml/);

@@ -1,4 +1,4 @@
-NicoValBolaLibre V0.18.9 — integração football-data.org
+NicoValBolaLibre V0.18.10 — área pública de Competições
 
 Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football não adiciona partidas: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
 
@@ -184,3 +184,28 @@ Documentação oficial: https://docs.football-data.org/general/v4/index.html
 Cobertura: https://www.football-data.org/coverage
 Planos: https://www.football-data.org/pricing
 FAQ/atribuição: https://www.football-data.org/documentation/faq
+
+
+NOVIDADES DA V0.18.10
+- Nova área pública Competições na barra superior, fora do Painel Admin.
+- Tabelas football-data.org acessíveis pela tela principal.
+- Competições e classificações já consultadas ficam salvas no cache local; Cloudflare continua oferecendo cache compartilhado entre os computadores quando configurado.
+- O token continua criptografado localmente e nunca é enviado ao navegador ou ao computador do Val.
+
+
+V0.18.10 - ÁREA PÚBLICA DE COMPETIÇÕES
+=====================================
+
+- Nova opção Competições na barra superior, fora do Painel Admin.
+- Consulte classificações das ligas disponíveis no football-data.org pela tela principal.
+- O seletor de ligas pode ser atualizado pela própria área Competições.
+- A última classificação escolhida fica salva em cache local para reabrir sem uma nova chamada.
+- Quando o cache compartilhado Cloudflare está configurado, respostas de competições e tabelas podem ser reaproveitadas pelo computador do Val sem compartilhar o token pessoal.
+- O Painel Admin continua responsável por salvar/testar/apagar token e por buscar os dados que complementam a agenda.
+
+PUBLICAR V0.18.10
+----------------
+1. Copie o conteúdo do ZIP para a raiz do repositório, preservando .git.
+2. Faça commit NicoValBolaLibre V0.18.10 e Push origin.
+3. Crie e envie a tag v0.18.10.
+4. Confira o GitHub Actions e a Release, incluindo Setup.exe e latest.yml.

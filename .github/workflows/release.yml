@@ -30,7 +30,7 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
-      - name: Test V0.18.9 match-center lineup, photos, schedule and update notice
+      - name: Test V0.18.10 match-center lineup, photos, schedule and update notice
         run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
@@ -40,6 +40,8 @@ jobs:
         run: node scripts/test-football-data-service.js
       - name: Test football-data.org interface and agenda integration
         run: node scripts/test-football-data-ui.js
+      - name: Test public competitions and standings view
+        run: node scripts/test-competitions-view.js
       - name: Test Cloudflare shared provider cache
         run: node scripts/test-cloudflare-provider-cache.js
       - name: Inject automatic read-only Cloud Sync settings

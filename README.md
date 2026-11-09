@@ -1,6 +1,20 @@
-# NicoValBolaLibre V0.18.9 — integração football-data.org
+# NicoValBolaLibre V0.18.10 — área pública de Competições
 
 A V0.18.9 transforma o token já configurado na V0.18.8 em uma integração utilizável. O football-data.org agora pode complementar placares/calendários das partidas já carregadas e fornecer classificações das ligas autorizadas pela conta.
+
+
+A V0.18.10 adiciona uma área **Competições** à tela principal. As tabelas do football-data.org podem ser consultadas sem abrir o Painel Admin. Competições e classificações consultadas ficam em cache local; as requisições usam o cache compartilhado Cloudflare já existente quando configurado. O token continua criptografado localmente e nunca é enviado ao navegador ou ao computador do Val.
+
+## Como usar a área Competições na V0.18.10
+
+1. Instale a V0.18.10. O token football-data.org salvo na V0.18.8 permanece neste Windows.
+2. Clique em **Competições** na barra superior.
+3. Se a lista estiver vazia, clique em **Atualizar competições**.
+4. Escolha uma liga e clique em **Ver classificação**.
+5. A tabela mostrará posição, clube, jogos, vitórias, empates, derrotas, saldo e pontos. A última tabela consultada ficará disponível no cache local.
+6. O Painel Admin continua sendo o local para gerenciar o token, testar a conexão e consultar diagnósticos.
+
+A lista de competições e classificações é carregada conforme o acesso permitido ao token/conta. O cache Cloudflare compartilhado permite que o computador do Val leia respostas publicadas pelo administrador sem receber a chave pessoal.
 
 ## O que mudou na V0.18.9
 
@@ -64,12 +78,22 @@ O workflow executa, entre outros:
 
 Os testes usam respostas simuladas e verificam autenticação, cache, limite por minuto, normalização, cruzamento exato de partidas, classificações, cobertura de copas, fallback de placar, atribuição e segurança de credenciais. Eles não substituem um teste real com o token e as competições da conta.
 
-## Publicar V0.18.9
+## Publicar V0.18.10
 
 1. Copie todo o conteúdo desta pasta para a raiz do repositório local, substituindo os arquivos antigos e preservando a pasta `.git`.
 2. Mantenha o segredo existente `NVB_SYNC_READ_TOKEN` em **Settings → Secrets and variables → Actions**. Não adicione o token football-data.org nem `SYNC_ADMIN_TOKEN` ao GitHub.
-3. Faça commit `NicoValBolaLibre V0.18.9` e `Push origin`.
-4. Crie a tag `v0.18.9` nesse commit e envie a tag com outro `Push origin`.
+3. Faça commit `NicoValBolaLibre V0.18.10` e `Push origin`.
+4. Crie a tag `v0.18.10` nesse commit e envie a tag com outro `Push origin`.
 5. Acompanhe o GitHub Actions. A Release só deve ser considerada pronta se o instalador `*-Setup.exe` e `latest.yml` forem publicados.
 
 A agenda continua vindo exclusivamente do Rei dos Canais/PelotaLibre. API-Football e football-data.org são fontes complementares e não adicionam jogos.
+
+
+## V0.18.10 — Área pública de Competições
+
+- Nova entrada **Competições** na barra superior, fora do Painel Admin.
+- Consulta de classificações football-data.org diretamente na área principal.
+- Lista de ligas e última classificação ficam em cache local para reabertura sem nova chamada.
+- A tela pública usa a mesma API e o cache compartilhado Cloudflare já existentes; não compartilha nem expõe o token.
+- A tabela mostra posição, clube, jogos, vitórias, empates, derrotas, saldo e pontos.
+- O Painel Admin continua com seus controles de configuração e diagnóstico.
