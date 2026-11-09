@@ -190,6 +190,116 @@ function normalizeGameDetails(payload) {
   };
 }
 
+
+function foldMatchText(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+const MATCH_TEAM_ALIASES = new Map([
+  ['man utd', 'manchester united'], ['man united', 'manchester united'], ['manchester utd', 'manchester united'],
+  ['man city', 'manchester city'], ['spurs', 'tottenham'], ['paris saint germain', 'psg'],
+  ['inter milan', 'inter'], ['internazionale', 'inter'], ['atletico de madrid', 'atletico madrid'],
+  ['athletic club', 'athletic bilbao'], ['bayern munchen', 'bayern munich'],
+  ['sporting cp', 'sporting'], ['benfica lisbon', 'benfica'], ['porto fc', 'porto'],
+  ['junior', 'junior barranquilla'], ['atletico junior', 'junior barranquilla']
+]);
+function normalizeMatchTeam(value) {
+  let key = foldMatchText(value);
+  if (MATCH_TEAM_ALIASES.has(key)) return MATCH_TEAM_ALIASES.get(key);
+  key = key.replace(/^(?:fc|cf|ac|as|ssc|ss|sc|cd|ca|afc|rcd|rc|ud|vfb|ec)\s+/, '');
+  key = key.replace(/\b(?:football club|fc|cf|club|deportivo|futbol club)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  return MATCH_TEAM_ALIASES.get(key) || key;
+}
+function teamNameSimilarity(left, right) {
+  const a = normalizeMatchTeam(left), b = normalizeMatchTeam(right);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if ((a.length >= 5 && b.includes(a)) || (b.length >= 5 && a.includes(b))) return Math.min(a.length, b.length) / Math.max(a.length, b.length) * 0.92;
+  const aa = new Set(a.split(' ')), bb = new Set(b.split(' '));
+  const intersection = [...aa].filter(token => bb.has(token)).length;
+  return intersection ? (2 * intersection) / (aa.size + bb.size) : 0;
+}
+function localDateInSaoPaulo(value) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+function localMinutesInSaoPaulo(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return Number(values.hour) * 60 + Number(values.minute);
+}
+function parseAgendaDate(row) {
+  const direct = firstText(row.dateEvent, row.date, row.startDate);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) return direct;
+  return localDateInSaoPaulo(row.start || row.startTime || row.start_time || '');
+}
+function parseAgendaMinutes(row) {
+  const direct = firstText(row.timeText, row.time, row.horario, row.start_time);
+  const match = direct.match(/(?:T|\s)?(\d{1,2}):(\d{2})/);
+  if (match && Number(match[1]) < 24 && Number(match[2]) < 60) return Number(match[1]) * 60 + Number(match[2]);
+  return localMinutesInSaoPaulo(row.start || row.startTime || '');
+}
+function compareCompetitionNames(left, right) {
+  const a = foldMatchText(left).replace(/\b(?:league|liga|championship|campeonato|division|divisao|serie|series)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  const b = foldMatchText(right).replace(/\b(?:league|liga|championship|campeonato|division|divisao|serie|series)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!a || !b) return null;
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  return teamNameSimilarity(a, b) >= 0.72;
+}
+function matchAgendaEvents(agendaEvents, scoresGames) {
+  const events = asArray(agendaEvents).slice(0, 250);
+  const games = asArray(scoresGames).slice(0, 500);
+  return events.map(eventValue => {
+    const event = asObject(eventValue);
+    const home = firstText(event.home, event.homeName, event.homeTeam?.name, event.teams?.home?.name);
+    const away = firstText(event.away, event.awayName, event.awayTeam?.name, event.teams?.away?.name);
+    const date = parseAgendaDate(event);
+    const competition = firstText(event.league, event.competition, event.competitionName);
+    if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
+    const candidates = [];
+    for (const game of games) {
+      const item = asObject(game);
+      const gameDate = localDateInSaoPaulo(item.startTime);
+      if (!gameDate || gameDate !== date) continue;
+      const gameHome = firstText(item.home?.name), gameAway = firstText(item.away?.name);
+      const directHome = teamNameSimilarity(home, gameHome);
+      const directAway = teamNameSimilarity(away, gameAway);
+      const reverseHome = teamNameSimilarity(home, gameAway);
+      const reverseAway = teamNameSimilarity(away, gameHome);
+      const direct = Math.min(directHome, directAway);
+      const reversed = Math.min(reverseHome, reverseAway);
+      const isReversed = reversed > direct;
+      const teamScore = Math.max(direct, reversed);
+      if (teamScore < 0.68) continue;
+      const gameCompetition = firstText(item.competition?.name);
+      const competitionMatch = compareCompetitionNames(competition, gameCompetition);
+      const agendaMinutes = parseAgendaMinutes(event);
+      const gameMinutes = localMinutesInSaoPaulo(item.startTime);
+      const timeDiffMinutes = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
+      const timeScore = timeDiffMinutes === null ? 0.5 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 45 ? 0.8 : timeDiffMinutes <= 90 ? 0.55 : timeDiffMinutes <= 180 ? 0.25 : 0;
+      const score = Math.round((teamScore * 0.72 + 0.15 + (competitionMatch === true ? 0.08 : competitionMatch === false ? 0 : 0.04) + timeScore * 0.05) * 100);
+      const exactOriented = directHome === 1 && directAway === 1;
+      const confidence = exactOriented && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : 'revisar';
+      candidates.push({
+        gameId: positiveId(item.gameId), startTime: item.startTime, home: gameHome, away: gameAway,
+        competition: gameCompetition, competitionId: positiveId(item.competition?.id),
+        score, confidence, reversed: isReversed, teamScore: Math.round(teamScore * 100),
+        competitionMatch, timeDiffMinutes,
+        reasons: [exactOriented ? 'times idênticos' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes aproximados', 'mesma data', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
+      });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3) };
+  });
+}
+
 class Scores365Service {
   constructor(options = {}) {
     this.baseUrl = String(options.baseUrl || API_BASE).replace(/\/$/, '');
@@ -347,5 +457,5 @@ class Scores365Service {
 
 module.exports = {
   Scores365Service, API_BASE, DEFAULT_PARAMS, ENDPOINTS,
-  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails
+  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity
 };

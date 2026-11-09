@@ -10,7 +10,7 @@ const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
-const { Scores365Service } = require('./365scores-service');
+const { Scores365Service, matchAgendaEvents } = require('./365scores-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -1119,6 +1119,35 @@ const requestHandler = async (req, res) => {
       });
     } catch (error) {
       return json(res, error.status || 502, { ok: false, provider: '365Scores', error: error.message || 'Não foi possível buscar partidas na 365Scores.', code: error.code || '' });
+    }
+  }
+
+  if (pathname === '/api/365scores/match-agenda' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 192 * 1024);
+      const date = String(body.date || '').trim();
+      const agendaEvents = Array.isArray(body.agendaEvents) ? body.agendaEvents.slice(0, 250) : [];
+      if (!agendaEvents.length) return json(res, 400, { ok:false, error:'Carregue uma agenda com partidas antes de procurar correspondências.' });
+      const cacheKey = scores365Service.gamesForDateCacheKey(date);
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
+      const result = await scores365Service.getGamesForDate(date, { force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      const matches = matchAgendaEvents(agendaEvents, result.games);
+      const candidateCount = matches.reduce((sum, item) => sum + item.candidates.length, 0);
+      return json(res, 200, {
+        ok:true, provider:'365Scores', experimental:true, date,
+        agendaCount:agendaEvents.length, sourceGamesCount:result.count,
+        matches, candidateCount, cached:Boolean(result.cached || shared), shared:Boolean(shared),
+        agendaChanged:false,
+        message:'Correspondências sugeridas para revisão. Nenhum gameId foi vinculado e a agenda permaneceu intacta.'
+      });
+    } catch (error) {
+      return json(res, error.status || 502, { ok:false, provider:'365Scores', error:error.message || 'Não foi possível comparar a agenda com a 365Scores.', code:error.code || '' });
     }
   }
 
