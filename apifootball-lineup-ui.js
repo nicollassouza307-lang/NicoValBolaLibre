@@ -17,6 +17,12 @@
   }
 
   function playerPhotoUrl(playerOrId) {
+    if (playerOrId && typeof playerOrId === 'object' && typeof playerOrId.photoUrl === 'string') {
+      try {
+        const custom = new URL(playerOrId.photoUrl);
+        if (custom.protocol === 'https:' && ['imagecache.365scores.com', 'media.api-sports.io'].includes(custom.hostname)) return custom.toString();
+      } catch {}
+    }
     const id = safeId(typeof playerOrId === 'object' ? playerOrId?.id : playerOrId);
     return id ? `https://media.api-sports.io/football/players/${id}.png` : '';
   }
@@ -119,7 +125,7 @@
     const record = player?.player && typeof player.player === 'object' ? player.player : player;
     const id = safeId(record?.id);
     const name = String(record?.name || 'Jogador');
-    const photo = playerPhotoUrl(id);
+    const photo = playerPhotoUrl(record);
     const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
     return `<div class="apifootball-photo-frame${photo ? '' : ' is-fallback'}" aria-hidden="true">${photo ? `<img class="apifootball-player-photo" data-apifootball-player-photo src="${photo}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}<span class="apifootball-photo-fallback">${escapeHtml(initials(name))}</span></div>`;
   }
@@ -183,7 +189,7 @@
         ${renderHalf(home, 'home')}${renderHalf(away, 'away')}
       </div></div>
       <div class="apifootball-support-grid">${renderSupportCard(home, fixtureHome, 'Mandante')}${renderSupportCard(away, fixtureAway, 'Visitante')}</div>
-      <div class="apifootball-muted apifootball-lineup-footnote">Fotos obtidas pelo ID do jogador na mídia da API-Football. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.</div>
+      <div class="apifootball-muted apifootball-lineup-footnote">Fotos obtidas pela fonte de dados do jogador quando disponível. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.</div>
     </div>`;
   }
 
@@ -313,7 +319,7 @@
         ? 50 : Math.round((homeNumber / (homeNumber + awayNumber)) * 100);
       return `<article class="apifootball-stat-card" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-values"><strong>${escapeHtml(row.home)}</strong><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.away)}</strong></div><div class="apifootball-stat-bar" aria-hidden="true"><span class="home" style="width:${homeShare}%"></span><span class="away" style="width:${100 - homeShare}%"></span></div></article>`;
     }).join('');
-    return `<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela API-Football. Um traço indica dado não informado.</div></div>`;
+    return `<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela fonte esportiva selecionada. Um traço indica dado não informado.</div></div>`;
   }
 
   return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };

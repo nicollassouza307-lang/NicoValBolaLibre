@@ -32,19 +32,19 @@ try {
   responses.set('/game/', { game: {
     id: 12345, startTime: '2026-11-09T22:00:00Z', statusText: 'Scheduled',
     homeCompetitor: { id: 10, name: 'Flamengo', lineups: { formation: '4-3-3', members: [
-      { id: 1, athleteId: 1, status: 1, yardFormation: { line: 1, fieldLine: 1 } },
-      { id: 2, athleteId: 2, status: 2 }
+      { id: 1, athleteId: 1, status: 1, yardFormation: { line: 1, fieldLine: 1 }, stats: [{ type: 19, name: 'Passes completos', value: 30 }] },
+      { id: 2, athleteId: 2, status: 2, stats: [{ type: 54, name: 'Dribles', value: 4 }] }
     ] } },
     awayCompetitor: { id: 20, name: 'Palmeiras', lineups: { formation: '4-2-3-1', members: [
-      { id: 3, athleteId: 3, status: 1 }
+      { id: 3, athleteId: 3, status: 1, stats: [{ type: 39, name: 'Desarmes', value: 5 }] }
     ] } },
-    competitions: [{ id: 77, name: 'Brasileirão' }], members: [
+    competitions: [{ id: 77, name: 'Brasileirão' }], roundNum: 33, members: [
       { id: 1, athleteId: 1, name: 'Goleiro Teste', jerseyNumber: 1, position: { name: 'GK' } },
       { id: 2, athleteId: 2, name: 'Atacante Teste', jerseyNumber: 9, position: { name: 'ST' } },
       { id: 3, athleteId: 3, name: 'Zagueiro Teste', jerseyNumber: 4, position: { name: 'CB' } }
     ],
-    events: [{ typeId: 1 }], chartEvents: { events: [{ xg: 0.3 }] },
-    stats: { competitorsStats: [{ name: 'Shots' }], athletesStats: [{ name: 'Passes' }] },
+    events: [{ typeId: 1, playerId: 1, competitorNum: 1, gameTime: '40', description: 'Gol' }, { typeId: 1000, playerId: 2, assistPlayerId: 3, competitorNum: 2, gameTime: '70' }], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
+    stats: {},
     venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste' }]
   } });
 
@@ -94,6 +94,13 @@ try {
   assert.match(game.details.lineups.home.members[0].photoUrl, /imagecache\.365scores\.com.*Athletes\/1$/);
   assert.equal(game.details.lineups.away.members[0].name, 'Zagueiro Teste');
   assert.equal(game.details.statsAvailable, true);
+  assert.equal(game.details.statistics.lineupPlayers, 3);
+  assert.equal(game.details.statistics.competitors, 2, 'Estatísticas por equipe devem ser agregadas dos membros da escalação quando não houver bloco de equipe.');
+  assert.equal(game.details.statistics.playerRows[0].stats[0].typeId, 19);
+  assert.equal(game.details.events[0].type, 'Gol');
+  assert.equal(game.details.events[0].player, 'Goleiro Teste');
+  assert.equal(game.details.shots[0].xg, 0.3);
+  assert.equal(game.details.round, 'Rodada 33');
   assert.equal(game.details.venueCapacity, 78838);
   const cachedGame = await service.getGame(12345);
   assert.equal(cachedGame.cached, true);

@@ -377,8 +377,8 @@
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
 /* V0.18.9: integração football-data.org com token local seguro */
 /* V0.18.10: área pública de competições e tabelas */
-/* V0.18.16: TheSportsDB V1, abas de competições e livescore */
-/* V0.18.16: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
+/* V0.18.17: TheSportsDB V1, abas de competições e livescore */
+/* V0.18.17: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
 .competitions-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:6px 0 22px;padding:21px;border:1px solid #48d9d02a;border-radius:17px;background:linear-gradient(115deg,#142d47,#102039)}
 .competitions-page-head p{max-width:680px;margin:8px 0 0;color:#a9bdd5;font-size:12px;line-height:1.55}
 .competitions-page-title{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:7px 0 0;color:#eef7ff}
@@ -416,7 +416,7 @@
 .competitions-attribution{margin:15px 2px;color:#7187a3;font-size:9px;line-height:1.5}
 .competitions-attribution a{color:#8fa9ca}
 @media(max-width:620px){.competitions-page-head{align-items:flex-start;flex-direction:column;padding:17px}.competitions-select-panel{grid-template-columns:1fr}.competitions-select-panel button{width:100%}.public-standings-head{padding:14px}.public-standings-table{font-size:10px}.public-standings-table th,.public-standings-table td{padding:9px 7px}.public-standings-table td:nth-child(2){min-width:145px}.public-standings-monogram{width:26px;height:26px;flex-basis:26px}}
-/* V0.18.16: abas de competição, livescore e TheSportsDB */
+/* V0.18.17: abas de competição, livescore e TheSportsDB */
 .competitions-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px;padding:5px;border:1px solid var(--line);border-radius:13px;background:#ffffff05}
 .competitions-tab{flex:1 1 110px;min-height:39px;border:1px solid transparent;border-radius:9px;background:transparent;color:#8fa5c2;font-size:11px;font-weight:850;cursor:pointer}
 .competitions-tab.active{border-color:#48d9d044;background:#48d9d014;color:#9ce9e2;box-shadow:inset 0 0 0 1px #48d9d011}
@@ -503,7 +503,7 @@
 
 </style>
 <style>
-/* V0.18.16: GitHub SVGs podem ser brancos; ficam em placa azul-marinho. Logos raster/competição ficam em placa branca. */
+/* V0.18.17: GitHub SVGs podem ser brancos; ficam em placa azul-marinho. Logos raster/competição ficam em placa branca. */
 img.crest:not(.crest-github),
 img.competition-divider-logo,
 .apifootball-team-head-crest {
@@ -779,7 +779,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.16 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.17 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -2222,6 +2222,167 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
     return 'upcoming';
   }
+  function scores365LinkedGameForEvent(event) {
+    const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
+    const key=scores365AgendaLinkKey(event);
+    if(key&&links[key])return links[key];
+    const eventId=String(event?.id||'');
+    if(eventId) {
+      const byId=Object.values(links).find(item=>String(item?.eventId||'')===eventId);
+      if(byId)return byId;
+    }
+    return null;
+  }
+  function scores365LineupAsApiSnapshot(details) {
+    const teamLogo=id=>Number(id)>0?`https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${Number(id)}`:'';
+    const mapTeam=(team,lineup)=>{
+      const members=Array.isArray(lineup?.members)?lineup.members:[];
+      const mapPlayer=member=>{
+        const formation=member.formationPosition||{};
+        const line=Number(formation.line||0), row=Number(formation.fieldLine||formation.fieldSide||0);
+        const grid=line>0&&row>0?`${line}:${row}`:'';
+        return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),photoUrl:String(member.photoUrl||'')},grid};
+      };
+      return {
+        team:{id:Number(team?.id)||0,name:String(team?.name||'Equipe'),logo:teamLogo(team?.id)},
+        formation:String(lineup?.formation||''),
+        startXI:members.filter(member=>Number(member.status)===1).map(mapPlayer),
+        substitutes:members.filter(member=>Number(member.status)===2).map(mapPlayer),
+        coach:{name:String(lineup?.coach||'')}
+      };
+    };
+    return {
+      fixture:{home:{id:Number(details.home?.id)||0,name:String(details.home?.name||'Mandante'),logo:teamLogo(details.home?.id)},away:{id:Number(details.away?.id)||0,name:String(details.away?.name||'Visitante'),logo:teamLogo(details.away?.id)}},
+      lineups:[mapTeam(details.home,details.lineups?.home),mapTeam(details.away,details.lineups?.away)]
+    };
+  }
+  function scores365EventMinute(value) {
+    const raw=String(value||'').trim();
+    if(!raw)return '—';
+    const match=raw.match(/\d{1,3}(?:\+\d{1,2})?/);
+    return match?`${match[0]}′`:raw;
+  }
+  function renderScores365Events(details) {
+    const events=Array.isArray(details?.events)?details.events:[];
+    if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
+    const iconFor=event=>({Gol:'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠'}[event.type]||'•');
+    const sorted=events.slice().sort((a,b)=>parseInt(String(a.minute||'').match(/\d+/)?.[0]||'0',10)-parseInt(String(b.minute||'').match(/\d+/)?.[0]||'0',10));
+    return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>`<article class="apifootball-event-row"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(event.player||event.type||'Evento')}</strong><small>${escapeHtml(event.type||'')}${event.secondaryPlayer?` · ${escapeHtml(event.secondaryPlayer)}`:''}${event.detail&&event.detail!==event.type?` · ${escapeHtml(event.detail)}`:''}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`).join('')}</div></div>`;
+  }
+  function scores365TeamStatRows(row) {
+    const source=Array.isArray(row?.stats)?row.stats:(Array.isArray(row?.rows)?row.rows:[]);
+    const typeNames=new Map((Array.isArray(row?.statsTypes)?row.statsTypes:[]).map(item=>[Number(item.typeId),String(item.name||'')]));
+    const out=[];
+    for(const item of source) {
+      const statList=Array.isArray(item?.stats)?item.stats:[item];
+      for(const stat of statList) {
+        const typeId=Number(stat?.typeId||stat?.type?.id||stat?.type||0);
+        const value=stat?.value??stat?.displayValue??null;
+        const name=String(stat?.name||stat?.typeName||stat?.type?.name||typeNames.get(typeId)||'').trim();
+        if(name&&value!==null&&value!==undefined)out.push({name,value});
+      }
+    }
+    return out;
+  }
+  function renderScores365Statistics(details) {
+    const statistics=details?.statistics||{};
+    const teams=Array.isArray(statistics.competitorRows)?statistics.competitorRows:[];
+    const homeName=String(details.home?.name||'Mandante'),awayName=String(details.away?.name||'Visitante');
+    const homeStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===homeName)||teams[0];
+    const awayStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===awayName)||teams.find(row=>row!==homeStats)||teams[1];
+    const h=scores365TeamStatRows(homeStats),a=scores365TeamStatRows(awayStats);
+    const get=(rows,name)=>rows.find(row=>row.name.toLowerCase()===name.toLowerCase())?.value??'—';
+    const commonNames=[...new Set([...h.map(row=>row.name),...a.map(row=>row.name)])].slice(0,24);
+    const playerRows=Array.isArray(statistics.playerRows)?statistics.playerRows:[];
+    const shots=Array.isArray(details.shots)?details.shots:[];
+    const xgFor=name=>shots.filter(shot=>shot.team===name&&Number.isFinite(shot.xg)).reduce((sum,shot)=>sum+shot.xg,0);
+    const xgHome=xgFor(homeName),xgAway=xgFor(awayName);
+    let content='';
+    if(commonNames.length)content=`<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${commonNames.map(name=>`<article class="apifootball-stat-card"><div class="apifootball-stat-values"><strong>${escapeHtml(get(h,name))}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(get(a,name))}</strong></div></article>`).join('')}</div></div>`;
+    else content='<div class="apifootball-message">Não encontramos estatísticas numéricas por equipe nesta resposta. Isso pode variar conforme a cobertura e os dados fornecidos para cada partida.</div>';
+    const xgMarkup=shots.length?`<div class="multi-api-provider" style="margin-top:10px"><strong>Finalizações · xG somado dos eventos</strong><span>${escapeHtml(homeName)}: ${xgHome.toFixed(2)} · ${escapeHtml(awayName)}: ${xgAway.toFixed(2)} · ${shots.length} finalização(ões) no gráfico.</span></div>`:'';
+    const playerMarkup=playerRows.length?`<details style="margin-top:10px"><summary class="admin-small">Estatísticas individuais · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,30).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,5).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
+    return `${content}${xgMarkup}${playerMarkup}`;
+  }
+  function renderScores365Standings(details) {
+    const competitionId=Number(details?.competition?.id||0);
+    const cached=competitionId?scores365StandingsCache[String(competitionId)]:null;
+    if(!cached)return `<div class="apifootball-message">Classificação ainda não carregada. ${competitionId?'Use o botão abaixo para consultar a competição.':'A partida não informou um competitionId.'}</div>`;
+    const root=cached.data||{};
+    const groups=Array.isArray(root.standings)?root.standings:[];
+    const rows=groups.flatMap(group=>Array.isArray(group.rows)?group.rows:[]).slice(0,60);
+    if(!rows.length)return '<div class="apifootball-message">A 365Scores respondeu, mas não encontramos linhas de classificação no formato esperado. A resposta foi mantida em cache para diagnóstico.</div>';
+    return `<div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${Number(row.position)||'—'}</td><td>${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}</td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  function renderScores365MatchContent(details,tab) {
+    if(tab==='lineups')return window.NVBLineupUI.renderLineups(scores365LineupAsApiSnapshot(details));
+    if(tab==='statistics')return renderScores365Statistics(details);
+    if(tab==='standings')return `${renderScores365Standings(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadStandings">Buscar/atualizar classificação</button></div>':''}`;
+    const homeScore=details.score?.home??details.home?.score??'—';
+    const awayScore=details.score?.away??details.away?.score??'—';
+    const shotCount=Number(details.chartEventsCount)||0;
+    const shotText=shotCount?` · ${shotCount} finalização(ões) no gráfico`:'';
+    return `<div class="match-livescore-summary"><div class="match-livescore-score"><strong>${escapeHtml(homeScore)}</strong><span>:</span><strong>${escapeHtml(awayScore)}</strong></div><div class="match-livescore-status">${escapeHtml(details.status||'Status não informado')}</div><small>${escapeHtml(details.round||'Rodada não informada')} · ${escapeHtml(details.venue||'Estádio não informado')}${shotText}</small></div>${renderScores365Events(details)}`;
+  }
+  function renderScores365MatchPanel(event) {
+    const link=scores365LinkedGameForEvent(event);
+    if(!link||!Number(link.gameId))return '';
+    const cache=scores365MatchCache[String(event.id)]||null;
+    const activeTab=scores365PanelActiveTab.get(String(event.id))||'livescore';
+    const tabs=[['livescore','Livescore'],['lineups','Escalações'],['statistics','Estatísticas'],['standings','Classificação']];
+    const detail=cache?.details||null;
+    const content=detail?renderScores365MatchContent(detail,activeTab):'<div class="apifootball-message">Vínculo manual confirmado. Consulte a 365Scores para carregar os dados desta partida.</div>';
+    return `<section class="apifootball-panel match-center-panel scores365-match-panel" id="scores365MatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">FONTE COMPLEMENTAR</div><h3>⚽ Dados da 365Scores</h3><div class="apifootball-muted">Vínculo confirmado manualmente · gameId ${Number(link.gameId)}${link.competitionId?` · competitionId ${Number(link.competitionId)}`:''}</div></div><div class="apifootball-match-actions"><span class="api-football-status-pill ${detail?'ok':'warn'}">${detail?'Dados disponíveis':'Vinculado'}</span><button class="btn small" type="button" id="scores365LoadMatchData">${detail?'Atualizar 365Scores':'Consultar 365Scores'}</button></div></div><div id="scores365MatchStatus" class="apifootball-key-note">${detail?`Dados recebidos pela 365Scores${cache.cached?' · cache':''}.`:'A consulta é manual. A agenda original e a API-Football permanecem inalteradas.'}</div>${detail?`<div class="apifootball-tabs match-center-tabs" role="tablist" aria-label="Dados da 365Scores">${tabs.map(([id,label])=>`<button class="apifootball-tab ${activeTab===id?'active':''}" type="button" role="tab" aria-selected="${activeTab===id}" data-scores365-match-tab="${id}">${label}</button>`).join('')}</div><div class="apifootball-tab-content match-center-tab-content">${content}</div>`:`<div class="apifootball-result">${content}</div>`}</section>`;
+  }
+  function bindScores365MatchPanelEvents(event) {
+    const panel=$('#scores365MatchDataPanel');
+    if(!panel)return;
+    panel.querySelector('#scores365LoadMatchData')?.addEventListener('click',()=>loadScores365MatchData(event,Boolean(scores365MatchCache[String(event.id)])));
+    panel.querySelectorAll('[data-scores365-match-tab]').forEach(button=>button.addEventListener('click',()=>{
+      const tab=['livescore','lineups','statistics','standings'].includes(button.dataset.scores365MatchTab)?button.dataset.scores365MatchTab:'livescore';
+      scores365PanelActiveTab.set(String(event.id),tab);
+      panel.outerHTML=renderScores365MatchPanel(event);
+      bindScores365MatchPanelEvents(event);
+    }));
+    panel.querySelector('#scores365LoadStandings')?.addEventListener('click',()=>loadScores365Standings(event));
+    attachApiFootballPhotoFallback(panel);
+  }
+  async function loadScores365MatchData(event,refresh=false) {
+    const link=scores365LinkedGameForEvent(event);
+    if(!link?.gameId){toast('Esta partida ainda não possui gameId confirmado no Admin → 365Scores.');return;}
+    const status=$('#scores365MatchStatus');
+    const button=$('#scores365LoadMatchData');
+    if(button)button.disabled=true;
+    if(status)status.textContent=`Consultando gameId ${Number(link.gameId)} na 365Scores…`;
+    try {
+      const response=await fetch('/api/365scores/game',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({gameId:Number(link.gameId),refresh,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar os dados da 365Scores.');
+      scores365MatchCache[String(event.id)]={gameId:Number(link.gameId),details:result.details,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
+      writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
+      if(state.selected&&String(state.selected.id)===String(event.id))renderModal();
+      toast(`Dados da 365Scores carregados para ${event.home} x ${event.away}.`);
+    } catch(error) {
+      if(status)status.textContent=error.message||'Falha ao carregar os dados da 365Scores.';
+      toast(error.message||'Falha ao carregar os dados da 365Scores.');
+    } finally { if(button)button.disabled=false; }
+  }
+  async function loadScores365Standings(event) {
+    const link=scores365LinkedGameForEvent(event);
+    const cached=scores365MatchCache[String(event.id)]?.details;
+    const competitionId=Number(cached?.competition?.id||link?.competitionId||0);
+    if(!competitionId){toast('A partida não informou o competitionId necessário.');return;}
+    const button=$('#scores365LoadStandings');if(button)button.disabled=true;
+    try {
+      const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação da 365Scores.');
+      scores365StandingsCache[String(competitionId)]={data:result.data,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
+      writeStore(SCORES365_STANDINGS_CACHE_KEY,scores365StandingsCache);
+      if(state.selected&&String(state.selected.id)===String(event.id))renderModal();
+      toast('Classificação recebida da 365Scores.');
+    } catch(error){toast(error.message||'Falha ao carregar a classificação da 365Scores.');}
+    finally{if(button)button.disabled=false;}
+  }
   function renderMatchCenterStandings(event, snapshot) {
     const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
     const inferred=footballDataCompetitionForEvent(event);
@@ -2605,6 +2766,13 @@ const BROADCASTER_ALIAS_GROUPS = [
     return new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(date);
   }
   const SCORES365_AGENDA_LINKS_KEY='nvb_365scores_agenda_links_v1';
+  const SCORES365_MATCH_CACHE_KEY='nvb_365scores_match_cache_v1';
+  const SCORES365_STANDINGS_CACHE_KEY='nvb_365scores_standings_cache_v1';
+  let scores365MatchCache=readStore(SCORES365_MATCH_CACHE_KEY,{});
+  if(!scores365MatchCache||typeof scores365MatchCache!=='object'||Array.isArray(scores365MatchCache))scores365MatchCache={};
+  let scores365StandingsCache=readStore(SCORES365_STANDINGS_CACHE_KEY,{});
+  if(!scores365StandingsCache||typeof scores365StandingsCache!=='object'||Array.isArray(scores365StandingsCache))scores365StandingsCache={};
+  const scores365PanelActiveTab=new Map();
   let scores365AgendaMatchSnapshot=[];
   function scores365AgendaLinkKey(event) {
     const date=String(event?.dateEvent||event?.date||'').slice(0,10);
@@ -2918,11 +3086,13 @@ const BROADCASTER_ALIAS_GROUPS = [
         <div class="player-footnote">As opções de fontes são gerenciadas no Painel Admin. A reprodução depende de a página de origem permitir incorporação no navegador.</div>
       </section>
       ${renderApiFootballMatchPanel(e)}
+      ${renderScores365MatchPanel(e)}
       ${externalScore.match?`<div class="admin-small" style="margin-top:10px;padding:10px;border:1px solid var(--line,#253247);border-radius:10px">Dados complementares: <strong>football-data.org</strong> · ${escapeHtml(externalScore.match.competition?.name||'Competição')}${externalScore.match.matchday?` · Rodada ${Number(externalScore.match.matchday)}`:''} · Atualizado pela fonte em ${escapeHtml(externalScore.match.lastUpdated||'data não informada')}.</div>`:''}
       <div class="match-bottom-note"><span>⚽ NicoValBolaLibre Match Center</span><span>Dados fornecidos pelas agendas selecionadas</span></div>`;
     $('#modalContent').querySelectorAll('[data-source-index]').forEach(btn=>btn.addEventListener('click',()=>{state.sourceIndex=Number(btn.dataset.sourceIndex);renderModal();}));
     $('#favoriteToggle').addEventListener('click',()=>toggleFavorite(e.id));
     bindApiFootballPanelEvents(e);
+    bindScores365MatchPanelEvents(e);
     const copyDiag=$('#copyPlayerDiag');
     if(copyDiag) copyDiag.addEventListener('click',async()=>{
       const report=buildPlayerDiagnostic(e,catalogMatches,active);
@@ -3964,7 +4134,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.16',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.17',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

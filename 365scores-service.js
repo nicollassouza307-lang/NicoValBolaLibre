@@ -123,35 +123,119 @@ function athleteImageUrl(id, isNationalTeam = false) {
   const base = 'https://imagecache.365scores.com/image/upload/f_png,w_34,h_34,c_limit,q_auto:eco,dpr_2,d_Athletes:default.png,r_max,c_thumb,g_face,z_0.65';
   return `${base}/v1/Athletes/${isNationalTeam ? 'NationalTeam/' : ''}${athleteId}`;
 }
+function normalizeStatRows(rows) {
+  return asArray(rows).map(row => {
+    const item = asObject(row);
+    const type = item.type;
+    const typeId = positiveId(item.typeId || (typeof type === 'number' || typeof type === 'string' ? type : type?.id));
+    const value = item.value ?? item.displayValue ?? item.val ?? null;
+    return {
+      typeId,
+      name: firstText(item.name, item.typeName, item.label, typeof type === 'object' ? type?.name : ''),
+      value,
+      numericValue: typeof value === 'number' ? value : (Number.isFinite(Number(String(value ?? '').replace(',', '.').replace('%', ''))) ? Number(String(value).replace(',', '.').replace('%', '')) : null)
+    };
+  }).filter(row => row.typeId || row.name || row.value !== null);
+}
+function positionCode(value) {
+  const text = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (/goal|goleir|keeper/.test(text)) return 'G';
+  if (/defen|defens|back|zague|lateral/.test(text)) return 'D';
+  if (/mid|meio|volant|meia/.test(text)) return 'M';
+  if (/attack|atac|forward|wing|striker|ponta/.test(text)) return 'F';
+  return String(value || '').slice(0, 2).toUpperCase();
+}
 function extractLineup(team, memberMap, isNationalTeam = false) {
   const source = asObject(team);
   const lineup = asObject(source.lineups);
   const members = asArray(lineup.members || source.lineup?.members);
   const starters = members.filter(member => Number(member?.status) === 1);
-  const coaches = members.filter(member => Number(member?.status) === 4 && (member?.isCoach || /coach|t[eé]cnico/i.test(firstText(member?.position?.name, member?.positionName))));
+  const coaches = members.filter(member => Number(member?.status) === 4 || member?.isCoach || /coach|t[eé]cnico/i.test(firstText(member?.position?.name, member?.positionName)));
   const normalizedMembers = members.map(member => {
     const athleteId = positiveId(member?.athleteId || member?.id);
     const detail = (athleteId && memberMap?.get(athleteId)) || {};
     const position = asObject(detail.position || member?.position);
     const photoId = positiveId(detail.athleteId || detail.id || athleteId);
+    const positionName = firstText(position.name, detail.positionName, member?.position?.name, member?.positionName);
     return {
       id: photoId,
       athleteId: photoId,
       name: firstText(detail.name, detail.displayName, detail.longName, detail.shortName, member?.name, member?.displayName, member?.longName, member?.shortName),
       number: detail.jerseyNumber ?? detail.shirtNumber ?? detail.number ?? member?.jerseyNumber ?? member?.shirtNumber ?? member?.number ?? null,
-      position: firstText(position.name, detail.positionName, member?.position?.name, member?.positionName),
+      position: positionName,
+      positionCode: positionCode(positionName),
       status: Number.isFinite(Number(member?.status)) ? Number(member.status) : null,
       formationPosition: asObject(member?.yardFormation || detail.yardFormation),
-      photoUrl: athleteImageUrl(photoId, isNationalTeam)
+      photoUrl: athleteImageUrl(photoId, isNationalTeam),
+      stats: normalizeStatRows(member?.stats || detail.stats)
     };
   });
+  const coachMember = normalizedMembers.find(member => coaches.some(coach => positiveId(coach?.athleteId || coach?.id) === member.id)) || null;
   return {
     formation: firstText(lineup.formation, source.formation),
     total: members.length,
     starters: starters.length,
-    substitutes: members.filter(member => [2, 4].includes(Number(member?.status)) && !coaches.includes(member)).length,
+    substitutes: members.filter(member => Number(member?.status) === 2 && !coaches.includes(member)).length,
     coaches: coaches.length,
+    coach: coachMember?.name || firstText(lineup.coach?.name, source.coach?.name),
     members: normalizedMembers.slice(0, 40)
+  };
+}
+function eventTypeLabel(typeId) {
+  const labels = { 1: 'Gol', 2: 'Cartão amarelo', 3: 'Cartão vermelho', 12: 'Bola na trave', 1000: 'Substituição' };
+  return labels[Number(typeId)] || 'Evento';
+}
+function normalizeGameEvent(event, memberMap, home, away) {
+  const item = asObject(event);
+  const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id);
+  const player = (athleteId && memberMap.get(athleteId)) || asObject(item.player);
+  const secondAthleteId = positiveId(item.assistAthleteId || item.assistPlayerId || item.substituteId || item.inAthleteId || item.assist?.id);
+  const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(item.assist || item.inPlayer);
+  const competitorNum = Number(item.competitorNum ?? item.competitor?.competitorNum);
+  return {
+    typeId: positiveId(item.typeId || item.type?.id),
+    type: eventTypeLabel(item.typeId || item.type?.id),
+    minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime),
+    player: firstText(player.name, player.displayName, item.playerName, item.name),
+    secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, item.assistName, item.inPlayerName),
+    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name),
+    detail: firstText(item.name, item.description, item.comment, item.shortText, item.type?.name),
+    score: firstText(item.score, item.scoreText)
+  };
+}
+const LINEUP_STAT_LABELS = Object.freeze({
+  19: 'Passes completos', 53: 'Passes longos', 52: 'Cruzamentos', 54: 'Dribles',
+  80: 'Passes no último terço', 46: 'Passes decisivos', 42: 'Faltas cometidas',
+  37: 'Faltas sofridas', 73: 'Posse perdida', 86: 'Recuperações', 39: 'Desarmes',
+  41: 'Interceptações', 40: 'Cortes', 23: 'Defesas', 56: 'Duelos aéreos', 55: 'Duelos no chão'
+});
+function aggregateLineupStats(lineup, teamName) {
+  const totals = new Map();
+  for (const player of asArray(lineup?.members)) {
+    for (const stat of asArray(player?.stats)) {
+      const typeId = positiveId(stat.typeId);
+      const numericValue = stat.numericValue;
+      if (!typeId || !Object.hasOwn(LINEUP_STAT_LABELS, typeId) || !Number.isFinite(numericValue)) continue;
+      const current = totals.get(typeId) || 0;
+      totals.set(typeId, current + numericValue);
+    }
+  }
+  return {
+    team: teamName,
+    stats: [...totals.entries()].map(([typeId, value]) => ({ typeId, name: LINEUP_STAT_LABELS[typeId], value }))
+  };
+}
+function normalizeShotEvent(event, home, away) {
+  const item = asObject(event);
+  const competitorNum = Number(item.competitorNum);
+  const xg = Number(item.xg);
+  return {
+    xg: Number.isFinite(xg) ? xg : null,
+    outcome: firstText(item.outcome?.name, item.outcome?.displayName, item.outcomeName, item.result?.name),
+    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : '',
+    minute: firstText(item.gameTime, item.minute, item.timeLabel),
+    player: firstText(item.athlete?.name, item.player?.name, item.playerName),
+    competitorNum: Number.isFinite(competitorNum) ? competitorNum : null
   };
 }
 function normalizeGameDetails(payload) {
@@ -165,31 +249,48 @@ function normalizeGameDetails(payload) {
   const awayLineup = extractLineup(away, memberMap, isNationalTeam);
   const competition = competitionOf(game);
   const teams = teamsOf(game);
+  const rawCompetitorStats = asArray(game.stats?.competitorsStats);
+  const rawAthleteStats = asArray(game.stats?.athletesStats);
+  const lineupPlayersWithStats = [...homeLineup.members, ...awayLineup.members].filter(member => member.stats.length);
+  const athleteStatsCount = rawAthleteStats.length || lineupPlayersWithStats.length;
+  const aggregatedCompetitors = [aggregateLineupStats(homeLineup, teams.home.name), aggregateLineupStats(awayLineup, teams.away.name)];
+  const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
+  const gameEvents = asArray(game.events).map(event => normalizeGameEvent(event, memberMap, teams.home, teams.away));
+  const shotEvents = asArray(game.chartEvents?.events).map(event => normalizeShotEvent(event, teams.home, teams.away));
   return {
     gameId: positiveId(game.id || game.gameId),
     startTime: firstText(game.startTime),
     status: firstText(game.statusText, game.status?.name),
+    statusGroup: game.statusGroup ?? game.status?.group ?? null,
+    score: { home: teams.home.score, away: teams.away.score },
     home: teams.home,
     away: teams.away,
     competition,
-    round: firstText(game.roundName),
+    round: firstText(game.roundName, Number(game.roundNum) > 0 ? `Rodada ${Number(game.roundNum)}` : '', game.stageName, Number(game.stageNum) > 0 ? `Fase ${Number(game.stageNum)}` : ''),
+    roundNum: positiveId(game.roundNum),
+    stageNum: positiveId(game.stageNum),
     venue: firstText(game.venue?.name),
     venueCapacity: game.venue?.capacity ?? null,
     referee: firstText(game.officials?.[0]?.name),
     tvNetworks: asArray(game.tvNetworks).map(x => firstText(x.name, x.displayName, x)).filter(Boolean).slice(0, 20),
     lineups: { home: homeLineup, away: awayLineup },
     membersCount: members.length,
-    eventsCount: asArray(game.events).length,
-    chartEventsCount: asArray(game.chartEvents?.events).length,
-    statsAvailable: Boolean(game.stats && (asArray(game.stats.competitorsStats).length || asArray(game.stats.athletesStats).length)),
+    eventsCount: gameEvents.length,
+    events: gameEvents,
+    chartEventsCount: shotEvents.length,
+    shots: shotEvents,
+    statsAvailable: Boolean(rawCompetitorStats.length || rawAthleteStats.length || lineupPlayersWithStats.length || hasAggregatedCompetitorStats),
     statistics: {
-      competitors: asArray(game.stats?.competitorsStats).length,
-      athletes: asArray(game.stats?.athletesStats).length
+      competitors: rawCompetitorStats.length || (hasAggregatedCompetitorStats ? aggregatedCompetitors.filter(row => row.stats.length).length : 0),
+      athletes: athleteStatsCount,
+      lineupPlayers: lineupPlayersWithStats.length,
+      competitorRows: rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors,
+      athleteRows: rawAthleteStats,
+      playerRows: lineupPlayersWithStats.map(player => ({ athleteId: player.athleteId, name: player.name, team: homeLineup.members.includes(player) ? teams.home.name : teams.away.name, stats: player.stats }))
     },
     responseKeys: Object.keys(game).slice(0, 100)
   };
 }
-
 
 function foldMatchText(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()

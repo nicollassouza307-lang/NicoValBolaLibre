@@ -1,16 +1,16 @@
-# NicoValBolaLibre V0.18.16
+# NicoValBolaLibre V0.18.17
 
-## V0.18.16 · Adaptador experimental da 365Scores
+## V0.18.17 · 365Scores na central da partida
 
-- Adicionado `365scores-service.js`, isolando chamadas aos endpoints web observados em documentação comunitária.
-- Adicionada consulta manual de catálogo, descoberta de partidas por data (`/web/games/allscores/`) e leitura de detalhes por `gameId` (`/web/game/`).
-- O painel Admin exibe partidas retornadas e permite testar escalações, formação, membros, eventos, metadados e estatísticas disponíveis.
-- Adicionados adaptadores de classificação (`/web/standings/`), chaveamento (`/web/brackets/`) e estatísticas da competição (`/web/stats/`) para testes posteriores.
-- Cache local persistente e compartilhamento por Cloudflare para descoberta diária e detalhes de partidas.
-- Limite de segurança local do protótipo: 12 requisições por minuto e 200 por dia. Esses valores são limites internos conservadores, não limites oficiais da 365Scores.
-- Nenhuma consulta é executada automaticamente; nenhuma partida é inserida ou alterada na agenda; a API-Football continua intacta.
-- Novo comparador manual entre a agenda carregada e partidas 365Scores por times, data, horário e competição. Sugestões exigem confirmação; vínculos de `gameId` ficam salvos localmente e não são publicados automaticamente na nuvem.
-- A integração permanece experimental porque os endpoints são interfaces web não oficiais, não existe documentação pública de desenvolvedor identificada e a autorização de reutilização dos dados/imagens ainda precisa ser confirmada com a 365Scores.
+- Mantido o adaptador `365scores-service.js` para os endpoints web observados em documentação comunitária.
+- A central da partida agora pode usar um vínculo `gameId` confirmado manualmente no Admin → 365Scores para carregar dados complementares.
+- Adicionado painel 365Scores na página individual da partida, com abas Livescore, Escalações, Estatísticas e Classificação.
+- Escalações da 365Scores são convertidas para o campo tático existente; fotos aceitam a CDN `imagecache.365scores.com` com validação de host HTTPS.
+- Eventos e finalizações são normalizados para exibição. Estatísticas individuais de `lineups.members[].stats[]` são lidas e agregadas para os tipos conhecidos; quando a fonte não envia estatísticas, a interface informa indisponibilidade em vez de inventar valores.
+- `roundNum` e `stageNum` passam a ser usados como fallback quando `roundName` não está preenchido; status 4 da escalação é tratado como técnico.
+- Cache local persistente para detalhes e classificações da 365Scores. A consulta continua sob demanda; vínculos e caches permanecem locais, enquanto o endpoint pode usar o cache compartilhado configurado.
+- A agenda não é alterada nem recebe jogos novos. A API-Football permanece intacta como fonte atual/fallback; nenhuma migração automática foi feita.
+- Integração experimental: os endpoints são interfaces web não oficiais, não há documentação pública de desenvolvedor identificada e a autorização de reutilização de dados/imagens ainda precisa ser confirmada com a 365Scores.
 
 ## Versão anterior · Prioridade e contraste dos escudos
 
@@ -23,8 +23,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.18.16` e `Push origin`.
-3. Crie e envie a tag `v0.18.16`.
+2. Faça commit `NicoValBolaLibre V0.18.17` e `Push origin`.
+3. Crie e envie a tag `v0.18.17`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores ainda não substitui nenhum provedor atual.
@@ -34,4 +34,4 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração 3
 - `npm run test:365scores`: respostas simuladas para catálogo, consulta diária, detalhes de partida, escalações e cache. Não faz chamadas externas.
 - `npm run test:multi-api`: cache persistente e registro de provedores.
 - Os demais testes cobrem as integrações anteriores, interface de partidas, agenda, logos e sincronização.
-- A chamada real à 365Scores foi validada pelo usuário na V0.18.15 para listagem diária e detalhes de uma partida. A nova correspondência com a agenda usa testes simulados; faça o teste manual no Painel Admin após iniciar o aplicativo.
+- O usuário validou consultas reais da 365Scores nas versões anteriores, incluindo listagem diária e escalações de Crystal Palace x Liverpool (gameId 4742009), com 21 eventos e 39 finalizações. O parser de estatísticas e a nova central integrada usam testes simulados; confirme o painel com uma partida que tenha vínculo manual salvo no Admin → 365Scores.

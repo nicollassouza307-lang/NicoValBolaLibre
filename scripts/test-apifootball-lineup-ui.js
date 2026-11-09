@@ -48,6 +48,8 @@ const snapshot = {
 
 assert.equal(ui.playerPhotoUrl(1234), 'https://media.api-sports.io/football/players/1234.png');
 assert.equal(ui.playerPhotoUrl(0), '');
+assert.equal(ui.playerPhotoUrl({ id: 321, photoUrl: 'https://imagecache.365scores.com/image/upload/v1/Athletes/321' }), 'https://imagecache.365scores.com/image/upload/v1/Athletes/321', 'A foto fornecida pela 365Scores deve ter prioridade sobre o fallback API-Football.');
+assert.equal(ui.playerPhotoUrl({ id: 321, photoUrl: 'javascript:alert(1)' }), 'https://media.api-sports.io/football/players/321.png', 'URLs de foto fora dos hosts permitidos devem ser rejeitadas.');
 assert.deepEqual(ui.sortLineupPlayers(snapshot.lineups[0].startXI).map(player => player.name), [
   'Goleiro Visitante', 'Defensor 1', 'Atacante 1', 'Atacante 2'
 ]);
@@ -67,6 +69,10 @@ assert.match(lineupHtml, /Flamengo/);
 assert.match(lineupHtml, /4-2-3-1/);
 assert.match(lineupHtml, /4-3-3/);
 assert.match(lineupHtml, /media\.api-sports\.io\/football\/players\/101\.png/);
+const scores365LineupSnapshot = { ...snapshot, lineups: [{ team:{id:10,name:'Palmeiras'},formation:'4-3-3',coach:{name:'Técnico 365'},startXI:[{player:{id:4321,name:'Atleta 365',number:8,pos:'M',photoUrl:'https://imagecache.365scores.com/image/upload/v1/Athletes/4321'},grid:'3:1'}],substitutes:[] }] };
+const scores365LineupHtml = ui.renderLineups(scores365LineupSnapshot);
+assert.match(scores365LineupHtml, /imagecache\.365scores\.com\/image\/upload\/v1\/Athletes\/4321/, 'O campo deve aceitar fotos da CDN 365Scores.');
+assert.match(scores365LineupHtml, /Atleta 365/);
 assert.match(lineupHtml, /Camisa 10/);
 assert.match(lineupHtml, /Técnico Mandante/);
 assert.match(lineupHtml, /Reserva Mandante/);
@@ -123,6 +129,9 @@ assert.match(index, /\.match-center-panel \.apifootball-stat-card \.away \{\s*ba
 assert.doesNotMatch(index, /id="competitionsView"|id="competitionsBtn"/, 'A página isolada de Competições deve sair da navegação.');
 assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel esportivo deve aparecer depois do player.');
 assert.match(index, /bindApiFootballPanelEvents\(e\)/);
+assert.match(index, /renderScores365MatchPanel\(e\)/, 'Partidas com vínculo confirmado devem exibir o painel da 365Scores.');
+assert.match(index, /scores365LineupAsApiSnapshot/, 'Escalações 365Scores devem ser adaptadas ao campo tático existente.');
+assert.match(index, /scores365LoadStandings/, 'A classificação 365Scores deve poder ser solicitada na central da partida.');
 // O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.
 // Encontramos a declaração pelo nome e isolamos o trecho até emptyMarkup.
 const cardMarkupPosition = index.search(/\bfunction\s+cardMarkup\s*\(/);
