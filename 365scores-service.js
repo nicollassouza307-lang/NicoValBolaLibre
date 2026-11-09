@@ -185,14 +185,24 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
     members: normalizedMembers.slice(0, 40)
   };
 }
-function eventTypeLabel(typeId, typeName = '') {
+function isOwnGoalText(value) {
+  const text = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[_-]+/g, ' ').trim();
+  return /\bown\s*goal\b|\bautogol\b|\bautogolo\b|\bgol\s+contra\b/.test(text);
+}
+function isTruthyEventFlag(value) {
+  if (value === true || value === 1) return true;
+  return ['true', '1', 'yes', 'sim'].includes(String(value ?? '').trim().toLowerCase());
+}
+function eventTypeLabel(typeId, typeName = '', ownGoal = false) {
   const labels = { 1: 'Gol', 2: 'Cartão amarelo', 3: 'Cartão vermelho', 12: 'Bola na trave', 1000: 'Substituição' };
   const numeric = Number(typeId);
   const hasNumericType = Number.isInteger(numeric) && numeric >= 0;
-  if (hasNumericType && labels[numeric]) return labels[numeric];
   const text = String(typeName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  // Um gol contra também pode chegar com typeId=1 (Gol). A indicação específica
+  // do evento deve prevalecer sobre o código genérico.
+  if (ownGoal || isOwnGoalText(typeName)) return 'Gol contra';
+  if (hasNumericType && labels[numeric]) return labels[numeric];
   if (text) {
-    if (/own goal|gol contra/.test(text)) return 'Gol contra';
     if (/goal|gol|penalty scored/.test(text)) return 'Gol';
     if (/yellow|amarelo/.test(text)) return 'Cartão amarelo';
     if (/red card|cartao vermelho|expulsion|expulsao/.test(text)) return 'Cartão vermelho';
@@ -212,11 +222,24 @@ function normalizeGameEvent(event, memberMap, home, away) {
   const rawTypeId = item.typeId ?? item.TypeId ?? item.eventTypeId ?? item.EventTypeId ?? nestedType.id ?? nestedType.ID ?? nestedType.typeId ?? item.event?.typeId ?? item.eventType ?? (typeof item.type === 'number' ? item.type : null) ?? item.Type ?? null;
   const rawTypeName = firstText(
     item.eventTypeName, item.EventTypeName, item.typeName, item.TypeName,
+    item.eventSubTypeName, item.subTypeName, item.goalTypeName,
     nestedType.name, nestedType.displayName, nestedType.description,
     typeof item.type === 'string' ? item.type : '',
     typeof item.eventType === 'string' ? item.eventType : '',
     typeof item.Type === 'string' ? item.Type : ''
   );
+  const ownGoalFlag = [
+    item.isOwnGoal, item.ownGoal, item.own_goal, item.IsOwnGoal, item.OwnGoal,
+    item.isOwnGoalEvent, item.event?.isOwnGoal, item.event?.ownGoal,
+    item.goal?.isOwnGoal, item.goal?.ownGoal, nestedType.isOwnGoal, nestedType.ownGoal
+  ].some(isTruthyEventFlag);
+  const ownGoalText = [
+    rawTypeName, item.eventSubType, item.subType, item.subtype, item.goalType,
+    item.eventDescription, item.description, item.Description, item.comment,
+    item.Comment, item.shortText, item.eventName, item.EventName, item.detail,
+    item.Details, item.note, item.message, item.goal?.type, item.goal?.typeName
+  ].some(isOwnGoalText);
+  const isOwnGoal = ownGoalFlag || ownGoalText;
   const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.PID);
   const rawPlayer = item.player || item.athlete || item.Player;
   const player = (athleteId && memberMap.get(athleteId)) || asObject(rawPlayer);
@@ -225,8 +248,9 @@ function normalizeGameEvent(event, memberMap, home, away) {
   const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(rawSecondPlayer);
   const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.Comp ?? item.side;
   const competitorNum = Number(competitorRaw);
-  const type = eventTypeLabel(rawTypeId, rawTypeName);
-  const detail = firstText(item.description, item.Description, item.comment, item.Comment, item.shortText, item.eventName, item.EventName, item.detail, item.Details, rawTypeName);
+  const type = eventTypeLabel(rawTypeId, rawTypeName, isOwnGoal);
+  const rawDetail = firstText(item.description, item.Description, item.comment, item.Comment, item.shortText, item.eventName, item.EventName, item.detail, item.Details, rawTypeName);
+  const detail = type === 'Gol contra' && isOwnGoalText(rawDetail) ? '' : rawDetail;
   return {
     typeId: Number.isInteger(Number(rawTypeId)) && rawTypeId !== null && rawTypeId !== undefined ? Number(rawTypeId) : null,
     type,

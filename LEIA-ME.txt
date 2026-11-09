@@ -1,6 +1,12 @@
-# NicoValBolaLibre V0.18.18
+# NicoValBolaLibre V0.18.19
 
-## V0.18.18 · Eventos mais robustos e classificação vinculada à temporada
+## V0.18.19 · Correção de gols contra na linha do tempo
+
+- Eventos com código numérico genérico de gol (`typeId=1`) agora verificam também indicadores explícitos de gol contra, incluindo flags booleanas e descrições/subtipos em inglês, português e espanhol.
+- A identificação específica de gol contra tem prioridade sobre o rótulo genérico `Gol`, sem alterar a classificação dos gols normais.
+- Incluídos testes de regressão para gol contra identificado por texto e por flag, além da preservação de gols normais.
+
+## V0.18.19 · Eventos mais robustos e classificação vinculada à temporada
 
 - O normalizador de eventos da 365Scores aceita variações comuns de formato/capitalização (`typeId`, `TypeId`, `eventTypeId`, `type.id`, `Type`, `Player`, `GTD`, `Comp` e campos equivalentes), além de nomes de evento em português/inglês.
 - A linha do tempo reconhece também gol contra, pênalti perdido, VAR, intervalo e fim de jogo; códigos desconhecidos são preservados como `Evento (tipo N)` em vez de esconder o código recebido.
@@ -19,11 +25,11 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.18.18` e `Push origin`.
-3. Crie e envie a tag `v0.18.18`.
+2. Faça commit `NicoValBolaLibre V0.18.19` e `Push origin`.
+3. Crie e envie a tag `v0.18.19`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
-O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores não substitui nenhum provedor atual.
+O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores não substitui nenhum provedor atual. Os testes da correção de gol contra usam respostas simuladas; confirme também em uma partida real após a instalação.
 
 ## Testes
 

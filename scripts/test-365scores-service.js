@@ -49,7 +49,9 @@ try {
       { typeId: 1000, playerId: 2, assistPlayerId: 3, competitorNum: 2, gameTime: '70' },
       { TypeId: 2, PlayerName: 'Jogador Amarelo', Comp: 1, GTD: '75' },
       { type: 'Substitution', player: 'Saiu', inPlayer: 'Entrou', competitorNum: 2, minute: '80' },
-      { type: 3, player: { name: 'Jogador Expulso' }, competitorNum: 2, minute: '90+2' }
+      { type: 3, player: { name: 'Jogador Expulso' }, competitorNum: 2, minute: '90+2' },
+      { typeId: 1, eventTypeName: 'Goal', description: 'Own goal', playerName: 'Defensor Teste', competitorNum: 2, gameTime: '48' },
+      { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' }
     ], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
     stats: {},
     venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste' }]
@@ -112,6 +114,10 @@ try {
   assert.equal(game.details.events[3].type, 'Substituição');
   assert.equal(game.details.events[3].secondaryPlayer, 'Entrou');
   assert.equal(game.details.events[4].type, 'Cartão vermelho');
+  assert.equal(game.details.events[5].type, 'Gol contra', 'A indicação textual de gol contra deve prevalecer sobre typeId=1.');
+  assert.equal(game.details.events[5].detail, '', 'Não deve repetir a indicação de gol contra como detalhe redundante.');
+  assert.equal(game.details.events[6].type, 'Gol contra', 'A flag isOwnGoal deve prevalecer sobre typeId=1.');
+  assert.equal(game.details.events[0].type, 'Gol', 'Gols normais continuam classificados como gol.');
   assert.equal(game.details.shots[0].xg, 0.3);
   assert.equal(game.details.round, 'Rodada 33');
   assert.equal(game.details.venueCapacity, 78838);
