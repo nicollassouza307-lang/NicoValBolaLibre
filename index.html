@@ -375,7 +375,8 @@
 
 
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
-/* V0.18.8: cadastro seguro do token football-data.org */
+/* V0.18.9: integração football-data.org com token local seguro */
+/* V0.18.9: resultados, partidas cruzadas e classificações football-data.org */
 .game-card .teams{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}
 .agenda-score-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;text-align:center}
 .agenda-score-wrap .score{font-size:22px;font-weight:1000;letter-spacing:.025em;white-space:nowrap}
@@ -600,8 +601,20 @@
           <button class="btn danger small" type="button" id="clearFootballDataToken">Apagar token local</button>
         </div>
         <div class="admin-small" id="footballDataTokenStatus" role="status" aria-live="polite" style="margin-top:10px">O token ainda não foi configurado.</div>
-        <p class="admin-small">O token fica criptografado no perfil deste Windows. Nunca é enviado ao navegador, ao GitHub, ao instalador nem ao computador do Val. O computador administrador consulta o provedor e poderá compartilhar os resultados pelo Cloudflare. O teste faz uma única consulta ao catálogo de competições.</p>
-        <div class="admin-small">Documentação: <a href="https://docs.football-data.org/general/v4/index.html" target="_blank" rel="noopener">API v4</a> · <a href="https://www.football-data.org/" target="_blank" rel="noopener">Cobertura e planos</a>.</div>
+        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn small" type="button" id="footballDataFetchAgenda">Buscar dados para a agenda carregada</button>
+          <button class="btn secondary small" type="button" id="footballDataLoadCompetitions">Carregar competições disponíveis</button>
+        </div>
+        <div class="admin-small" id="footballDataDataStatus" role="status" aria-live="polite" style="margin-top:8px">Carregue a agenda e busque dados para complementar somente as partidas já existentes.</div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:12px">
+          <label class="admin-small" for="footballDataCompetitionSelect">Classificação da competição
+            <select id="footballDataCompetitionSelect" style="display:block;width:100%;margin-top:5px" disabled><option value="">Carregue as competições primeiro</option></select>
+          </label>
+          <button class="btn secondary small" type="button" id="footballDataLoadStandings" disabled>Buscar classificação</button>
+        </div>
+        <div id="footballDataStandingsResult" style="margin-top:10px"></div>
+        <p class="admin-small">O token fica criptografado no perfil deste Windows. Nunca é enviado ao navegador, ao GitHub, ao instalador nem ao computador do Val. Resultados e classificações em cache podem ser compartilhados pelo Cloudflare; a chave de API nunca é compartilhada. A busca de agenda consulta uma janela curta e só associa jogos que já existem na agenda.</p>
+        <div class="admin-small">Plano gratuito: 12 competições e 10 chamadas por minuto; resultados e calendários podem ter atraso. A API não fornece escalações e estatísticas avançadas no plano gratuito. Consulte <a href="https://docs.football-data.org/general/v4/index.html" target="_blank" rel="noopener">API v4</a> · <a href="https://www.football-data.org/coverage" target="_blank" rel="noopener">Cobertura</a> · <a href="https://www.football-data.org/pricing" target="_blank" rel="noopener">Planos</a>.</div>
       </div>
       <div class="admin-panel" id="cloudSyncPanel">
         <h4>☁️ Sincronização entre computadores</h4>
@@ -640,7 +653,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.8 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.9 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -879,8 +892,13 @@ const BROADCASTER_ALIAS_GROUPS = [
   function writeStore(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
   const API_FOOTBALL_MATCH_CACHE_KEY = 'nvb_apifootball_match_cache_v1';
   const API_FOOTBALL_STANDINGS_CACHE_KEY = 'nvb_apifootball_standings_cache_v1';
+  const FOOTBALL_DATA_MATCH_CACHE_KEY = 'nvb_footballdata_match_cache_v1';
   let apiFootballMatchCache = readStore(API_FOOTBALL_MATCH_CACHE_KEY, {});
   let apiFootballStandingsCache = readStore(API_FOOTBALL_STANDINGS_CACHE_KEY, {});
+  let footballDataMatchCache = readStore(FOOTBALL_DATA_MATCH_CACHE_KEY, {});
+  if (!footballDataMatchCache || typeof footballDataMatchCache !== 'object' || Array.isArray(footballDataMatchCache)) footballDataMatchCache = {};
+  let footballDataCompetitions = [];
+  let footballDataBusy = false;
   if (!apiFootballMatchCache || typeof apiFootballMatchCache !== 'object' || Array.isArray(apiFootballMatchCache)) apiFootballMatchCache = {};
   if (!apiFootballStandingsCache || typeof apiFootballStandingsCache !== 'object' || Array.isArray(apiFootballStandingsCache)) apiFootballStandingsCache = {};
   let apiFootballLocalKeyConfigured = false;
@@ -1767,16 +1785,25 @@ const BROADCASTER_ALIAS_GROUPS = [
     }
     return '';
   }
+  function footballDataScoreFor(event) {
+    const match=footballDataMatchCache[String(event?.id)]?.match || footballDataMatchCache[String(event?.id)] || null;
+    if(!match)return {home:null,away:null,penaltyHome:null,penaltyAway:null,match:null};
+    const full=match.score?.fullTime||{};const regular=match.score?.regularTime||{};const half=match.score?.halfTime||{};const penalties=match.score?.penalties||{};
+    const usable=(pair)=>pair?.home!==null&&pair?.home!==undefined&&pair?.away!==null&&pair?.away!==undefined;
+    const selected=usable(full)?full:(usable(regular)?regular:(usable(half)?half:{}));
+    return {home:selected.home??null,away:selected.away??null,penaltyHome:penalties.home??null,penaltyAway:penalties.away??null,match};
+  }
   function cardMarkup(e) {
     const fav=favorites.has(e.id);
     const matchSnapshot=apiFootballMatchCache[String(e.id)]||null;
     const snapshotGoals=matchSnapshot?.fixture?.goals||{};
-    const cardHomeScore=snapshotGoals.home ?? e.homeScore;
-    const cardAwayScore=snapshotGoals.away ?? e.awayScore;
+    const externalScore=footballDataScoreFor(e);
+    const cardHomeScore=snapshotGoals.home ?? e.homeScore ?? externalScore.home;
+    const cardAwayScore=snapshotGoals.away ?? e.awayScore ?? externalScore.away;
     const hasCardScore=cardHomeScore!==null&&cardHomeScore!==undefined&&cardHomeScore!==''&&cardAwayScore!==null&&cardAwayScore!==undefined&&cardAwayScore!=='';
     const penalties=matchSnapshot?.fixture?.score?.penalty||{};
-    const cardPenaltyHome=penalties.home??e.homePenaltyScore;
-    const cardPenaltyAway=penalties.away??e.awayPenaltyScore;
+    const cardPenaltyHome=penalties.home??e.homePenaltyScore??externalScore.penaltyHome;
+    const cardPenaltyAway=penalties.away??e.awayPenaltyScore??externalScore.penaltyAway;
     const hasPenaltyScore=cardPenaltyHome!==null&&cardPenaltyHome!==undefined&&cardPenaltyAway!==null&&cardPenaltyAway!==undefined;
     const middle=hasCardScore?`<div class="agenda-score-wrap"><div class="score">${escapeHtml(cardHomeScore)} <small>:</small> ${escapeHtml(cardAwayScore)}</div>${hasPenaltyScore?`<div class="agenda-penalty-score">PÊNALTIS ${escapeHtml(cardPenaltyHome)}–${escapeHtml(cardPenaltyAway)}</div>`:''}</div>`:'<div class="versus">VS</div>';
     const demo=e.demo?'<span style="color:#ffc76b;font-size:8px;margin-left:5px">DEMO</span>':'';
@@ -2036,7 +2063,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const cache=Number(provider.cacheEntries||0);
       const quota=provider.quota?.appSoftLimit?` · teto ${provider.quota.appSoftLimit}/dia`:'';
       return `<div class="multi-api-provider"><strong>${escapeHtml(provider.name||provider.id)}</strong><span>${escapeHtml(provider.description||'')}</span><em class="${active?'':'planned'}">${state} · ${cache} item(ns) em cache${quota}</em></div>`;
-    }).join('')+`<div class="admin-small" style="grid-column:1/-1">Cache local: ${Number(engine.cacheEntries||0)} entrada(s). O cache compartilhado usa o Cloudflare quando as credenciais de leitura/admin estão configuradas. football-data.org e TheSportsDB ainda não fazem chamadas nesta versão.</div>`;
+    }).join('')+`<div class="admin-small" style="grid-column:1/-1">Cache local: ${Number(engine.cacheEntries||0)} entrada(s). O cache compartilhado usa o Cloudflare quando as credenciais de leitura/admin estão configuradas. football-data.org já consulta resultados e classificações quando solicitado; TheSportsDB continua planejada.</div>`;
   }
 
   async function refreshApiFootballAdminStatus() {
@@ -2083,6 +2110,21 @@ const BROADCASTER_ALIAS_GROUPS = [
     await refreshApiFootballAdminStatus();
   }
   let footballDataTokenConfigured = false;
+  function renderFootballDataCompetitionOptions(competitions) {
+    footballDataCompetitions = Array.isArray(competitions) ? competitions : [];
+    const select=$('#footballDataCompetitionSelect'); if(!select) return;
+    const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
+    select.innerHTML=leagues.length
+      ? '<option value="">Selecione uma liga...</option>'+leagues.map(item=>`<option value="${escapeHtml(item.code)}">${escapeHtml(item.name)} · ${escapeHtml(item.area?.name||'')}</option>`).join('')
+      : '<option value="">Nenhuma liga com classificação disponível</option>';
+    select.disabled=!leagues.length;
+    const button=$('#footballDataLoadStandings'); if(button) button.disabled=!leagues.length;
+  }
+  function renderFootballDataStandings(snapshot) {
+    const root=$('#footballDataStandingsResult'); if(!root) return;
+    if(!snapshot?.table?.length){root.innerHTML='';return;}
+    root.innerHTML=`<div class="admin-small" style="margin-bottom:6px"><strong>${escapeHtml(snapshot.competition?.name||'Classificação')}</strong>${snapshot.season?.currentMatchday?` · Rodada ${Number(snapshot.season.currentMatchday)}`:''}${snapshot.cached?' · cache':''}</div><div style="overflow:auto;max-height:420px;border:1px solid var(--line,#253247);border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th style="padding:8px;text-align:left">#</th><th style="padding:8px;text-align:left">Clube</th><th style="padding:8px">J</th><th style="padding:8px">V</th><th style="padding:8px">E</th><th style="padding:8px">D</th><th style="padding:8px">SG</th><th style="padding:8px">Pts</th></tr></thead><tbody>${snapshot.table.map(row=>`<tr style="border-top:1px solid var(--line,#253247)"><td style="padding:7px 8px">${Number(row.position)||'–'}</td><td style="padding:7px 8px;white-space:normal;min-width:130px">${escapeHtml(row.team)}</td><td style="padding:7px 8px;text-align:center">${Number(row.played)||0}</td><td style="padding:7px 8px;text-align:center">${Number(row.won)||0}</td><td style="padding:7px 8px;text-align:center">${Number(row.draw)||0}</td><td style="padding:7px 8px;text-align:center">${Number(row.lost)||0}</td><td style="padding:7px 8px;text-align:center">${Number(row.goalDifference)||0}</td><td style="padding:7px 8px;text-align:center;font-weight:800">${Number(row.points)||0}</td></tr>`).join('')}</tbody></table></div>`;
+  }
   async function refreshFootballDataAdminStatus() {
     const badge=$('#footballDataConfiguredBadge'); const status=$('#footballDataTokenStatus');
     try {
@@ -2096,9 +2138,64 @@ const BROADCASTER_ALIAS_GROUPS = [
         : (window.nvbDesktop?.isDesktop?'Cole o token do football-data.org aqui e clique em Salvar token neste computador.':'A configuração do token está disponível no aplicativo Windows.');
     } catch(error) { if(status) status.textContent=`Não foi possível consultar o estado do token: ${error.message}`; }
   }
+  async function loadFootballDataCompetitions({refresh=false}={}) {
+    const button=$('#footballDataLoadCompetitions'); const status=$('#footballDataDataStatus');
+    if(footballDataBusy)return;
+    footballDataBusy=true;if(button)button.disabled=true;
+    if(status)status.textContent='Carregando competições liberadas para esta conta...';
+    try{
+      const response=await fetch('/api/football-data/competitions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar as competições.');
+      renderFootballDataCompetitionOptions(result.competitions);
+      if(status)status.textContent=`${Number(result.count||result.competitions?.length||0)} competições disponíveis${result.cached?' · dados em cache':''}. As classificações podem não existir para copas e playoffs.`;
+      toast(`football-data.org: ${Number(result.count||result.competitions?.length||0)} competições carregadas.`);
+    }catch(error){if(status)status.textContent=error.message||'Falha ao carregar competições.';toast(error.message||'Falha ao carregar competições.');}
+    finally{footballDataBusy=false;if(button)button.disabled=false;}
+  }
+  async function fetchFootballDataAgenda({refresh=false}={}) {
+    const button=$('#footballDataFetchAgenda'); const status=$('#footballDataDataStatus');
+    if(footballDataBusy)return;
+    if(!state.events.length){toast('Carregue a agenda antes de buscar dados do football-data.org.');return;}
+    footballDataBusy=true;if(button)button.disabled=true;
+    if(status)status.textContent=`Consultando resultados para ${dateLabel(state.date)} e cruzando com os jogos da agenda...`;
+    try{
+      const response=await fetch('/api/football-data/matches-for-agenda',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:state.date,events:state.events.map(event=>({id:event.id,home:event.home,away:event.away,dateEvent:event.dateEvent})),refresh,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível buscar os jogos do football-data.org.');
+      let added=0;
+      for(const item of Array.isArray(result.matches)?result.matches:[]){
+        if(!item?.eventId||!item?.match)continue;
+        footballDataMatchCache[String(item.eventId)]={provider:'football-data.org',match:item.match,fetchedAt:new Date().toISOString(),cached:Boolean(result.cached)};
+        added++;
+      }
+      writeStore(FOOTBALL_DATA_MATCH_CACHE_KEY,footballDataMatchCache);
+      if(status)status.textContent=added
+        ? `${added} partida(s) da agenda complementada(s) com resultados do football-data.org. ${Number(result.providerMatchesCount||0)} jogo(s) foram recebidos do provedor${result.cached?' usando cache compartilhado/local':''}.`
+        : `O provedor retornou ${Number(result.providerMatchesCount||0)} jogo(s), mas nenhum correspondeu exatamente aos times e à data dos jogos já carregados. Nenhuma partida nova foi adicionada à agenda.`;
+      render();if(state.selected&&state.events.some(event=>event.id===state.selected.id)){state.selected=state.events.find(event=>event.id===state.selected.id);renderModal();}
+      toast(added?`${added} jogo(s) da agenda atualizado(s) com football-data.org.`:'Nenhuma correspondência exata encontrada. A agenda permaneceu intacta.');
+    }catch(error){if(status)status.textContent=error.message||'Falha ao buscar resultados.';toast(error.message||'Falha ao buscar resultados.');}
+    finally{footballDataBusy=false;if(button)button.disabled=false;}
+  }
+  async function loadFootballDataStandings() {
+    const select=$('#footballDataCompetitionSelect');const button=$('#footballDataLoadStandings');const status=$('#footballDataDataStatus');
+    const competitionCode=String(select?.value||'').trim();
+    if(!competitionCode){toast('Selecione uma liga primeiro.');return;}
+    if(footballDataBusy)return;
+    footballDataBusy=true;if(button)button.disabled=true;
+    if(status)status.textContent=`Buscando a classificação de ${select.selectedOptions?.[0]?.textContent||competitionCode}...`;
+    try{
+      const response=await fetch('/api/football-data/standings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({competitionCode,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível buscar a classificação.');
+      renderFootballDataStandings(result);
+      if(status)status.textContent=`Classificação de ${result.competition?.name||competitionCode} carregada${result.cached?' do cache':''}.`;
+      toast(`Classificação de ${result.competition?.name||competitionCode} carregada.`);
+    }catch(error){if(status)status.textContent=error.message||'Falha ao carregar classificação.';toast(error.message||'Falha ao carregar classificação.');}
+    finally{footballDataBusy=false;if(button)button.disabled=false;}
+  }
   async function initFootballDataPanel() {
     const desktop=window.nvbDesktop;
     const input=$('#footballDataTokenInput'); const save=$('#saveFootballDataToken'); const test=$('#testFootballDataToken'); const clear=$('#clearFootballDataToken'); const statusElement=$('#footballDataTokenStatus');
+    const fetchAgenda=$('#footballDataFetchAgenda');const loadCompetitions=$('#footballDataLoadCompetitions');const loadStandings=$('#footballDataLoadStandings');
     if(!desktop?.isDesktop){if(input)input.disabled=true;if(save)save.disabled=true;if(test)test.disabled=true;if(clear)clear.disabled=true;}
     save?.addEventListener('click',async()=>{
       const value=String(input?.value||'').trim(); if(!value){toast('Cole o token do football-data.org antes de salvar.');return;}
@@ -2116,8 +2213,9 @@ const BROADCASTER_ALIAS_GROUPS = [
         const response=await fetch('/api/football-data/test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
         const result=await response.json();
         if(!response.ok||!result.ok)throw new Error(result.error||'O football-data.org não aceitou a conexão.');
+        renderFootballDataCompetitionOptions(result.competitions);
         toast(`football-data.org conectado. ${Number(result.competitionsCount||0)} competições disponíveis para sua conta.`);
-        if(statusElement) statusElement.textContent=`Conexão validada. ${Number(result.competitionsCount||0)} competições disponíveis para sua conta.`;
+        if(statusElement) statusElement.textContent=`Conexão validada. ${Number(result.competitionsCount||0)} competições disponíveis para sua conta. O token está protegido neste Windows.`;
       } catch(error){toast(error.message||'Não foi possível testar o football-data.org.');}
       finally{test.disabled=false;await refreshFootballDataAdminStatus();}
     });
@@ -2126,6 +2224,9 @@ const BROADCASTER_ALIAS_GROUPS = [
       try{await desktop.clearFootballDataToken();toast('Token do football-data.org apagado deste computador.');await refreshFootballDataAdminStatus();}
       catch(error){toast(error.message||'Não foi possível apagar o token.');}
     });
+    fetchAgenda?.addEventListener('click',()=>fetchFootballDataAgenda());
+    loadCompetitions?.addEventListener('click',()=>loadFootballDataCompetitions());
+    loadStandings?.addEventListener('click',loadFootballDataStandings);
     await refreshFootballDataAdminStatus();
   }
 
@@ -2204,13 +2305,14 @@ const BROADCASTER_ALIAS_GROUPS = [
     const status=statusLabel(e.status);
     const apiSnapshot=apiFootballMatchCache[String(e.id)]||null;
     const apiGoals=apiSnapshot?.fixture?.goals;
-    const displayHomeScore=apiGoals?.home ?? e.homeScore;
-    const displayAwayScore=apiGoals?.away ?? e.awayScore;
+    const externalScore=footballDataScoreFor(e);
+    const displayHomeScore=apiGoals?.home ?? e.homeScore ?? externalScore.home;
+    const displayAwayScore=apiGoals?.away ?? e.awayScore ?? externalScore.away;
     const hasScore=displayHomeScore!==null && displayHomeScore!==undefined && displayHomeScore!=='' && displayAwayScore!==null && displayAwayScore!==undefined && displayAwayScore!=='';
     const score=hasScore?`${escapeHtml(displayHomeScore)} <span>:</span> ${escapeHtml(displayAwayScore)}`:'<span>VS</span>';
     const penaltyScores=apiSnapshot?.fixture?.score?.penalty||{};
-    const displayPenaltyHome=penaltyScores.home??e.homePenaltyScore;
-    const displayPenaltyAway=penaltyScores.away??e.awayPenaltyScore;
+    const displayPenaltyHome=penaltyScores.home??e.homePenaltyScore??externalScore.penaltyHome;
+    const displayPenaltyAway=penaltyScores.away??e.awayPenaltyScore??externalScore.penaltyAway;
     const hasPenaltyScore=displayPenaltyHome!==null&&displayPenaltyHome!==undefined&&displayPenaltyAway!==null&&displayPenaltyAway!==undefined;
     const penaltyScoreMarkup=hasPenaltyScore?`<div class="match-penalty-score">PÊNALTIS <strong>${escapeHtml(displayPenaltyHome)} × ${escapeHtml(displayPenaltyAway)}</strong></div>`:'';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
@@ -2251,6 +2353,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         <div class="player-footnote">As opções de fontes são gerenciadas no Painel Admin. A reprodução depende de a página de origem permitir incorporação no navegador.</div>
       </section>
       ${renderApiFootballMatchPanel(e)}
+      ${externalScore.match?`<div class="admin-small" style="margin-top:10px;padding:10px;border:1px solid var(--line,#253247);border-radius:10px">Dados complementares: <strong>football-data.org</strong> · ${escapeHtml(externalScore.match.competition?.name||'Competição')}${externalScore.match.matchday?` · Rodada ${Number(externalScore.match.matchday)}`:''} · Atualizado pela fonte em ${escapeHtml(externalScore.match.lastUpdated||'data não informada')}.</div>`:''}
       <div class="match-bottom-note"><span>⚽ NicoValBolaLibre Match Center</span><span>Dados fornecidos pelas agendas selecionadas</span></div>`;
     $('#modalContent').querySelectorAll('[data-source-index]').forEach(btn=>btn.addEventListener('click',()=>{state.sourceIndex=Number(btn.dataset.sourceIndex);renderModal();}));
     $('#favoriteToggle').addEventListener('click',()=>toggleFavorite(e.id));
@@ -3296,7 +3399,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.8',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.9',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
-const { FootballDataService } = require('./football-data-service');
+const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -35,7 +35,8 @@ const apiFootballService = new ApiFootballService({
   getApiKey: () => String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()
 });
 const footballDataService = new FootballDataService({
-  getToken: () => String(process.env.NVB_FOOTBALL_DATA_TOKEN || '').trim()
+  getToken: () => String(process.env.NVB_FOOTBALL_DATA_TOKEN || '').trim(),
+  engine: apiFootballService.multiApiEngine
 });
 
 const REQUESTED_PORT = Number(process.env.PORT || 8787);
@@ -845,20 +846,20 @@ async function cloudSyncFetch(url, options = {}) {
   } finally { clearTimeout(timer); }
 }
 
-async function readSharedProviderCache(cloudSync, key) {
+async function readSharedProviderCache(cloudSync, key, provider = 'api-football') {
   const settings = cloudSync && typeof cloudSync === 'object' ? cloudSync : {};
   const url = String(settings.url || '').trim();
   const readToken = String(settings.readToken || '').trim();
   if (!url || readToken.length < 24) return null;
   try {
     const base = normalizeCloudSyncBase(url);
-    const query = new URLSearchParams({ provider: 'api-football', key });
+    const query = new URLSearchParams({ provider: String(provider || 'api-football'), key });
     const result = await cloudSyncFetch(`${base}/v1/provider-cache?${query}`, { headers:{ 'Authorization':`Bearer ${readToken}` }, timeoutMs:4500 });
     return result?.hit && result.record ? result.record : null;
   } catch { return null; }
 }
 
-async function writeSharedProviderCache(cloudSync, key, record) {
+async function writeSharedProviderCache(cloudSync, key, record, provider = 'api-football') {
   const settings = cloudSync && typeof cloudSync === 'object' ? cloudSync : {};
   const url = String(settings.url || '').trim();
   const adminToken = String(settings.adminToken || '').trim();
@@ -868,7 +869,7 @@ async function writeSharedProviderCache(cloudSync, key, record) {
     const ttlSeconds = Math.max(1, Math.min(30 * 24 * 60 * 60, Math.floor((Number(record.expiresAt) - Date.now()) / 1000)));
     await cloudSyncFetch(`${base}/v1/provider-cache`, {
       method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${adminToken}` },
-      body:JSON.stringify({ provider:'api-football', key, data:record.data, ttlSeconds }), timeoutMs:4500
+      body:JSON.stringify({ provider:String(provider || 'api-football'), key, data:record.data, ttlSeconds }), timeoutMs:4500
     });
     return true;
   } catch { return false; }
@@ -992,7 +993,8 @@ const requestHandler = async (req, res) => {
   }
 
   if (pathname === '/api/football-data/status' && req.method === 'GET') {
-    return json(res, 200, { ok: true, configured: footballDataService.isConfigured(), provider: 'football-data.org', keyNeverSentToBrowser: true });
+    const usage = apiFootballService.multiApiEngine.getProviderUsage('football-data') || {};
+    return json(res, 200, { ok: true, configured: footballDataService.isConfigured(), provider: 'football-data.org', usage: { requestsLastMinute: Array.isArray(usage.minuteCalls) ? usage.minuteCalls.length : 0, perMinuteSoftLimit: 8 }, keyNeverSentToBrowser: true });
   }
 
   if (pathname === '/api/football-data/test' && req.method === 'POST') {
@@ -1004,10 +1006,78 @@ const requestHandler = async (req, res) => {
     }
   }
 
+  if (pathname === '/api/football-data/competitions' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const cloudSync = body.cloudSync || {};
+      const cacheKey = 'competitions:v1';
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'football-data');
+        if (shared) apiFootballService.multiApiEngine.importRecord('football-data', cacheKey, shared);
+      }
+      const result = await footballDataService.getCompetitions({ force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'football-data');
+      return json(res, 200, { ok: true, provider: 'football-data.org', ...result, keyNeverSentToBrowser: true });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar as competições do football-data.org.', code: error.code || '', keyNeverSentToBrowser: true });
+    }
+  }
+
+  if (pathname === '/api/football-data/matches-for-agenda' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 256 * 1024);
+      const date = String(body.date || '').trim();
+      const events = Array.isArray(body.events) ? body.events.slice(0, 500) : [];
+      const cloudSync = body.cloudSync || {};
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(res, 400, { ok:false, error:'Selecione uma data válida para buscar as partidas.' });
+      if (!events.length) return json(res, 400, { ok:false, error:'Carregue a agenda antes de buscar dados do football-data.org.' });
+      const cacheKey = `matches:${date}:v1`;
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'football-data');
+        if (shared) apiFootballService.multiApiEngine.importRecord('football-data', cacheKey, shared);
+      }
+      const result = await footballDataService.getMatchesForDate(date, { force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'football-data');
+      const matches = FootballDataService.matchesForAgenda(events, result.matches);
+      return json(res, 200, {
+        ok: true, provider: 'football-data.org', date,
+        providerMatchesCount: result.count, matchedCount: matches.length,
+        unmatchedAgendaCount: Math.max(0, events.length - matches.length), matches,
+        competitions: result.competitions, cached: Boolean(result.cached || shared), shared: Boolean(shared),
+        keyNeverSentToBrowser: true
+      });
+    } catch (error) {
+      return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível buscar os resultados do football-data.org.', code:error.code || '', keyNeverSentToBrowser:true });
+    }
+  }
+
+  if (pathname === '/api/football-data/standings' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const code = String(body.competitionCode || '').trim().toUpperCase();
+      const cloudSync = body.cloudSync || {};
+      const cacheKey = `standings:${code}:current:v1`;
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'football-data');
+        if (shared) apiFootballService.multiApiEngine.importRecord('football-data', cacheKey, shared);
+      }
+      const cached = !body.refresh ? apiFootballService.multiApiEngine.get('football-data', cacheKey) : null;
+      if (cached) return json(res, 200, { ok:true, provider:'football-data.org', ...cleanStandingRows(cached), cached:true, shared:Boolean(shared), keyNeverSentToBrowser:true });
+      const result = await footballDataService.getStandings(code, { force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'football-data');
+      return json(res, 200, { ok:true, provider:'football-data.org', ...result, cached:Boolean(result.cached || shared), shared:Boolean(shared), keyNeverSentToBrowser:true });
+    } catch (error) {
+      return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível carregar a classificação do football-data.org.', code:error.code || '', keyNeverSentToBrowser:true });
+    }
+  }
+
   if (pathname === '/api/providers/status' && req.method === 'GET') {
     const status = apiFootballService.multiApiEngine.status();
     status.providers = status.providers.map(provider => provider.id === 'football-data' && footballDataService.isConfigured()
-      ? { ...provider, state: 'configured', configured: true }
+      ? { ...provider, state: 'active', configured: true, description: 'Resultados, calendário e classificações das competições permitidas pela conta.' }
       : provider);
     return json(res, 200, { ok: true, ...status });
   }
@@ -1358,7 +1428,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.8 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.9 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);
