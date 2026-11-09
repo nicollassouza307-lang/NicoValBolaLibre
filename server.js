@@ -10,6 +10,7 @@ const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
+const { Scores365Service } = require('./365scores-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -40,6 +41,7 @@ const footballDataService = new FootballDataService({
   engine: apiFootballService.multiApiEngine
 });
 const theSportsDBService = new TheSportsDBService({ engine: apiFootballService.multiApiEngine });
+const scores365Service = new Scores365Service({ engine: apiFootballService.multiApiEngine });
 
 const REQUESTED_PORT = Number(process.env.PORT || 8787);
 let ACTIVE_PORT = REQUESTED_PORT;
@@ -1074,6 +1076,106 @@ const requestHandler = async (req, res) => {
     } catch (error) {
       return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível carregar a classificação do football-data.org.', code:error.code || '', keyNeverSentToBrowser:true });
     }
+  }
+
+  if (pathname === '/api/365scores/status' && req.method === 'GET') {
+    const provider = apiFootballService.multiApiEngine.providerStatus().find(item => item.id === '365scores') || null;
+    return json(res, 200, {
+      ok: true, provider: '365Scores', experimental: true, enabled: true,
+      officialDeveloperApi: false, apiKeyRequiredByObservedClient: false,
+      note: 'Endpoints web não oficiais, documentados por comunidade. Consultas somente sob demanda; autorização de reutilização ainda não confirmada.',
+      localThrottle: { perMinuteSoftLimit: scores365Service.perMinuteLimit, dailySoftLimit: scores365Service.dailySoftLimit, officialLimitKnown: false },
+      cacheEntries: provider?.cacheEntries || 0, usage: provider?.usage || null
+    });
+  }
+
+  if (pathname === '/api/365scores/test' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 8 * 1024);
+      return json(res, 200, await scores365Service.testConnection({ force: Boolean(body.refresh) }));
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, provider: '365Scores', error: error.message || 'Não foi possível testar a 365Scores.', code: error.code || '' });
+    }
+  }
+
+  if (pathname === '/api/365scores/games-for-date' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const date = String(body.date || '').trim();
+      const cacheKey = scores365Service.gamesForDateCacheKey(date);
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
+      const result = await scores365Service.getGamesForDate(date, { force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      return json(res, 200, {
+        ok: true, provider: '365Scores', experimental: true, date: result.date,
+        games: result.games, count: result.count, rawCount: result.rawCount,
+        cached: Boolean(result.cached || shared), shared: Boolean(shared),
+        agendaChanged: false, message: 'Consulta de diagnóstico: nenhuma partida foi adicionada ou alterada na agenda.'
+      });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, provider: '365Scores', error: error.message || 'Não foi possível buscar partidas na 365Scores.', code: error.code || '' });
+    }
+  }
+
+  if (pathname === '/api/365scores/game' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const gameId = Number(body.gameId || 0);
+      const matchupId = String(body.matchupId || '').trim();
+      const cacheKey = scores365Service.gameCacheKey(gameId, matchupId);
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
+      const result = await scores365Service.getGame(gameId, { matchupId, force: Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      return json(res, 200, { ok: true, provider: '365Scores', experimental: true, details: result.details, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, provider: '365Scores', error: error.message || 'Não foi possível consultar os detalhes da partida.', code: error.code || '' });
+    }
+  }
+
+  if (pathname === '/api/365scores/standings' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const competitionId = Number(body.competitionId || 0);
+      const options = { seasonNum: body.seasonNum, stageNum: body.stageNum, force: Boolean(body.refresh) };
+      const cacheKey = scores365Service.standingsCacheKey(competitionId, options);
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
+      const result = await scores365Service.getStandings(competitionId, options);
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
+    } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar a classificação da 365Scores.', code: error.code || '' }); }
+  }
+
+  if (pathname === '/api/365scores/brackets' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const competitionId = Number(body.competitionId || 0);
+      const result = await scores365Service.getBrackets(competitionId, { force: Boolean(body.refresh) });
+      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: result.cached });
+    } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar o chaveamento da 365Scores.', code: error.code || '' }); }
+  }
+
+  if (pathname === '/api/365scores/competition-stats' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const competitionId = Number(body.competitionId || 0);
+      const result = await scores365Service.getCompetitionStats(competitionId, { force: Boolean(body.refresh) });
+      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: result.cached });
+    } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar as estatísticas da competição.', code: error.code || '' }); }
   }
 
   if (pathname === '/api/providers/status' && req.method === 'GET') {

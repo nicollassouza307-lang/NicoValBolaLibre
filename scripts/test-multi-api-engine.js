@@ -31,7 +31,8 @@ try {
   const status = restored.status();
   assert.equal(status.engine, 'NicoVal Multi-API Engine');
   assert.equal(status.activeProviders, 3);
-  assert.equal(status.plannedProviders, 0);
+  assert.equal(status.plannedProviders, 1, 'A integração 365Scores permanece marcada como experimental.');
+  assert.equal(status.providers.find(item => item.id === '365scores').state, 'planned');
   assert.equal(status.providers.find(item => item.id === 'api-football').cacheEntries, 1);
 
   now += 61_000;

@@ -30,12 +30,14 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
-      - name: Test V0.18.14 in-match FotMob tabs, lineup, team colors and schedule
+      - name: Test V0.18.15 match center tabs, lineup, team colors and schedule
         run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
       - name: Test Multi-API Engine cache and provider registry
         run: node scripts/test-multi-api-engine.js
+      - name: Test experimental 365Scores adapter (mocked responses)
+        run: node scripts/test-365scores-service.js
       - name: Test football-data.org token storage, results, matching and standings
         run: node scripts/test-football-data-service.js
       - name: Test football-data.org interface and agenda integration

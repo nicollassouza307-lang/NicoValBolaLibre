@@ -19,6 +19,11 @@ const PROVIDER_CATALOG = Object.freeze([
     description: 'Escudos e imagens via API V1 gratuita (chave pública 123 integrada).', quota: { perMinuteLimit: 25, dailyLimit: null }
   },
   {
+    id: '365scores', name: '365Scores', role: 'experimental', state: 'planned',
+    description: 'Teste manual de endpoints web não oficiais para partidas e competições; uso sujeito a autorização.',
+    quota: { perMinuteSoftLimit: 12, dailySoftLimit: 200, note: 'Teto local experimental, não é limite oficial da 365Scores.' }
+  },
+  {
     id: 'github-logos', name: 'GitHub Logos', role: 'fallback', state: 'available',
     description: 'Repositórios públicos de escudos como último recurso.', quota: null
   }

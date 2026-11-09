@@ -33,6 +33,7 @@ module.exports = {
     { from: path.resolve(__dirname, '..', 'team-logo-index.js'), to: 'app-server/team-logo-index.js' },
     { from: path.resolve(__dirname, '..', 'apifootball-service.js'), to: 'app-server/apifootball-service.js' },
     { from: path.resolve(__dirname, '..', 'multi-api-engine.js'), to: 'app-server/multi-api-engine.js' },
+    { from: path.resolve(__dirname, '..', '365scores-service.js'), to: 'app-server/365scores-service.js' },
     { from: path.resolve(__dirname, '..', 'football-data-service.js'), to: 'app-server/football-data-service.js' },
     { from: path.resolve(__dirname, '..', 'thesportsdb-service.js'), to: 'app-server/thesportsdb-service.js' },
     { from: path.resolve(__dirname, '..', 'apifootball-lineup-ui.js'), to: 'app-server/apifootball-lineup-ui.js' },
