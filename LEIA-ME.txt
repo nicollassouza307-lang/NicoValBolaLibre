@@ -1,22 +1,25 @@
-NICOVALBOLALIBRE V0.18.11
+CORREÇÃO VISUAL V0.18.13
+- Fundo branco somente nas placas atrás dos logos PNG de clubes e competições. Os cartões e painéis abaixo das partidas mantêm o tema escuro original.
+- Cores das estatísticas por clube mantidas.
+
+NICOVALBOLALIBRE V0.18.13
 ========================
 
 NOVIDADES
 ---------
-- Área Competições com as abas Jogos, Classificação e Ao vivo.
-- Jogos filtra a agenda já carregada pela competição selecionada; não adiciona partidas externas.
-- Classificação usa o football-data.org, fora do Painel Admin.
-- Ao vivo consulta a API-Football sob demanda, com cache de 60 segundos.
-- TheSportsDB V1 gratuita integrada como fonte auxiliar de escudos.
-- A chave pública gratuita TheSportsDB (123) já está integrada. Não crie conta, não procure token e não cole chave no Painel Admin.
-- A busca de escudos considera competição, país e ID da API-Football quando disponível. Correspondências incertas ou de outro país são recusadas.
-- GitHub/FootyLogos continuam como fallback quando um escudo não for encontrado.
+- Removida a página independente Competições da navegação principal.
+- A tela de cada partida agora reúne as abas Livescore, Escalações, Estatísticas e Classificação, abaixo do player.
+- Livescore mostra placar, estado e eventos fornecidos pela API-Football.
+- Estatísticas usam as cores primárias conhecidas dos clubes, com alternativas quando a cor não está mapeada.
+- Fundo branco aplicado somente às placas atrás dos logos PNG de clubes e competições; todos os painéis e cartões continuam com o tema escuro original.
+- A aba Classificação procura a liga correspondente no football-data.org e permite escolher manualmente se necessário.
+- TheSportsDB V1 gratuita continua integrada para escudos, com fallback GitHub/FootyLogos.
 
 CONFIGURAÇÃO DAS APIS
 ---------------------
 API-Football:
 - Use a chave pessoal já configurada no Painel Admin.
-- O botão Atualizar ao vivo, na aba Competições > Ao vivo, faz uma consulta manual.
+- Na tela de cada partida, a aba Livescore exibe os dados salvos e os eventos; para consultar novamente, use Buscar dados da API-Football.
 
 football-data.org:
 - O token pessoal deve ser configurado no Painel Admin.
@@ -30,15 +33,12 @@ TheSportsDB:
 - A lista gratuita de equipes pode retornar no máximo 10 equipes por consulta; alguns clubes podem não ser encontrados.
 - O livescore V2 da TheSportsDB é Premium. O livescore desta versão vem da API-Football.
 
-COMO USAR A ABA COMPETIÇÕES
----------------------------
-1. Instale a V0.18.11.
-2. Clique em Competições na barra superior.
-3. Clique em Atualizar competições, se necessário.
-4. Selecione uma competição.
-5. Jogos: veja os jogos dessa competição que já estão na agenda carregada.
-6. Classificação: clique em Atualizar classificação.
-7. Ao vivo: clique em Atualizar ao vivo. A consulta não ocorre automaticamente em segundo plano.
+COMO USAR A CENTRAL DA PARTIDA
+------------------------------
+1. Abra uma partida na agenda.
+2. Abaixo do player, escolha Livescore, Escalações, Estatísticas ou Classificação.
+3. Se necessário, busque os dados da API-Football.
+4. Na aba Classificação, selecione a competição correspondente se ela não for identificada automaticamente.
 
 CACHE
 -----
@@ -52,8 +52,8 @@ CACHE
 PUBLICAR A VERSÃO
 -----------------
 1. Extraia o ZIP e copie seu conteúdo para a raiz do repositório local, preservando a pasta .git.
-2. Faça commit NicoValBolaLibre V0.18.11 e Push origin.
-3. Crie e envie a tag v0.18.11.
+2. Faça commit NicoValBolaLibre V0.18.13 e Push origin.
+3. Crie e envie a tag v0.18.13.
 4. Acompanhe o GitHub Actions.
 5. Confira se a Release contém o instalador *-Setup.exe e os assets de atualização esperados.
 

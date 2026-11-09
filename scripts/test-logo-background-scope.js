@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+assert.equal(pkg.version, '0.18.13');
+assert.match(html, /img\.crest,\s*img\.competition-divider-logo,\s*\.apifootball-team-head-crest\s*\{\s*background-color:\s*#fff/,
+  'Somente o plano de fundo por trás das imagens de escudos deve ser branco.');
+assert.doesNotMatch(html, /\.match-scoreboard \.match-team-home[^}]*background:\s*#fff/,
+  'O cartão/área do time não deve ser clareado.');
+assert.doesNotMatch(html, /\.match-center-panel\s*\{[^}]*background:\s*#(?:fff|f[0-9a-f]{3,6})/i,
+  'O painel de informações abaixo do jogo deve manter o fundo escuro.');
+assert.match(html, /\.match-center-panel \.apifootball-stat-card \.home \{\s*background:\s*var\(--stat-home-color/,
+  'A barra do mandante continua colorida pela cor do clube.');
+assert.match(html, /\.match-center-panel \.apifootball-stat-card \.away \{\s*background:\s*var\(--stat-away-color/,
+  'A barra do visitante continua colorida pela cor do clube.');
+console.log('PASSOU: fundo branco restrito às placas dos logos; Match Center preserva tema escuro; barras usam cores dos clubes.');

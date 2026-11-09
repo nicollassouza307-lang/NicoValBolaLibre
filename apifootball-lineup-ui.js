@@ -276,20 +276,45 @@
     return `<section class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Gols, assistências e substituições</div><small>Eventos oficiais fornecidos pela API-Football</small></div>${events.length ? `<span>${events.length} lance(s)</span>` : ''}</div><div class="apifootball-event-list">${rows}</div></section>`;
   }
 
+  const TEAM_PRIMARY_COLORS = {
+    'flamengo':'#c8102e','fluminense':'#7a003c','palmeiras':'#007a33','gremio':'#00a1e4','atletico mg':'#171717','corinthians':'#171717','santos':'#181818',
+    'botafogo':'#171717','atletico mineiro':'#171717','atletico-mg':'#171717','internacional':'#d71920','cruzeiro':'#005ca9','vasco':'#171717',
+    'bahia':'#075ca8','bragantino':'#8c1017','red bull bragantino':'#8c1017','athletico paranaense':'#d71920','fortaleza':'#00529b','ceara':'#171717',
+    'sport recife':'#d71920','vitoria':'#d71920','goias':'#007a33','coritiba':'#007a33','america mineiro':'#007a33','sao paulo':'#e32636',
+    'liverpool':'#c8102e','manchester united':'#da291c','manchester city':'#6cabdd','arsenal':'#ef0107','chelsea':'#034694','tottenham':'#132257',
+    'newcastle':'#171717','aston villa':'#670e36','west ham':'#7a263a','everton':'#003399','brighton':'#0057b8','crystal palace':'#1b458f',
+    'real madrid':'#d4a72c','barcelona':'#a50044','atletico madrid':'#c8102e','atletico de madrid':'#c8102e','sevilla':'#d71920','valencia':'#171717',
+    'bayern munich':'#dc052d','borussia dortmund':'#f7d417','bayer leverkusen':'#e32219','rb leipzig':'#dd0741','schalke 04':'#004b9b',
+    'inter':'#00529f','internazionale':'#00529f','ac milan':'#fb090b','milan':'#fb090b','juventus':'#171717','napoli':'#00a0df','roma':'#8e1b2f',
+    'paris saint germain':'#004170','psg':'#004170','benfica':'#d50032','porto':'#0050a4','sporting cp':'#008e44','ajax':'#d2122e',
+    'celtic':'#018749','rangers':'#005eb8','borussia monchengladbach':'#171717','monaco':'#e00025','marseille':'#009fe3','lyon':'#003c8f'
+  };
+  function normalizeTeamColorName(name) {
+    return String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function teamPrimaryColor(name, fallback='#64748b') {
+    const normalized=normalizeTeamColorName(name);
+    if(TEAM_PRIMARY_COLORS[normalized])return TEAM_PRIMARY_COLORS[normalized];
+    const alias=Object.keys(TEAM_PRIMARY_COLORS).find(key=>normalized===key || (normalized.length>5&&normalized.includes(key)) || (key.length>5&&key.includes(normalized)));
+    return alias?TEAM_PRIMARY_COLORS[alias]:fallback;
+  }
+
   function renderStatistics(snapshot) {
     const rows = statsRows(snapshot);
     if (!rows.length) return '<div class="apifootball-message">As estatísticas detalhadas ainda não estão disponíveis para esta partida. Isso pode depender da cobertura da competição ou do estágio do jogo.</div>';
     const homeName = String(snapshot?.fixture?.home?.name || snapshot?.home || 'Mandante');
     const awayName = String(snapshot?.fixture?.away?.name || snapshot?.away || 'Visitante');
+    const homeColor=teamPrimaryColor(homeName,'#2563eb');
+    const awayColor=teamPrimaryColor(awayName,'#dc2626');
     const list = rows.map(row => {
       const homeNumber = numericValue(row.home);
       const awayNumber = numericValue(row.away);
       const homeShare = homeNumber === null || awayNumber === null || homeNumber + awayNumber === 0
         ? 50 : Math.round((homeNumber / (homeNumber + awayNumber)) * 100);
-      return `<article class="apifootball-stat-card"><div class="apifootball-stat-values"><strong>${escapeHtml(row.home)}</strong><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.away)}</strong></div><div class="apifootball-stat-bar" aria-hidden="true"><span class="home" style="width:${homeShare}%"></span><span class="away" style="width:${100 - homeShare}%"></span></div></article>`;
+      return `<article class="apifootball-stat-card" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-values"><strong>${escapeHtml(row.home)}</strong><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.away)}</strong></div><div class="apifootball-stat-bar" aria-hidden="true"><span class="home" style="width:${homeShare}%"></span><span class="away" style="width:${100 - homeShare}%"></span></div></article>`;
     }).join('');
-    return `<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela API-Football. Um traço indica dado não informado.</div></div>`;
+    return `<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela API-Football. Um traço indica dado não informado.</div></div>`;
   }
 
-  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, renderStatistics, eventMinute, renderMatchEvents };
+  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };
 });

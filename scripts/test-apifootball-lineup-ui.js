@@ -100,6 +100,10 @@ assert.match(statsHtml, /Estatísticas|Posse de bola/);
 assert.match(statsHtml, /58%/);
 assert.match(statsHtml, /42%/);
 assert.match(statsHtml, /apifootball-stat-bar/);
+assert.match(statsHtml, /--stat-home-color:#007a33/, 'Palmeiras deve usar sua cor principal nas estatísticas.');
+assert.match(statsHtml, /--stat-away-color:#c8102e/, 'Flamengo deve usar sua cor principal nas estatísticas.');
+assert.equal(ui.teamPrimaryColor('Liverpool'), '#c8102e');
+assert.equal(ui.teamPrimaryColor('Borussia Dortmund'), '#f7d417');
 
 const escapedHtml = ui.renderLineups({ ...snapshot, lineups: [{ ...snapshot.lineups[1], team: { id: 10, name: '<script>alert(1)<\/script>' } }] });
 assert.doesNotMatch(escapedHtml, /<script>alert\(1\)<\/script>/);
@@ -108,6 +112,14 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 assert.match(index, /apifootball-lineup-ui\.js/);
 assert.match(index, /data-apifootball-tab="lineups"/);
 assert.match(index, /data-apifootball-tab="statistics"/);
+assert.match(index, /data-apifootball-tab="livescore"/);
+assert.match(index, /data-apifootball-tab="standings"/);
+assert.match(index, /img\.crest,\s*img\.competition-divider-logo,\s*\.apifootball-team-head-crest\s*\{\s*background-color:\s*#fff/, 'Somente as placas atrás dos logos de times e competições devem ficar brancas.');
+assert.doesNotMatch(index, /\.match-scoreboard \.match-team-home[^}]*background:\s*#fff/, 'O cartão do time na central não deve ficar branco.');
+assert.doesNotMatch(index, /\.match-center-panel\s*\{[^}]*background:\s*#(?:fff|f[0-9a-f]{3,6})/i, 'O painel inferior da partida deve manter o tema escuro.');
+assert.match(index, /\.match-center-panel \.apifootball-stat-card \.home \{\s*background:\s*var\(--stat-home-color/, 'A barra de estatísticas do mandante deve usar a cor do clube.');
+assert.match(index, /\.match-center-panel \.apifootball-stat-card \.away \{\s*background:\s*var\(--stat-away-color/, 'A barra de estatísticas do visitante deve usar a cor do clube.');
+assert.doesNotMatch(index, /id="competitionsView"|id="competitionsBtn"/, 'A página isolada de Competições deve sair da navegação.');
 assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel esportivo deve aparecer depois do player.');
 assert.match(index, /bindApiFootballPanelEvents\(e\)/);
 // O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.

@@ -30,7 +30,7 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
-      - name: Test V0.18.11 match-center lineup, photos, schedule and update notice
+      - name: Test V0.18.13 in-match FotMob tabs, lineup, team colors and schedule
         run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
@@ -40,12 +40,14 @@ jobs:
         run: node scripts/test-football-data-service.js
       - name: Test football-data.org interface and agenda integration
         run: node scripts/test-football-data-ui.js
-      - name: Test public competitions and standings view
+      - name: Test in-match competition standings
         run: node scripts/test-competitions-view.js
       - name: Test Cloudflare shared provider cache
         run: node scripts/test-cloudflare-provider-cache.js
-      - name: Test public competition tabs and livescore UI
+      - name: Test in-match tab navigation and match center
         run: node scripts/test-competitions-tabs.js
+      - name: Test logo background scope and dark match center theme
+        run: node scripts/test-logo-background-scope.js
       - name: Test API-Football live fixtures and cache
         run: node scripts/test-apifootball-livescore.js
       - name: Test TheSportsDB free V1 badge lookup and cache

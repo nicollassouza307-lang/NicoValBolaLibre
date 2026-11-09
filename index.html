@@ -377,8 +377,8 @@
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
 /* V0.18.9: integração football-data.org com token local seguro */
 /* V0.18.10: área pública de competições e tabelas */
-/* V0.18.11: TheSportsDB V1, abas de competições e livescore */
-/* V0.18.11: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
+/* V0.18.13: TheSportsDB V1, abas de competições e livescore */
+/* V0.18.13: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
 .competitions-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:6px 0 22px;padding:21px;border:1px solid #48d9d02a;border-radius:17px;background:linear-gradient(115deg,#142d47,#102039)}
 .competitions-page-head p{max-width:680px;margin:8px 0 0;color:#a9bdd5;font-size:12px;line-height:1.55}
 .competitions-page-title{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:7px 0 0;color:#eef7ff}
@@ -416,7 +416,7 @@
 .competitions-attribution{margin:15px 2px;color:#7187a3;font-size:9px;line-height:1.5}
 .competitions-attribution a{color:#8fa9ca}
 @media(max-width:620px){.competitions-page-head{align-items:flex-start;flex-direction:column;padding:17px}.competitions-select-panel{grid-template-columns:1fr}.competitions-select-panel button{width:100%}.public-standings-head{padding:14px}.public-standings-table{font-size:10px}.public-standings-table th,.public-standings-table td{padding:9px 7px}.public-standings-table td:nth-child(2){min-width:145px}.public-standings-monogram{width:26px;height:26px;flex-basis:26px}}
-/* V0.18.11: abas de competição, livescore e TheSportsDB */
+/* V0.18.13: abas de competição, livescore e TheSportsDB */
 .competitions-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px;padding:5px;border:1px solid var(--line);border-radius:13px;background:#ffffff05}
 .competitions-tab{flex:1 1 110px;min-height:39px;border:1px solid transparent;border-radius:9px;background:transparent;color:#8fa5c2;font-size:11px;font-weight:850;cursor:pointer}
 .competitions-tab.active{border-color:#48d9d044;background:#48d9d014;color:#9ce9e2;box-shadow:inset 0 0 0 1px #48d9d011}
@@ -502,13 +502,27 @@
 }
 
 </style>
+<style>
+/* V0.18.13: branco somente na placa atrás dos escudos/logos PNG; superfícies da UI mantêm o tema escuro. */
+img.crest,
+img.competition-divider-logo,
+.apifootball-team-head-crest {
+  background-color: #fff;
+  border: 1px solid #e6ebf1;
+}
+/* As estatísticas usam as cores primárias de cada clube, sem clarear os cartões/painéis. */
+.match-center-panel .apifootball-stat-team-labels strong:first-child { color: var(--stat-home-color, #2563eb); }
+.match-center-panel .apifootball-stat-team-labels strong:last-child { color: var(--stat-away-color, #dc2626); }
+.match-center-panel .apifootball-stat-card .home { background: var(--stat-home-color, #2563eb); }
+.match-center-panel .apifootball-stat-card .away { background: var(--stat-away-color, #dc2626); }
+</style>
 </head>
 <body>
 <div class="app">
   <main class="main">
     <header class="topbar">
       <div class="topbar-left"><button class="brand brand-btn" id="homeBtn" type="button" aria-label="Início"><div class="brand-mark"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAA6dklEQVR42lX92a5lS5Ylho0xp9lauzmNN7ePuBE3IiMru0oVWRRBECBBvhIkCBD8BUIPehOgr9CTAP2BIEISoCdBP8B6IasRk6rMyqwqVlVGRtwbt/Pr7qfbe61lNufQg+1zs+oADjgcfrplZtPmHN3i/+X/9v8macikAwCoDJCQAABQb5NlFzMTsbnCgHmuL2+upzpJCQCZhAABEEjIGEplSn2DBCNAKA2KVDvfx+mH1hOSKRTdLK3MLLNPB3jpcPikSAHpOxqNAkyxnR8fzk+Pke2wvzbGw8Pdsm6tBZSRoQQFKDOzp2heqydM4tv33379zZePj+1h6RFBYT/zo5dHs3Je9HR+WlpD5mRerdpcdhP2xQohRQQJBAiAJCGJRsmgMEvIkK6WygSp7Nu6xXGqQgYB0QxBKkUSqfGMMhVQggRk40tmFqxeeq9E37K1micYU6UomRu3M2mFlE/wvSGzn9wNCqPQl2NVXq19W5FPyryZ1s0ZiQQZq42FyogEU53WVAzq8le7q198+KvltLy9f3w6bb3Hfi6sPLde0StKK4ggMqtrLlm8FGTJFGkJQTAzZCqTCNIEJlSookiFzB1Qb6YAjEpljE1GRIgGgoBgCCRa78gggxDkZg7JGNSSamOXGRcZCFFIK8WKIGWa+Q/v7u7vv35xe3378gM3IlZjV3am2M81N2SDOp07a1QYgoBREkj0yEhzh1qAEB2SRL4s+uwWYJIUMrNLCoscTxXr2jPSFQCbVJitEE10EmEhAUiYK0kARLYkAg7IIEMKcKLaeBoQOP5cDliGoUugBEgwQBIyRcgIyXrLFACFWAQjolTZ1AVARvvu3el/+rO/+PLb7652x88++eTnX3z+008/uJqYKUiCCEEEyUgix0/QRQNMmSnBjKmEMRWg5aVodIx1NHMpZdjTaiWAIM3NsyjVUAGRVixb0AwUDZmubjSQKbjGU5YyKZk6Mk3J8aFL0QHGExBgRIoWmBUrkSBTNAQZQBhFZRclZo/ERKflU0FkNnWTTwRa6je//ep3v/v2nHo6P755/2/++qtvfu/nn//R3/npR7d75JqRNRvZkY1KUqCUaYAiRSQIdUgkBcIEQCRBcKwjaIaEuTkIyoQOZggAyCKBJqEgww2gkJaSEYBMYSCUEo0AErhUH4MyBVaYjX8DAF72CyRwVC8KhkwqYcCoSghHBCIY5rSUGDALKxANgVxB6x3v378/ry1VYBbgw+PyV//q1+/u7v74D372xccvKguADBlCzHGjCFDKSBosJSXAy0/IH5fy+emQSaIUl0gBBqg+r7kDIMdnFI8VKqIBUSB6gToA0caVphQo6vJoM0miUBjfVnx+RiRCNAmpVASUyCQ4DgQJwsjNEIRs/KsbsgBplwMpI9fAOahMEBlBeidi67/7+vvT0/nx9z77xecfvZh3nt1AI0UAcI7dIWUCoBdetjZ4+VkJCpKRoBnh1PgkY457llCCkgiOB1pOy0Ko1LnUSSQyBBrCzAUKQvbx0DFOFQUgJSqVgBdAREIpCSYzKroUptDztwFlCKJn9EgIjBTVkTkKFcdBJbJvTFkZy56p8UvTW7TCH+5O/8tf/frt+4c//OLDj2/35mZ5JmPskrHs5g7A8O9sHcOlthIovJSD2U1SwH3s8OcqCtqlYInlfPdO5sUfSplgpVA0r8XNzLyQBppAYRwiKDOiq7og0lJBJcf3NxpCmVBqnHsIQEULMaTIjKjZz4qWvWUEkBCQaWgGSzE4GXCsk3ldt660tBSlUAaKZwr/62+++eHu7vd//tHvf/7R9TTNunP0SIymjJK7CQKYoOGyv40wCKKAYmaUpMvmMpdEpjTqRUl1g5FRzvdvvXiYN9LMuhFWzqW4V5ZpP7mZW93RizIAGpLE5G6xJSaZka7cBBoBBQTSTJsJ+nEXBKAWYrZFfcltlSIFAqYgO0e7ASaUabvDoZTSTyuZ0SHk6LEi2Nq6lfJ43t78cPqbr97+9LMPfvKyvt6V2x1KQRcQEQLNxkMhklIIKRgxGiUbP5rGsiZytABju8nUR+9CopzOC8liBjeAxVDqNB55meaoFUyW3WF/mOcdSCjoXh1mo7Bv9ArQx0qBZlDkZWsABjkFR3QwAxkGueUWl54lBaIQzthkdG1e9ofj1bw74v4pctQnNyAV4zQqCjPve3/862//5svvro6H1y+OH7/a3cw2ERGZwFSsOmy3e33lV5MfqsyUSghOrAGjCqnxkJCjeypmgnpebjwIZVs3kOvl2jEzNy4kjZSdBJpZmeb1uByubg77PcVKoxnMAUqpaPQJiASczN4iwmkwUJ1EyJR9XBxECKKymIJOpbuljOpmNcQAK0pxztVBJ5KgY1xGlV44arB5qCSnlE4P8eb+3b/4LZgolgnzKY1wI70c6vT6avr49eGnHx8/v533VcxOBYwdCZoo0NwAskuUIsftAxJlf32b0ZWRUu+9t94iJYjc1bKbJ5JdJhYikQkvCYI+yhhJmhnlBgeidYXMTDkqpkghtoxQSm1DbMw1pVQh9HBav33z9vvv3z+e+83N8Rc/++SDVzfrhmVb1h5OJD1TGlcSLWm0JBm6dGIJAhZwkjI0wE3OpDNgyLxf4v68/PbN8s+/vP/s5eHnH7787FX54Nr2jhSgvmy5ruvjuT+cmtr2+uXNB6/mMvo/ofzpf/C/7T0IZUZf1631dV23Hutynoq/ePV6tz/+9oeHH3548/LTj3y3z0hUX7y2pKRqsHG4OwEgXII6CVBR6E6ZTZkhioXmUO623iS7e7z/Z3/99b/4V1/+8MNDC8H8o3/z/YevrpcWDw8P948r6iGTZoKVTDkDZLKMG0rPM7AySEDphBeYoXg1c6HQZDAIztwav/qhvbn//l9+la9vro4zl7U9Pjze3z+eTmsIV/v6d3/56edXV/uaOTo4kv/9//3/mSB5GQjc0JLffvPtr3/z1enx4aNPPv74J5/T7N/8+qt1Of3+H/7x4Xi8NETRCUKBDAAxql6GIwVKkuDIiqBZLebEdn5a7958/8Pbb77/YVnOj+fl3buH0+MSIguVEDJaQvBiNI5GyH4cZcxEUgkzKpGRYgiIZmbFvJjKxAxlZkRTjGJCKmr1WqpXV4QylrX1HpkBlqvj7tWLq9cvX37x6cvf/9kHH9/WQ/8B22lUIf5f//v/B0fHN5pgs998+fU//V/+6dPTKQGfdp//4pc/+dnPWvK3/+Z/BfCrP/yj4+HYehs1eWsRo20VIroyjCQUMJCINq6Sp8fTb/7lX3737TdPD3dtXXrIXWZMmUQ+oyQgAONoiy+tuhFJ9MzIJKTMaBFStKbWkojrmXV3MIoKksjoqR4Nsep5AnM3mPHSL4Jm+3m+vjleXb28uTpeX+291Ie33633P3zx09f/6d/7/FVdmBuJMjoEiYYUuLb48je/ef/2bQIh5ePjvz6f1tZ/9vOf/+yLX3z129/+i7/4i89/8cvr25dbaxojJxCtSZkZEgwpKaXMRAZISb/7m7/+Z3/2T7Ye8252eC0VFC0t+WO3K0IC1aOHSCl7oHdQa+s9IpXqcQGelCzOUr2WUgpye0y6Y+w5JZAR0ZhSpoh0y6TVyv1uvr2+ub69vZ7naTdZrYfdbp7n5fT0u+/f//Wvf/Nnf/mv3r9589/+57+63VEZRWNMJ1J0I6I9nZa197GwKTw9Pf7rP/+z5e6Hz37xq08+++SH7978y7/8Z68+/OijTz41sx6jM1REV3ZdOsnLKQvBCI+2280vP/70269/ty7rNB8sRIaiZXiot6aMyOxKQK1H9hYSlALSILGAIOlON9RSjGUq6VAqo0vRwEheJtHoPVIRQagUr7Xsdvub2+urw/Gw281TLdNUqruz1jqX6XR6evfufVdO+/360P/qX3/99u9/fr079IhSmJGX1pvk1kMZBgSUfctYU7bA/tU//+dv3vzws9/71asPP573+9/97nfv3rz55LPPrm5fRFsviBuwtT7mmIwAgegBdKAeb/7On/zpixcvv/rt13fv32U8Atq2rXVFplKSJBbnNLkXn+iAWusSixspr8WN1awYnckx3yAJJwxlj+w0gjRQ1QSYWZ3281Svr4/H/TzVqRYvpbLUaarHw65We3p8eHy4O53ObWvHaXpxffz+6fGnn75+eXuICNAKjY5nUBRQRKaMCFDm0VLKURHefvfN0939648//uKXv/jiZz95++7+y9/8zbT77vXr17vDoUdI6CEogLGsYzv16KFoynj98adXN7ffff3V999+83B/ImutYO8tG0EaSWYag1asOupcQHPC3YuxGEh3dUVTtoRDoJoEwaE0GURRZapGg5Xdbn/c76/20646a/E612LTNNVaJqebZfLx8U6hSnGqVuvxsP+TP/hiP9dsnUQhR+VCCNXI4lYKzZigufnU29oCQJdsW+8f7+/ffPvdp5998tFPf/aTz3/6w5sffvs3vz4cDtcvXs67HZS9bZk5EGgos0drbeBFinMxffDJZ4erm6f3b0/nZVm3tq3LurZl23pmRESLIDaspLuVYumAIIeC1aKT9OrulCm3AQiSo2ZeIAcp4dM07Q/zvJvc1TOJbUUGsxIdctdu2XB6elzWlik3axHnx/s/+uKTP/jV55mPTooslwGBY35DdZ+YpUzZO1IyM4Mlo0VCImC8u3//cH/31W9/8+GnP/nw00+PH314f3f37W9/PdVydfti2u1MyOiMJZIdRZKURCp6RvTAVKu/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" alt="NicoValBolaLibre"></div><div class="brand-copy"><div class="brand-name">NicoValBolaLibre</div><div class="brand-sub">PRIVATE MATCH CENTER</div></div></button><div><div class="eyebrow">Central de partidas</div><h1 class="heading">Seu futebol<span>, do seu jeito.</span></h1></div></div>
-      <div class="top-actions"><label class="language-picker" for="languageSelect"><span id="languageLabel">Idioma</span><select id="languageSelect" aria-label="Idioma"><option value="pt-BR">🇧🇷 Português</option><option value="es-AR">🇦🇷 Español</option></select></label><div class="api-pill"><span class="dot" id="apiDot"></span><span id="apiLabel">Conectando à API</span></div><button class="btn secondary small" id="competitionsBtn" type="button"><span class="ico">🏆</span> <span>Competições</span></button><button class="btn secondary small" id="adminBtn" type="button"><span class="ico">⚙</span> <span>Painel admin</span></button><button class="icon-btn" id="refreshBtn" title="Atualizar partidas" aria-label="Atualizar">↻</button></div>
+      <div class="top-actions"><label class="language-picker" for="languageSelect"><span id="languageLabel">Idioma</span><select id="languageSelect" aria-label="Idioma"><option value="pt-BR">🇧🇷 Português</option><option value="es-AR">🇦🇷 Español</option></select></label><div class="api-pill"><span class="dot" id="apiDot"></span><span id="apiLabel">Conectando à API</span></div><button class="btn secondary small" id="adminBtn" type="button"><span class="ico">⚙</span> <span>Painel admin</span></button><button class="icon-btn" id="refreshBtn" title="Atualizar partidas" aria-label="Atualizar">↻</button></div>
     </header>
 
     <div id="scheduleView">
@@ -544,48 +558,6 @@
     <div class="games-grid" id="gamesGrid"><div class="loading"><span class="spinner"></span>Buscando a agenda de futebol...</div></div>
     <div class="notice" id="apiNotice">Fontes: Rei dos Canais (prioridade) + LA18HD JSON + PelotaLibre.video + PelotaLibre.ar quando a data da agenda coincide. Importamos informações de partidas e nomes de emissoras; links de retransmissões de terceiros não são coletados.</div>
     </div>
-
-    <section id="competitionsView" hidden>
-      <div class="competitions-page-head">
-        <div style="display:flex;align-items:center;gap:13px;min-width:0">
-          <img id="publicCompetitionBadge" class="public-competition-badge" alt="" hidden>
-          <div>
-            <div class="eyebrow">Central de competições</div>
-            <h2 class="competitions-page-title">Competições<span>, jogos e tabelas.</span></h2>
-            <p>Veja os jogos da agenda, a classificação e as partidas ao vivo em abas separadas.</p>
-          </div>
-        </div>
-        <button class="btn secondary small" id="publicLoadCompetitions" type="button">↻ Atualizar competições</button>
-      </div>
-      <div class="competitions-select-panel">
-        <label for="publicCompetitionSelect">Escolha uma competição
-          <select id="publicCompetitionSelect" aria-label="Escolha uma competição"><option value="">Carregue as competições primeiro</option></select>
-        </label>
-      </div>
-      <div class="competitions-tabs" role="tablist" aria-label="Seções da competição">
-        <button class="competitions-tab active" type="button" data-competition-tab="games" role="tab" aria-selected="true">⚽ Jogos</button>
-        <button class="competitions-tab" type="button" data-competition-tab="standings" role="tab" aria-selected="false">🏆 Classificação</button>
-        <button class="competitions-tab" type="button" data-competition-tab="live" role="tab" aria-selected="false">🔴 Ao vivo</button>
-      </div>
-      <div class="competitions-status" id="publicCompetitionStatus" role="status" aria-live="polite">Carregue as competições disponíveis para começar.</div>
-      <section id="publicCompetitionGamesPanel" class="competition-tab-panel" role="tabpanel">
-        <div id="publicCompetitionGamesResult" class="competition-games-list">
-          <div class="competitions-empty"><span>⚽</span><strong>Jogos da competição</strong><p>Escolha uma competição e carregue a agenda na tela inicial.</p></div>
-        </div>
-      </section>
-      <section id="publicCompetitionStandingsPanel" class="competition-tab-panel" role="tabpanel" hidden>
-        <div class="competitions-tab-toolbar"><span class="admin-small">Classificação da competição selecionada</span><button class="btn small" id="publicLoadStandings" type="button" disabled>↻ Atualizar classificação</button></div>
-        <div id="publicStandingsResult" class="public-standings-result">
-          <div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação selecionada</strong><p>Escolha uma liga e clique em “Atualizar classificação”.</p></div>
-        </div>
-      </section>
-      <section id="publicCompetitionLivePanel" class="competition-tab-panel" role="tabpanel" hidden>
-        <div class="competitions-tab-toolbar"><span class="admin-small">Livescore de todos os campeonatos · API-Football</span><button class="btn small" id="publicLoadLivescore" type="button">↻ Atualizar ao vivo</button></div>
-        <div class="competitions-status" id="publicLivescoreStatus" role="status" aria-live="polite">O livescore é consultado somente quando você solicitar, para economizar sua cota diária.</div>
-        <div id="publicLivescoreResult" class="livescore-list"><div class="competitions-empty"><span>🔴</span><strong>Nenhum livescore carregado</strong><p>Clique em “Atualizar ao vivo” para consultar as partidas em andamento.</p></div></div>
-      </section>
-      <p class="competitions-attribution">Dados de jogos e classificação fornecidos por <a href="https://www.football-data.org/" target="_blank" rel="noopener">Football-Data.org</a>. Livescore fornecido por <a href="https://www.api-football.com/" target="_blank" rel="noopener">API-Football</a>. A disponibilidade depende da cobertura de cada provedor.</p>
-    </section>
 
     <section id="adminView" hidden>
       <div class="section-head">
@@ -775,7 +747,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.11 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.13 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -1018,19 +990,10 @@ const BROADCASTER_ALIAS_GROUPS = [
   const FOOTBALL_DATA_COMPETITIONS_CACHE_KEY = 'nvb_footballdata_competitions_v1';
   const FOOTBALL_DATA_STANDINGS_CACHE_KEY = 'nvb_footballdata_standings_v1';
   const FOOTBALL_DATA_SELECTED_COMPETITION_KEY = 'nvb_footballdata_selected_competition_v1';
-  const API_FOOTBALL_LIVE_CACHE_KEY = 'nvb_apifootball_livescore_v1';
-  const COMPETITION_ACTIVE_TAB_KEY = 'nvb_competition_active_tab_v1';
   const THESPORTSDB_BADGE_CACHE_KEY = 'nvb_thesportsdb_badge_cache_v1';
-  const THESPORTSDB_LEAGUE_BADGE_CACHE_KEY = 'nvb_thesportsdb_league_badge_cache_v1';
-  let apiFootballLiveSnapshot = readStore(API_FOOTBALL_LIVE_CACHE_KEY, { fixtures:[], fetchedAt:'', cached:true });
-  if (!apiFootballLiveSnapshot || typeof apiFootballLiveSnapshot !== 'object' || !Array.isArray(apiFootballLiveSnapshot.fixtures)) apiFootballLiveSnapshot = { fixtures:[], fetchedAt:'', cached:true };
-  let competitionActiveTab = ['games','standings','live'].includes(readStore(COMPETITION_ACTIVE_TAB_KEY,'games')) ? readStore(COMPETITION_ACTIVE_TAB_KEY,'games') : 'games';
   let theSportsDbBadgeCache = readStore(THESPORTSDB_BADGE_CACHE_KEY, {});
-  let theSportsDbLeagueBadgeCache = readStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY, {});
   if (!theSportsDbBadgeCache || typeof theSportsDbBadgeCache !== 'object' || Array.isArray(theSportsDbBadgeCache)) theSportsDbBadgeCache = {};
-  if (!theSportsDbLeagueBadgeCache || typeof theSportsDbLeagueBadgeCache !== 'object' || Array.isArray(theSportsDbLeagueBadgeCache)) theSportsDbLeagueBadgeCache = {};
   const theSportsDbPendingBadges = new Map();
-  let apiFootballLiveBusy = false;
   let theSportsDbTestBusy = false;
   let apiFootballMatchCache = readStore(API_FOOTBALL_MATCH_CACHE_KEY, {});
   let apiFootballStandingsCache = readStore(API_FOOTBALL_STANDINGS_CACHE_KEY, {});
@@ -1048,6 +1011,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   let apiFootballBusy = false;
   const apiFootballNoMatchLookup = new Set();
   const apiFootballPanelActiveTab = new Map();
+  const matchFootballDataCompetitionChoice = new Map();
 
   // Idioma da interface: preferência local, independente do JSON de emissoras.
   let currentLanguage = readStore('futeblox_language_v1', 'pt-BR') === 'es-AR' ? 'es-AR' : 'pt-BR';
@@ -2078,14 +2042,10 @@ const BROADCASTER_ALIAS_GROUPS = [
 
   function render() {
     const isAdmin=state.view==='admin';
-    const isCompetitions=state.view==='competitions';
-    $('#scheduleView').hidden=isAdmin||isCompetitions;
+    $('#scheduleView').hidden=isAdmin;
     $('#adminView').hidden=!isAdmin;
-    $('#competitionsView').hidden=!isCompetitions;
     const adminBtn=$('#adminBtn');if(adminBtn)adminBtn.classList.toggle('active',isAdmin);
-    const competitionsBtn=$('#competitionsBtn');if(competitionsBtn)competitionsBtn.classList.toggle('active',isCompetitions);
     if(isAdmin) { renderAdmin(); return; }
-    if(isCompetitions) { renderCompetitionsView(); return; }
     // Reavalia o catálogo do painel a cada renderização. Assim, uma fonte cadastrada
     // uma vez passa a aparecer em partidas atuais/futuras compatíveis.
     autoLinkCatalogStations(state.events);
@@ -2164,29 +2124,70 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
     return 'upcoming';
   }
-  function renderApiFootballSnapshot(snapshot, activeTab = 'lineups') {
-    const tab = activeTab === 'statistics' ? 'statistics' : 'lineups';
-    const homeGoals=snapshot?.fixture?.goals?.home; const awayGoals=snapshot?.fixture?.goals?.away;
+  function renderMatchCenterStandings(event, snapshot) {
+    const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
+    const inferred=footballDataCompetitionForEvent(event);
+    const selectedCode=String(matchFootballDataCompetitionChoice.get(String(event.id))||inferred?.code||'').toUpperCase();
+    const selected=leagues.find(item=>String(item.code||'').toUpperCase()===selectedCode)||null;
+    const footballDataTable=selectedCode?footballDataStandingsCache[selectedCode]:null;
+    const apiLeague=snapshot?.fixture?.league||{};
+    const apiKey=apiLeague.id&&apiLeague.season?`${Number(apiLeague.id)}:${Number(apiLeague.season)}`:'';
+    const apiTable=apiKey?apiFootballStandingsCache[apiKey]:null;
+    const options=leagues.length
+      ? `<option value="">Selecionar competição...</option>${leagues.map(item=>`<option value="${escapeHtml(item.code)}" ${String(item.code).toUpperCase()===selectedCode?'selected':''}>${escapeHtml(item.name)} · ${escapeHtml(item.area?.name||'')}</option>`).join('')}`
+      : '<option value="">Competições ainda não carregadas</option>';
+    const apiButton=apiKey&&apiFootballLocalKeyConfigured&&!apiTable?'<button class="btn secondary small" id="apiFootballLoadStandings" type="button">Buscar pela API-Football</button>':'';
+    const footballButton=selected?'<button class="btn small" id="matchLoadFootballDataStandings" type="button">Buscar classificação</button>':'';
+    const content=footballDataTable?.table?.length
+      ? footballDataStandingMarkup(footballDataTable,true)
+      : apiTable?.rows?.length ? renderApiFootballStandings(apiTable)
+      : `<div class="apifootball-message">${selected?'A classificação desta competição ainda não foi carregada.':'Não identifiquei automaticamente a liga desta partida. Escolha uma competição disponível ou carregue a lista no botão ao lado.'}</div>`;
+    return `<div class="match-standings-panel">
+      <div class="match-standings-toolbar">
+        <label for="matchFootballDataCompetitionSelect">Classificação da competição desta partida
+          <select id="matchFootballDataCompetitionSelect" ${leagues.length?'':'disabled'}>${options}</select>
+        </label>
+        <div class="apifootball-actions">
+          <button class="btn secondary small" id="matchLoadFootballDataCompetitions" type="button">${leagues.length?'Atualizar ligas':'Carregar ligas'}</button>
+          ${footballButton}${apiButton}
+        </div>
+      </div>
+      <div id="matchFootballDataStatus" class="apifootball-key-note">${selected?`Competição identificada: ${escapeHtml(selected.name)}.`:'A classificação é carregada sob demanda e depende da cobertura do football-data.org.'}</div>
+      <div id="matchFootballDataStandingsResult">${content}</div>
+      ${footballDataTable?.table?.length?'<div class="match-standings-source">Classificação fornecida por Football-Data.org.</div>':''}
+    </div>`;
+  }
+  function renderApiFootballSnapshot(snapshot, activeTab = 'livescore', event = null) {
+    const allowedTabs=['livescore','lineups','statistics','standings'];
+    const tab=allowedTabs.includes(activeTab)?activeTab:'livescore';
+    const eventScore=event?footballDataScoreFor(event):{home:null,away:null};
+    const homeGoals=snapshot?.fixture?.goals?.home ?? event?.homeScore ?? eventScore.home;
+    const awayGoals=snapshot?.fixture?.goals?.away ?? event?.awayScore ?? eventScore.away;
     const homeScoreText=homeGoals===null||homeGoals===undefined?'—':String(homeGoals);
     const awayScoreText=awayGoals===null||awayGoals===undefined?'—':String(awayGoals);
-    const status=String(snapshot?.fixture?.statusLong||snapshot?.fixture?.status||'');
-    const homeName=snapshot?.fixture?.home?.name||snapshot?.home||'Mandante';
-    const awayName=snapshot?.fixture?.away?.name||snapshot?.away||'Visitante';
-    const fetched=snapshot?.fetchedAt?new Date(snapshot.fetchedAt).toLocaleString():'ainda não consultado';
+    const status=String(snapshot?.fixture?.statusLong||snapshot?.fixture?.status||(event?.status?statusLabel(event.status):'STATUS NÃO INFORMADO'));
+    const fetched=snapshot?.fetchedAt?new Date(snapshot.fetchedAt).toLocaleString():(eventScore.match?.lastUpdated?new Date(eventScore.match.lastUpdated).toLocaleString():'ainda não consultado');
     const errors=Array.isArray(snapshot?.detailErrors)?snapshot.detailErrors:Array.isArray(snapshot?.errors)?snapshot.errors:[];
     const errorMarkup=errors.length?`<div class="apifootball-message">${errors.map(item=>escapeHtml(item.message||item.section)).join(' · ')}</div>`:'';
-    const content = !snapshot
-      ? '<div class="apifootball-message">Busque os dados da API-Football para carregar escalações e estatísticas desta partida.</div>'
-      : (tab === 'statistics' ? window.NVBLineupUI.renderStatistics(snapshot) : window.NVBLineupUI.renderLineups(snapshot));
-    return `<div class="apifootball-scoreline"><span>${escapeHtml(homeScoreText)}</span><small>${escapeHtml(status||'STATUS NÃO INFORMADO')}</small><span>${escapeHtml(awayScoreText)}</span></div>
-      <div class="apifootball-match-meta"><span>${escapeHtml(homeName)} <b>×</b> ${escapeHtml(awayName)}</span><small>Atualizado em ${escapeHtml(fetched)}</small></div>
-      ${snapshot?window.NVBLineupUI.renderMatchEvents(snapshot):''}
-      ${errorMarkup}
-      <div class="apifootball-tabs" role="tablist" aria-label="Dados da partida">
+    let content='';
+    if(tab==='livescore') {
+      const eventsMarkup=snapshot?window.NVBLineupUI.renderMatchEvents(snapshot):'<div class="apifootball-message">Consulte os dados da partida para carregar o livescore e os lances. O placar da agenda continua visível acima quando a fonte original o fornece.</div>';
+      content=`<div class="match-livescore-summary"><div class="match-livescore-score"><strong>${escapeHtml(homeScoreText)}</strong><span>:</span><strong>${escapeHtml(awayScoreText)}</strong></div><div class="match-livescore-status">${escapeHtml(status)}</div><small>Atualizado em ${escapeHtml(fetched)}</small></div>${eventsMarkup}`;
+    } else if(tab==='lineups') {
+      content=snapshot?window.NVBLineupUI.renderLineups(snapshot):'<div class="apifootball-message">Busque os dados da API-Football para carregar as escalações desta partida.</div>';
+    } else if(tab==='statistics') {
+      content=snapshot?window.NVBLineupUI.renderStatistics(snapshot):'<div class="apifootball-message">Busque os dados da API-Football para carregar as estatísticas desta partida.</div>';
+    } else {
+      content=event?renderMatchCenterStandings(event,snapshot):'<div class="apifootball-message">Classificação indisponível para esta partida.</div>';
+    }
+    return `<div class="apifootball-tabs match-center-tabs" role="tablist" aria-label="Central da partida">
+        <button class="apifootball-tab ${tab==='livescore'?'active':''}" type="button" role="tab" aria-selected="${tab==='livescore'}" data-apifootball-tab="livescore"><span>◉</span> Livescore</button>
         <button class="apifootball-tab ${tab==='lineups'?'active':''}" type="button" role="tab" aria-selected="${tab==='lineups'}" data-apifootball-tab="lineups"><span>♟</span> Escalações</button>
         <button class="apifootball-tab ${tab==='statistics'?'active':''}" type="button" role="tab" aria-selected="${tab==='statistics'}" data-apifootball-tab="statistics"><span>▥</span> Estatísticas</button>
+        <button class="apifootball-tab ${tab==='standings'?'active':''}" type="button" role="tab" aria-selected="${tab==='standings'}" data-apifootball-tab="standings"><span>🏆</span> Classificação</button>
       </div>
-      <div class="apifootball-tab-content" role="tabpanel">${content}</div>`;
+      ${errorMarkup}
+      <div class="apifootball-tab-content match-center-tab-content" role="tabpanel">${content}</div>`;
   }
   function renderApiFootballStandings(snapshot) {
     if(!snapshot?.rows?.length) return '';
@@ -2194,15 +2195,11 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function renderApiFootballMatchPanel(event) {
     const snapshot=apiFootballMatchCache[String(event.id)]||null;
-    const leagueId=Number(snapshot?.fixture?.league?.id||0);
-    const season=Number(snapshot?.fixture?.league?.season||0);
-    const standingsKey=leagueId&&season?`${leagueId}:${season}`:'';
-    const standings=standingsKey?apiFootballStandingsCache[standingsKey]:null;
     const desktop=Boolean(window.nvbDesktop?.isDesktop);
     const canQuery=desktop&&apiFootballLocalKeyConfigured;
     const actionLabel=snapshot?'Atualizar dados da partida':(apiFootballNoMatchLookup.has(String(event.id))?'Tentar novamente (nova consulta)':'Buscar dados da API-Football');
-    const activeTab=apiFootballPanelActiveTab.get(String(event.id))||'lineups';
-    return `<section class="apifootball-panel" id="apiFootballMatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">DADOS ESPORTIVOS</div><h3>⚽ API-Football</h3><div class="apifootball-muted">A agenda continua sendo exclusivamente do Rei dos Canais e PelotaLibre. Esta fonte só complementa a partida selecionada.</div></div><span class="api-football-status-pill ${snapshot?'ok':'warn'}">${snapshot?'Dados disponíveis':'Complemento opcional'}</span></div><div class="apifootball-actions">${canQuery?`<button class="btn small" id="apiFootballLoadMatchData" type="button" ${apiFootballBusy?'disabled':''}>${apiFootballBusy?'Consultando…':actionLabel}</button>`:''}${canQuery&&snapshot&&leagueId&&season?'<button class="btn secondary small" id="apiFootballLoadStandings" type="button">Buscar classificação</button>':''}</div><div id="apiFootballMatchStatus" class="apifootball-key-note">${snapshot?'Dados armazenados localmente e compartilhados quando o computador administrador consegue publicar.':canQuery?'A consulta é feita somente quando você solicita. Atualizar ou tentar novamente ignora o cache e pode usar até 2 chamadas; evite clicar repetidamente.':desktop?'Este computador está em modo somente leitura. Aguarde os dados publicados pelo administrador.':'Disponível na versão desktop após configurar a chave no Painel Admin.'}</div><div class="apifootball-result">${renderApiFootballSnapshot(snapshot,activeTab)}${renderApiFootballStandings(standings)}</div></section>`;
+    const activeTab=apiFootballPanelActiveTab.get(String(event.id))||'livescore';
+    return `<section class="apifootball-panel match-center-panel" id="apiFootballMatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">CENTRAL DA PARTIDA</div><h3>⚽ Dados do jogo</h3><div class="apifootball-muted">Livescore, escalações, estatísticas e classificação reunidos nesta tela.</div></div><div class="apifootball-match-actions"><span class="api-football-status-pill ${snapshot?'ok':'warn'}">${snapshot?'Dados disponíveis':'Dados adicionais'}</span>${canQuery?`<button class="btn small" id="apiFootballLoadMatchData" type="button" ${apiFootballBusy?'disabled':''}>${apiFootballBusy?'Consultando…':actionLabel}</button>`:''}</div></div><div id="apiFootballMatchStatus" class="apifootball-key-note">${snapshot?'Dados armazenados localmente e compartilhados quando o computador administrador consegue publicar.':canQuery?'A consulta é feita somente quando você solicitar. Atualizar ou tentar novamente pode usar até 2 chamadas; evite clicar repetidamente.':desktop?'Este computador está em modo somente leitura. Aguarde os dados publicados pelo administrador.':'Disponível na versão desktop após configurar a chave no Painel Admin.'}</div><div class="apifootball-result">${renderApiFootballSnapshot(snapshot,activeTab,event)}</div></section>`;
   }
   function attachApiFootballPhotoFallback(root) {
     root?.querySelectorAll('[data-apifootball-player-photo]').forEach(image => {
@@ -2213,13 +2210,24 @@ const BROADCASTER_ALIAS_GROUPS = [
     const panel=$('#apiFootballMatchDataPanel');
     if(!panel) return;
     panel.querySelectorAll('[data-apifootball-tab]').forEach(button=>button.addEventListener('click',()=>{
-      const selected=button.dataset.apifootballTab==='statistics'?'statistics':'lineups';
+      const allowed=['livescore','lineups','statistics','standings'];
+      const selected=allowed.includes(button.dataset.apifootballTab)?button.dataset.apifootballTab:'livescore';
       apiFootballPanelActiveTab.set(String(event.id),selected);
       panel.outerHTML=renderApiFootballMatchPanel(event);
       bindApiFootballPanelEvents(event);
     }));
     panel.querySelector('#apiFootballLoadMatchData')?.addEventListener('click',()=>loadApiFootballMatchData(event,{refresh:Boolean(apiFootballMatchCache[String(event.id)])||apiFootballNoMatchLookup.has(String(event.id))}));
     panel.querySelector('#apiFootballLoadStandings')?.addEventListener('click',()=>loadApiFootballStandings(apiFootballMatchCache[String(event.id)]));
+    panel.querySelector('#matchFootballDataCompetitionSelect')?.addEventListener('change',button=>{
+      const code=String(button.target.value||'').toUpperCase();
+      matchFootballDataCompetitionChoice.set(String(event.id),code);
+      panel.outerHTML=renderApiFootballMatchPanel(event);bindApiFootballPanelEvents(event);
+    });
+    panel.querySelector('#matchLoadFootballDataCompetitions')?.addEventListener('click',()=>loadFootballDataCompetitionsForMatch(event));
+    panel.querySelector('#matchLoadFootballDataStandings')?.addEventListener('click',()=>{
+      const code=String(panel.querySelector('#matchFootballDataCompetitionSelect')?.value||'').toUpperCase();
+      loadFootballDataStandingsForMatch(event,code);
+    });
     attachApiFootballPhotoFallback(panel);
   }
   function updateApiFootballUsage(usage) {
@@ -2291,17 +2299,15 @@ const BROADCASTER_ALIAS_GROUPS = [
     const optionHtml=leagues.length
       ? '<option value="">Selecione uma liga...</option>'+leagues.map(item=>`<option value="${escapeHtml(item.code)}">${escapeHtml(item.name)} · ${escapeHtml(item.area?.name||'')}</option>`).join('')
       : '<option value="">Nenhuma liga com classificação disponível</option>';
-    ['footballDataCompetitionSelect','publicCompetitionSelect'].forEach(id=>{
-      const select=$(`#${id}`); if(!select)return;
+    const select=$('#footballDataCompetitionSelect');
+    if(select){
       const previous=select.value || footballDataSelectedCompetition;
       select.innerHTML=optionHtml;
       select.disabled=!leagues.length;
       if(previous && leagues.some(item=>item.code===previous)) select.value=previous;
       else if(footballDataSelectedCompetition && leagues.some(item=>item.code===footballDataSelectedCompetition)) select.value=footballDataSelectedCompetition;
-    });
+    }
     const button=$('#footballDataLoadStandings'); if(button) button.disabled=!leagues.length;
-    const publicButton=$('#publicLoadStandings'); if(publicButton) publicButton.disabled=!leagues.length;
-    renderCompetitionsView();
   }
   function footballDataStandingMarkup(snapshot, publicView=false) {
     if(!snapshot?.table?.length) return '';
@@ -2323,18 +2329,15 @@ const BROADCASTER_ALIAS_GROUPS = [
     footballDataStandingsCache[code]={...snapshot, fetchedAt:new Date().toISOString()};
     writeStore(FOOTBALL_DATA_STANDINGS_CACHE_KEY,footballDataStandingsCache);
     const adminRoot=$('#footballDataStandingsResult');
-    const publicRoot=$('#publicStandingsResult');
     if(adminRoot) adminRoot.innerHTML=footballDataStandingMarkup(snapshot,false);
-    if(publicRoot) publicRoot.innerHTML=footballDataStandingMarkup(snapshot,true);
     footballDataSelectedCompetition=code;
     writeStore(FOOTBALL_DATA_SELECTED_COMPETITION_KEY,code);
-    ['footballDataCompetitionSelect','publicCompetitionSelect'].forEach(id=>{const select=$(`#${id}`);if(select)select.value=code;});
-    renderCompetitionsView();
+    const select=$('#footballDataCompetitionSelect');if(select)select.value=code;
+    if(state.selected) renderModal();
   }
-  function selectedFootballDataCompetition() {
-    const select=$('#publicCompetitionSelect');
-    const code=String(select?.value||footballDataSelectedCompetition||'').toUpperCase();
-    return footballDataCompetitions.find(item=>String(item.code||'').toUpperCase()===code)||null;
+  function footballDataCompetitionForEvent(event) {
+    const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
+    return leagues.find(item=>competitionMatchesAgendaEvent(event,item))||null;
   }
   function competitionMatchesAgendaEvent(event, competition) {
     if(!event||!competition)return false;
@@ -2344,86 +2347,45 @@ const BROADCASTER_ALIAS_GROUPS = [
     const alias=codeAliases[String(competition.code||'').toUpperCase()]||'';
     return Boolean(eventName&&((competitionName&&eventName===competitionName)||(alias&&eventName===foldLabel(alias))));
   }
-  function competitionGameMarkup(event) {
-    const api=apiFootballMatchCache[String(event.id)]||null;const goals=api?.fixture?.goals||{};const external=footballDataScoreFor(event);
-    const home=goals.home??event.homeScore??external.home;const away=goals.away??event.awayScore??external.away;
-    const hasScore=home!==null&&home!==undefined&&away!==null&&away!==undefined;
-    const country=event.leagueCountry||leagueCountryHint(event.league);
-    return `<button class="competition-game-row" type="button" data-competition-open-match="${escapeHtml(event.id)}" aria-label="Abrir ${escapeHtml(event.home)} contra ${escapeHtml(event.away)}"><span class="competition-game-team">${logoMarkup(event.home,event.homeBadge||apiFootballTeamLogoFor(event,'home'),event.homeCountry||country,api?.fixture?.home?.id||'',event.league)}<span>${escapeHtml(event.home)}</span></span><span class="competition-game-score">${hasScore?`${escapeHtml(home)} : ${escapeHtml(away)}`:'VS'}</span><span class="competition-game-team away"><span>${escapeHtml(event.away)}</span>${logoMarkup(event.away,event.awayBadge||apiFootballTeamLogoFor(event,'away'),event.awayCountry||country,api?.fixture?.away?.id||'',event.league)}</span><span class="competition-game-meta"><span>${escapeHtml(event.dateEvent||'Data a confirmar')} · ${escapeHtml(event.timeText||'Horário a confirmar')}</span><span class="status ${event.status}">${statusLabel(event.status)}</span>${event.round?`<span>${escapeHtml(event.round)}</span>`:''}</span></button>`;
+  async function loadFootballDataCompetitionsForMatch(event) {
+    if(footballDataBusy)return;
+    footballDataBusy=true;
+    const panel=$('#apiFootballMatchDataPanel');
+    const status=panel?.querySelector('#matchFootballDataStatus');
+    const button=panel?.querySelector('#matchLoadFootballDataCompetitions');
+    if(button)button.disabled=true;
+    if(status)status.textContent='Carregando competições disponíveis para este token...';
+    try {
+      const response=await fetch('/api/football-data/competitions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar as competições.');
+      renderFootballDataCompetitionOptions(result.competitions);
+      const inferred=footballDataCompetitionForEvent(event);
+      if(inferred)matchFootballDataCompetitionChoice.set(String(event.id),String(inferred.code).toUpperCase());
+      if(state.selected)renderModal();
+      toast(`${footballDataCompetitions.length} competição(ões) carregada(s).`);
+    } catch(error) { if(status)status.textContent=error.message||'Falha ao carregar competições.';toast(error.message||'Falha ao carregar competições.'); }
+    finally { footballDataBusy=false; }
   }
-  function renderCompetitionGames() {
-    const root=$('#publicCompetitionGamesResult');if(!root)return;
-    const competition=selectedFootballDataCompetition();
-    if(!competition){root.innerHTML='<div class="competitions-empty"><span>⚽</span><strong>Escolha uma competição</strong><p>Carregue as competições disponíveis e selecione uma liga.</p></div>';return;}
-    const matches=state.events.filter(event=>competitionMatchesAgendaEvent(event,competition)).sort((a,b)=>(a.start?.getTime()||0)-(b.start?.getTime()||0));
-    if(!matches.length){root.innerHTML=`<div class="competitions-empty"><span>📅</span><strong>Nenhum jogo de ${escapeHtml(competition.name)} na agenda carregada</strong><p>Carregue ou atualize a agenda na tela inicial. Esta aba mostra somente partidas que já existem na agenda original.</p></div>`;return;}
-    root.innerHTML=matches.map(competitionGameMarkup).join('');
-    root.querySelectorAll('[data-competition-open-match]').forEach(button=>button.addEventListener('click',()=>openMatch(button.dataset.competitionOpenMatch)));
-    attachLogoFallback(root);
-  }
-  function renderApiFootballLivescore() {
-    const root=$('#publicLivescoreResult');if(!root)return;
-    const fixtures=Array.isArray(apiFootballLiveSnapshot.fixtures)?apiFootballLiveSnapshot.fixtures:[];
-    if(!fixtures.length){root.innerHTML='<div class="competitions-empty"><span>🔴</span><strong>Nenhuma partida ao vivo encontrada</strong><p>A API-Football não retornou jogos em andamento com cobertura disponível neste momento. Você pode tentar atualizar novamente mais tarde.</p></div>';return;}
-    root.innerHTML=fixtures.map(item=>{
-      const home=item.teams?.home||{};const away=item.teams?.away||{};const status=item.fixture?.status||{};const elapsed=Number(status.elapsed||0);
-      const clock=elapsed?`${elapsed}′`:String(status.long||status.short||'AO VIVO');
-      const goals=item.goals||{};const score=goals.home===null||goals.home===undefined||goals.away===null||goals.away===undefined?'– : –':`${goals.home} : ${goals.away}`;
-      return `<article class="livescore-row"><span class="livescore-team">${home.logo?`<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">`:''}<span>${escapeHtml(home.name||'Mandante')}</span></span><span class="livescore-center"><div class="livescore-score">${escapeHtml(score)}</div><div class="livescore-clock">${escapeHtml(clock)}</div></span><span class="livescore-team away"><span>${escapeHtml(away.name||'Visitante')}</span>${away.logo?`<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">`:''}</span><span class="livescore-league">${escapeHtml(item.league?.name||'Competição')}${item.league?.country?` · ${escapeHtml(item.league.country)}`:''}</span></article>`;
-    }).join('');
-  }
-  async function loadApiFootballLivescore({refresh=false}={}) {
-    const button=$('#publicLoadLivescore');const status=$('#publicLivescoreStatus');
-    if(apiFootballLiveBusy)return;apiFootballLiveBusy=true;if(button)button.disabled=true;
-    if(status)status.textContent='Consultando partidas em andamento na API-Football...';
-    try{
-      const response=await fetch('/api/apifootball/livescore',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({refresh,cloudSync:readCloudSyncSettings()})});
-      const result=await response.json();if(result.usage)updateApiFootballUsage(result.usage);if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar o livescore.');
-      apiFootballLiveSnapshot={fixtures:Array.isArray(result.fixtures)?result.fixtures:[],fetchedAt:new Date().toISOString(),cached:Boolean(result.cached),shared:Boolean(result.shared)};
-      writeStore(API_FOOTBALL_LIVE_CACHE_KEY,apiFootballLiveSnapshot);renderApiFootballLivescore();
-      if(status)status.textContent=`${apiFootballLiveSnapshot.fixtures.length} partida(s) ao vivo${result.cached?' · cache local/compartilhado':''}. Atualização consultada agora.`;
-      toast(apiFootballLiveSnapshot.fixtures.length?`${apiFootballLiveSnapshot.fixtures.length} partida(s) ao vivo carregada(s).`:'Nenhuma partida ao vivo foi encontrada.');
-    }catch(error){if(status)status.textContent=error.message||'Falha ao consultar o livescore.';toast(error.message||'Falha ao consultar o livescore.');}
-    finally{apiFootballLiveBusy=false;if(button)button.disabled=false;}
-  }
-  function setCompetitionActiveTab(tab) {
-    competitionActiveTab=['games','standings','live'].includes(tab)?tab:'games';writeStore(COMPETITION_ACTIVE_TAB_KEY,competitionActiveTab);renderCompetitionsView();
-  }
-  async function hydrateTheSportsDbLeagueBadge(competition) {
-    const img=$('#publicCompetitionBadge');if(!img||!competition)return;
-    const country=String(competition.area?.name||'').trim();const leagueName=String(competition.name||'').trim();if(!country||!leagueName)return;
-    const key=`${foldLabel(leagueName)}|${foldLabel(country)}`;const cached=theSportsDbLeagueBadgeCache[key];
-    if(cached&&Number(cached.expiresAt)>Date.now()){if(cached.url){img.src=cached.url;img.hidden=false;}return;}
-    if(img.dataset.lookupKey===key)return;img.dataset.lookupKey=key;
-    try{
-      const response=await fetch('/api/thesportsdb/league-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({leagueName,country,cloudSync:readCloudSyncSettings()})});
-      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Imagem da competição indisponível.');
-      const url=String(result.badgeUrl||'');theSportsDbLeagueBadgeCache[key]={url,expiresAt:Date.now()+(url?30:1)*24*60*60*1000};writeStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY,theSportsDbLeagueBadgeCache);
-      if(url){img.src=url;img.hidden=false;img.onerror=()=>{img.hidden=true;};}else img.hidden=true;
-    }catch(error){img.hidden=true;console.warn('TheSportsDB league badge:',error.message);}
-  }
-  function renderCompetitionsView() {
-    const root=$('#publicStandingsResult');if(!root)return;
-    const select=$('#publicCompetitionSelect');const status=$('#publicCompetitionStatus');
-    const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
-    const selectedCode=String(select?.value||footballDataSelectedCompetition||'').toUpperCase();
-    const selected=leagues.find(item=>String(item.code||'').toUpperCase()===selectedCode)||null;
-    const snapshot=selectedCode?footballDataStandingsCache[selectedCode]:null;
-    const publicButton=$('#publicLoadStandings');if(publicButton)publicButton.disabled=!selectedCode||!selected;
-    document.querySelectorAll('[data-competition-tab]').forEach(button=>{
-      const active=button.dataset.competitionTab===competitionActiveTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
-    });
-    $('#publicCompetitionGamesPanel').hidden=competitionActiveTab!=='games';
-    $('#publicCompetitionStandingsPanel').hidden=competitionActiveTab!=='standings';
-    $('#publicCompetitionLivePanel').hidden=competitionActiveTab!=='live';
-    if(status){
-      if(!leagues.length)status.textContent='Nenhuma liga carregada ainda. Use “Atualizar competições” para consultar as opções da sua conta.';
-      else status.textContent=`${leagues.length} liga(s) disponíveis${selected?` · ${selected.name} selecionada`:' · escolha uma competição'}.`;
-    }
-    if(snapshot?.table?.length)root.innerHTML=footballDataStandingMarkup(snapshot,true);
-    else root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação carregada</strong><p>Escolha uma liga e clique em “Atualizar classificação”.</p></div>';
-    renderCompetitionGames();renderApiFootballLivescore();
-    if(selected)hydrateTheSportsDbLeagueBadge(selected);else {const badge=$('#publicCompetitionBadge');if(badge)badge.hidden=true;}
+  async function loadFootballDataStandingsForMatch(event, competitionCode) {
+    const code=String(competitionCode||'').trim().toUpperCase();
+    if(!code){toast('Selecione a competição desta partida.');return;}
+    if(footballDataBusy)return;
+    footballDataBusy=true;
+    const panel=$('#apiFootballMatchDataPanel');
+    const status=panel?.querySelector('#matchFootballDataStatus');
+    const button=panel?.querySelector('#matchLoadFootballDataStandings');
+    if(button)button.disabled=true;
+    if(status)status.textContent=`Buscando a classificação de ${code}...`;
+    try {
+      const response=await fetch('/api/football-data/standings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({competitionCode:code,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação.');
+      matchFootballDataCompetitionChoice.set(String(event.id),code);
+      renderFootballDataStandings(result);
+      toast(`Classificação de ${result.competition?.name||code} carregada.`);
+    } catch(error) { if(status)status.textContent=error.message||'Falha ao carregar a classificação.';toast(error.message||'Falha ao carregar a classificação.'); }
+    finally { footballDataBusy=false; }
   }
   async function refreshFootballDataAdminStatus() {
     const badge=$('#footballDataConfiguredBadge'); const status=$('#footballDataTokenStatus');
@@ -2438,9 +2400,9 @@ const BROADCASTER_ALIAS_GROUPS = [
         : (window.nvbDesktop?.isDesktop?'Cole o token do football-data.org aqui e clique em Salvar token neste computador.':'A configuração do token está disponível no aplicativo Windows.');
     } catch(error) { if(status) status.textContent=`Não foi possível consultar o estado do token: ${error.message}`; }
   }
-  async function loadFootballDataCompetitions({refresh=false,publicView=false}={}) {
-    const button=$(publicView?'#publicLoadCompetitions':'#footballDataLoadCompetitions');
-    const status=$(publicView?'#publicCompetitionStatus':'#footballDataDataStatus');
+  async function loadFootballDataCompetitions({refresh=false}={}) {
+    const button=$('#footballDataLoadCompetitions');
+    const status=$('#footballDataDataStatus');
     if(footballDataBusy)return;
     footballDataBusy=true;if(button)button.disabled=true;
     if(status)status.textContent='Carregando competições liberadas para esta conta...';
@@ -2450,7 +2412,6 @@ const BROADCASTER_ALIAS_GROUPS = [
       renderFootballDataCompetitionOptions(result.competitions);
       const count=Number(result.count||result.competitions?.length||0);
       if(status)status.textContent=`${count} competições disponíveis${result.cached?' · dados em cache':''}. As classificações podem não existir para copas e playoffs.`;
-      const adminStatus=$('#footballDataDataStatus'); if(publicView&&adminStatus)adminStatus.textContent=`${count} competições disponíveis${result.cached?' · dados em cache':''}.`;
       toast(`football-data.org: ${count} competições carregadas.`);
     }catch(error){if(status)status.textContent=error.message||'Falha ao carregar competições.';toast(error.message||'Falha ao carregar competições.');}
     finally{footballDataBusy=false;if(button)button.disabled=false;}
@@ -2479,10 +2440,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     }catch(error){if(status)status.textContent=error.message||'Falha ao buscar resultados.';toast(error.message||'Falha ao buscar resultados.');}
     finally{footballDataBusy=false;if(button)button.disabled=false;}
   }
-  async function loadFootballDataStandings({publicView=false}={}) {
-    const select=$(publicView?'#publicCompetitionSelect':'#footballDataCompetitionSelect');
-    const button=$(publicView?'#publicLoadStandings':'#footballDataLoadStandings');
-    const status=$(publicView?'#publicCompetitionStatus':'#footballDataDataStatus');
+  async function loadFootballDataStandings() {
+    const select=$('#footballDataCompetitionSelect');
+    const button=$('#footballDataLoadStandings');
+    const status=$('#footballDataDataStatus');
     const competitionCode=String(select?.value||'').trim().toUpperCase();
     if(!competitionCode){toast('Selecione uma liga primeiro.');return;}
     footballDataSelectedCompetition=competitionCode;writeStore(FOOTBALL_DATA_SELECTED_COMPETITION_KEY,competitionCode);
@@ -2494,7 +2455,6 @@ const BROADCASTER_ALIAS_GROUPS = [
       const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível buscar a classificação.');
       renderFootballDataStandings(result);
       if(status)status.textContent=`Classificação de ${result.competition?.name||competitionCode} carregada${result.cached?' do cache':''}.`;
-      const adminStatus=$('#footballDataDataStatus');if(publicView&&adminStatus)adminStatus.textContent=`Classificação de ${result.competition?.name||competitionCode} carregada${result.cached?' do cache':''}.`;
       toast(`Classificação de ${result.competition?.name||competitionCode} carregada.`);
     }catch(error){if(status)status.textContent=error.message||'Falha ao carregar classificação.';toast(error.message||'Falha ao carregar classificação.');}
     finally{footballDataBusy=false;if(button)button.disabled=false;}
@@ -2503,7 +2463,6 @@ const BROADCASTER_ALIAS_GROUPS = [
     const desktop=window.nvbDesktop;
     const input=$('#footballDataTokenInput'); const save=$('#saveFootballDataToken'); const test=$('#testFootballDataToken'); const clear=$('#clearFootballDataToken'); const statusElement=$('#footballDataTokenStatus');
     const fetchAgenda=$('#footballDataFetchAgenda');const loadCompetitions=$('#footballDataLoadCompetitions');const loadStandings=$('#footballDataLoadStandings');
-    const publicLoadCompetitions=$('#publicLoadCompetitions');const publicLoadStandings=$('#publicLoadStandings');const publicSelect=$('#publicCompetitionSelect');
     if(!desktop?.isDesktop){if(input)input.disabled=true;if(save)save.disabled=true;if(test)test.disabled=true;if(clear)clear.disabled=true;}
     save?.addEventListener('click',async()=>{
       const value=String(input?.value||'').trim(); if(!value){toast('Cole o token do football-data.org antes de salvar.');return;}
@@ -2535,20 +2494,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     fetchAgenda?.addEventListener('click',()=>fetchFootballDataAgenda());
     loadCompetitions?.addEventListener('click',()=>loadFootballDataCompetitions());
     loadStandings?.addEventListener('click',()=>loadFootballDataStandings());
-    publicLoadCompetitions?.addEventListener('click',()=>loadFootballDataCompetitions({publicView:true}));
-    publicLoadStandings?.addEventListener('click',()=>loadFootballDataStandings({publicView:true}));
-    publicSelect?.addEventListener('change',()=>{
-      const code=String(publicSelect.value||'').toUpperCase();
-      footballDataSelectedCompetition=code;writeStore(FOOTBALL_DATA_SELECTED_COMPETITION_KEY,code);
-      const cached=code?footballDataStandingsCache[code]:null;
-      if(cached) { const root=$('#publicStandingsResult');if(root)root.innerHTML=footballDataStandingMarkup(cached,true); }
-      else { const root=$('#publicStandingsResult');if(root)root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Classificação ainda não carregada</strong><p>Abra a aba Classificação e clique em “Atualizar classificação”.</p></div>'; }
-      const badge=$('#publicCompetitionBadge');if(badge){badge.hidden=true;badge.removeAttribute('src');badge.dataset.lookupKey='';}
-      renderCompetitionsView();
-    });
     renderFootballDataCompetitionOptions(footballDataCompetitions);
-    if(footballDataSelectedCompetition && footballDataStandingsCache[footballDataSelectedCompetition]) renderFootballDataStandings(footballDataStandingsCache[footballDataSelectedCompetition]);
-    else renderCompetitionsView();
+    if(footballDataSelectedCompetition && footballDataStandingsCache[footballDataSelectedCompetition]) { const root=$('#footballDataStandingsResult'); if(root)root.innerHTML=footballDataStandingMarkup(footballDataStandingsCache[footballDataSelectedCompetition],false); }
     await refreshFootballDataAdminStatus();
   }
 
@@ -3733,7 +3680,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.11',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.13',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -3782,7 +3729,6 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(view!=='admin' && !state.events.length) { const cached=getCacheEntry(state.date,state.markets); if(cached?.events?.length) { state.events=dedupeScheduleEvents(cached.events.map(normalizeEvent).filter(e=>e.tvNetworks.length>0)); state.cached=true; state.provider=`Cache local · ${marketLabel()}`; } }
     document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',view!=='admin' && b.dataset.filter===view));
     const adminBtn=$('#adminBtn'); if(adminBtn) adminBtn.classList.toggle('active',view==='admin');
-    const competitionsBtn=$('#competitionsBtn'); if(competitionsBtn) competitionsBtn.classList.toggle('active',view==='competitions');
     render();
   }
   const languageSelect = $('#languageSelect');
@@ -3803,13 +3749,10 @@ const BROADCASTER_ALIAS_GROUPS = [
   initApiFootballPanel();
   initFootballDataPanel();
   initTheSportsDBPanel();
-  document.querySelectorAll('[data-competition-tab]').forEach(button=>button.addEventListener('click',()=>setCompetitionActiveTab(button.dataset.competitionTab)));
-  $('#publicLoadLivescore')?.addEventListener('click',()=>loadApiFootballLivescore());
   initDesktopUpdatePanel();
   // V0.15: filtros (Todos / Ao vivo / Próximos / Encerrados / Favoritos) no topo da lista.
   document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.filter)));
   $('#adminBtn').addEventListener('click',()=>setView(state.view==='admin'?'all':'admin'));
-  $('#competitionsBtn').addEventListener('click',()=>setView(state.view==='competitions'?'all':'competitions'));
   $('#homeBtn').addEventListener('click',()=>setView('all'));
   $('#searchInput').addEventListener('input',render);
   const savedLastSchedule=readStore('futeblox_last_broadcast_schedule_v4',null);

@@ -1,17 +1,23 @@
-# NicoValBolaLibre V0.18.11
+# NicoValBolaLibre V0.18.13
 
 Aplicativo desktop para acompanhar a agenda de futebol e enriquecer partidas com dados esportivos. A agenda continua sendo fornecida pelas fontes configuradas do Rei dos Canais/PelotaLibre; provedores esportivos externos apenas complementam eventos já carregados.
 
-## Novidades da V0.18.11
+## Correção visual da V0.18.13
 
-- A área pública **Competições** possui as abas **Jogos**, **Classificação** e **Ao vivo**.
-- **Jogos** filtra a agenda já carregada pela competição selecionada. Não busca nem adiciona partidas externas à agenda.
-- **Classificação** consulta as tabelas do football-data.org fora do Painel Admin.
-- **Ao vivo** consulta a rota API-Football `/fixtures?live=all` sob demanda. O cache é de 60 segundos para evitar chamadas repetidas; o livescore não é atualizado em segundo plano.
-- **TheSportsDB V1 gratuita** está integrada como fonte auxiliar de escudos de clubes e ligas. A chave pública `123` já está no aplicativo; não é necessário criar conta nem colar token.
+- Fundo branco restrito às placas atrás dos logos PNG de clubes/competições. Os cartões de times, painéis, abas, estatísticas e conteúdo abaixo das partidas mantêm o tema escuro original.
+- Barras e rótulos das estatísticas continuam usando as cores dos dois clubes.
+
+## Novidades herdadas da V0.18.12
+
+- Removida a página independente **Competições** da navegação principal. Jogos, classificações e livescore ficam dentro da tela de cada partida, no estilo de um Match Center.
+- A central da partida possui as abas **Livescore**, **Escalações**, **Estatísticas** e **Classificação**.
+- **Livescore** mostra placar, estado da partida, horário da última consulta e linha do tempo de gols, assistências, cartões, substituições e eventos fornecidos pela API-Football.
+- **Escalações** e **Estatísticas** permanecem na própria partida. As barras e identificações estatísticas usam cores primárias conhecidas dos clubes, com cores alternativas quando o clube não está no mapa.
+- A aba **Classificação** procura a liga correspondente à competição da partida no football-data.org; se não houver correspondência automática, permite carregar as competições e escolher manualmente. Pode usar a classificação da API-Football quando disponível como alternativa.
+- Somente a placa atrás dos logos PNG de clubes e competições recebe fundo branco. Os cartões dos times, abas, estatísticas, classificação e todo o conteúdo abaixo das partidas mantêm o tema escuro original.
+- TheSportsDB V1 gratuita continua como fonte auxiliar de escudos de clubes e ligas. A chave pública `123` já está no aplicativo; não é necessário criar conta nem colar token.
 - A busca de escudos considera competição, país e ID de equipe da API-Football quando disponível. Correspondências de outro país ou com nome insuficientemente parecido são recusadas.
 - O fallback de logos existente (GitHub/FootyLogos) permanece disponível quando a TheSportsDB não encontrar o clube.
-- O teste de conexão da TheSportsDB verifica o retorno de um clube de teste, e não apenas uma resposta HTTP vazia.
 
 ## APIs e limites
 
@@ -28,15 +34,13 @@ A conta gratuita do football-data.org tem cobertura limitada. Resultados/calend�
 
 ## Como usar
 
-### Área Competições
+### Central da partida
 
-1. Instale a V0.18.11.
-2. Clique em **Competições** na barra superior.
-3. Use **Atualizar competições** para carregar a lista liberada no football-data.org.
-4. Escolha uma competição.
-5. Na aba **Jogos**, visualize somente as partidas da competição que já estão carregadas na agenda.
-6. Na aba **Classificação**, clique em **Atualizar classificação**.
-7. Na aba **Ao vivo**, clique em **Atualizar ao vivo** para consultar as partidas em andamento na API-Football. A consulta é manual para proteger a cota diária.
+1. Abra uma partida na agenda.
+2. Abaixo do player, use **Livescore**, **Escalações**, **Estatísticas** e **Classificação**.
+3. Se ainda não houver dados da API-Football, clique em **Buscar dados da API-Football**. A consulta é manual para proteger a cota diária.
+4. Na aba **Classificação**, a liga correspondente é selecionada automaticamente quando possível. Caso contrário, carregue a lista de competições e escolha a liga manualmente.
+5. A tabela vem do football-data.org; quando houver uma tabela da API-Football já disponível para aquela partida, ela pode servir como alternativa.
 
 ### Painel Admin
 
@@ -54,7 +58,7 @@ A conta gratuita do football-data.org tem cobertura limitada. Resultados/calend�
 - Livescore API-Football: cache por 60 segundos.
 - A TheSportsDB mantém cache separado por provedor e pode reutilizar o cache compartilhado do Cloudflare se estiver configurado.
 
-A V0.18.11 não exige nova migração do Worker/D1 se o cache `provider_cache` da V0.18.7 ou posterior já foi implantado. Não publique chaves de APIs no Worker ou em GitHub Secrets.
+A V0.18.12 não exige nova migração do Worker/D1 se o cache `provider_cache` da V0.18.7 ou posterior já foi implantado. Não publique chaves de APIs no Worker ou em GitHub Secrets.
 
 ## Testes e validação
 
@@ -68,12 +72,12 @@ node scripts/test-competitions-tabs.js
 node scripts/test-apifootball-livescore.js
 ```
 
-## Publicar V0.18.11
+## Publicar V0.18.13
 
 1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando a pasta `.git`.
 2. Mantenha os segredos de sincronização já configurados no GitHub Actions. Não adicione tokens pessoais da API-Football ou football-data.org ao repositório.
-3. Faça commit `NicoValBolaLibre V0.18.11` e `Push origin`.
-4. Crie e envie a tag `v0.18.11`.
+3. Faça commit `NicoValBolaLibre V0.18.13` e `Push origin`.
+4. Crie e envie a tag `v0.18.13`.
 5. Confira o GitHub Actions. Considere a release pronta somente quando o instalador `*-Setup.exe` e os arquivos de atualização esperados (`latest.yml`, quando aplicável) estiverem nos assets da Release.
 
 O ZIP contém o código-fonte. O instalador Windows ainda precisa ser compilado pelo GitHub Actions; não está incluído neste pacote.
