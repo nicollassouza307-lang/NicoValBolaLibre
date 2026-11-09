@@ -28,6 +28,9 @@ const LEAGUE_API_NAMES = Object.freeze({
 });
 // TheSportsDB free V1: confirmed official ID for the English Premier League.
 const VERIFIED_LEAGUE_IDS = Object.freeze({ 'english premier league|england': '4328' });
+// Juventus team page verified on TheSportsDB: /team/133676-Juventus.
+// The free V1 lookup endpoint can fetch a known team ID without using the restricted name-search endpoint.
+const VERIFIED_TEAM_IDS = Object.freeze({ 'juventus|italy': '133676', 'juventus fc|italy': '133676', 'juventus turin|italy': '133676', 'juventus torino|italy': '133676' });
 
 function fold(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -138,19 +141,31 @@ class TheSportsDBService {
     const apiFootballId = String(Number(input.apiFootballId || 0) || '').slice(0, 16);
     if (!teamName) throw Object.assign(new Error('Informe o nome do clube para procurar o escudo.'), { status: 400, code: 'THESPORTSDB_TEAM_REQUIRED' });
     const normalized = normalizeTeam(teamName);
-    const cacheKey = `team-badge:${normalized}:${countryKey(country) || 'any'}:${apiFootballId || 'noid'}`.slice(0, 190);
+    const cacheKey = `team-badge:${normalized}:${countryKey(country) || 'any'}:${apiFootballId || 'noid'}:${options.preferTheSportsDb ? 'preferred' : 'standard'}`.slice(0, 190);
     const cachedData = !options.force ? this.engine?.get('thesportsdb', cacheKey) : null;
     if (cachedData && typeof cachedData === 'object') return { ...cachedData, cached:true, record:this.engine?.getRecord('thesportsdb', cacheKey) || null };
 
+
     const query = teamListQuery({ league, country });
-    if (!query) {
+    const verifiedTeamId = VERIFIED_TEAM_IDS[`${normalized}|${countryKey(country)}`] || '';
+    if (!verifiedTeamId && !query) {
       const data = { found:false, teamName, resolvedName:'', country:'', league, badgeUrl:'', source:'TheSportsDB', confidence:0, reason:'Informe a competição ou o país para usar a lista pública de equipes.' };
       if (this.engine) this.engine.set('thesportsdb', cacheKey, data, this.ttl.negative);
       return { ...data, cached:false, record:this.engine?.getRecord('thesportsdb', cacheKey) || null };
     }
-    const path = `/search_all_teams.php?${new URLSearchParams(query.params)}`;
-    const result = await this.request(path, { cacheKey:`raw:teams:${query.key}`.slice(0, 220), ttlMs:this.ttl.teamBadge, force:Boolean(options.force) });
-    const teams = Array.isArray(result.data?.teams) ? result.data.teams : [];
+    let result;
+    let teams;
+    let lookupScope;
+    if (verifiedTeamId) {
+      result = await this.request(`/lookupteam.php?${new URLSearchParams({ id:verifiedTeamId })}`, { cacheKey:`raw:team-id:${verifiedTeamId}`, ttlMs:this.ttl.teamBadge, force:Boolean(options.force) });
+      teams = Array.isArray(result.data?.teams) ? result.data.teams : [];
+      lookupScope = `team-id:${verifiedTeamId}`;
+    } else {
+      const path = `/search_all_teams.php?${new URLSearchParams(query.params)}`;
+      result = await this.request(path, { cacheKey:`raw:teams:${query.key}`.slice(0, 220), ttlMs:this.ttl.teamBadge, force:Boolean(options.force) });
+      teams = Array.isArray(result.data?.teams) ? result.data.teams : [];
+      lookupScope = query.key;
+    }
     const expectedCountry = countryKey(country);
     const expectedApiId = apiFootballId;
     const candidates = teams.map(team => {
@@ -169,7 +184,7 @@ class TheSportsDBService {
       found: Boolean(badgeUrl), teamName, resolvedName: String(best?.team?.strTeam || ''),
       country: String(best?.team?.strCountry || ''), league: String(best?.team?.strLeague || ''),
       badgeUrl, source: 'TheSportsDB', confidence: best?.idMatch ? 1 : (best?.nameScore || 0),
-      lookupScope: query.key, listLimitedByFreeTier: teams.length >= 10
+      lookupScope, listLimitedByFreeTier: !verifiedTeamId && teams.length >= 10
     };
     if (this.engine) this.engine.set('thesportsdb', cacheKey, data, data.found ? this.ttl.teamBadge : this.ttl.negative);
     return { ...data, cached: result.cached, record: this.engine?.getRecord('thesportsdb', cacheKey) || result.record };
@@ -206,4 +221,4 @@ class TheSportsDBService {
   }
 }
 
-module.exports = { TheSportsDBService, API_BASE, FREE_API_KEY, DEFAULT_TTL, fold, normalizeTeam, countryKey, diceSimilarity, safeImageUrl, leagueApiName, countryApiName, teamListQuery };
+module.exports = { TheSportsDBService, API_BASE, FREE_API_KEY, DEFAULT_TTL, VERIFIED_TEAM_IDS, fold, normalizeTeam, countryKey, diceSimilarity, safeImageUrl, leagueApiName, countryApiName, teamListQuery };

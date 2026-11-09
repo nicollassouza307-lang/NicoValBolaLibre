@@ -61,6 +61,19 @@ const { MultiApiEngine } = require('../multi-api-engine');
     assert.equal(leagueBadge.resolvedName, 'English Premier League');
     assert.ok(calls.some(call => call.includes('/lookupleague.php?id=4328')));
 
+    const juventusCalls = [];
+    const juventusService = new TheSportsDBService({ fetchImpl:async url => {
+      const parsed = new URL(url); juventusCalls.push(parsed.pathname + parsed.search);
+      if (parsed.pathname.endsWith('/lookupteam.php')) return new Response(JSON.stringify({ teams:[{ idTeam:'133676', idAPIfootball:'496', strTeam:'Juventus', strCountry:'Italy', strLeague:'Italian Serie A', strBadge:'https://r2.thesportsdb.com/images/media/team/badge/juventus-black.png' }] }), { status:200 });
+      return new Response(JSON.stringify({ leagues:[] }), { status:200 });
+    }});
+    const juventus = await juventusService.getTeamBadge({ teamName:'Juventus', country:'Italy', league:'Serie A', apiFootballId:496 }, { preferTheSportsDb:true });
+    assert.equal(juventus.found, true, 'Juventus deve ser resolvida pela lista da liga quando o ID/API-Football e o país coincidirem.');
+    assert.equal(juventus.source, 'TheSportsDB');
+    assert.equal(juventus.lookupScope, 'team-id:133676');
+    assert.ok(juventusCalls.some(call => call.includes('/lookupteam.php?id=133676')), 'Juventus deve usar o ID de equipe verificado da TheSportsDB para obter o escudo preto sem busca nominal limitada.');
+    assert.equal(juventusCalls.some(call => call.includes('/searchteams.php')), false, 'A busca nominal livre da V1 é limitada a Arsenal; não usar para Juventus.');
+
     const badImageService = new TheSportsDBService({ fetchImpl:async url => {
       const parsed = new URL(url);
       if (parsed.pathname.endsWith('/search_all_teams.php')) return new Response(JSON.stringify({ teams:[{ strTeam:'Liverpool', strCountry:'England', strBadge:'https://bad.example/badge.png' }] }), { status:200 });

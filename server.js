@@ -1158,14 +1158,14 @@ const requestHandler = async (req, res) => {
       const normalized = normalizeSportsDbTeam(name);
       const countryCacheKey = sportsDbCountryKey(country) || 'any';
       const apiFootballId = String(Number(body.apiFootballId || 0) || '').slice(0, 16);
-      const cacheKey = `team-badge:${normalized}:${countryCacheKey}:${apiFootballId || 'noid'}`.slice(0, 190);
+      const cacheKey = `team-badge:${normalized}:${countryCacheKey}:${apiFootballId || 'noid'}:${body.preferTheSportsDb ? 'preferred' : 'standard'}`.slice(0, 190);
       if (!name) return json(res, 400, { ok:false, error:'Informe o nome do clube.' });
       let shared = null;
       if (!body.refresh) {
         shared = await readSharedProviderCache(cloudSync, cacheKey, 'thesportsdb');
         if (shared) apiFootballService.multiApiEngine.importRecord('thesportsdb', cacheKey, shared);
       }
-      const result = await theSportsDBService.getTeamBadge({ teamName:name, country, league:body.league, apiFootballId }, { force:Boolean(body.refresh) });
+      const result = await theSportsDBService.getTeamBadge({ teamName:name, country, league:body.league, apiFootballId }, { force:Boolean(body.refresh), preferTheSportsDb:Boolean(body.preferTheSportsDb) });
       if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'thesportsdb');
       return json(res, 200, { ok:true, found:result.found, teamName:result.teamName, resolvedName:result.resolvedName, country:result.country, league:result.league, badgeUrl:result.badgeUrl, source:result.source, confidence:result.confidence, cached:result.cached || Boolean(shared), shared:Boolean(shared) });
     } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível buscar o escudo no TheSportsDB.', code:error.code || '' }); }

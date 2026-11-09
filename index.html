@@ -377,8 +377,8 @@
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
 /* V0.18.9: integração football-data.org com token local seguro */
 /* V0.18.10: área pública de competições e tabelas */
-/* V0.18.13: TheSportsDB V1, abas de competições e livescore */
-/* V0.18.13: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
+/* V0.18.14: TheSportsDB V1, abas de competições e livescore */
+/* V0.18.14: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
 .competitions-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:6px 0 22px;padding:21px;border:1px solid #48d9d02a;border-radius:17px;background:linear-gradient(115deg,#142d47,#102039)}
 .competitions-page-head p{max-width:680px;margin:8px 0 0;color:#a9bdd5;font-size:12px;line-height:1.55}
 .competitions-page-title{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:7px 0 0;color:#eef7ff}
@@ -416,7 +416,7 @@
 .competitions-attribution{margin:15px 2px;color:#7187a3;font-size:9px;line-height:1.5}
 .competitions-attribution a{color:#8fa9ca}
 @media(max-width:620px){.competitions-page-head{align-items:flex-start;flex-direction:column;padding:17px}.competitions-select-panel{grid-template-columns:1fr}.competitions-select-panel button{width:100%}.public-standings-head{padding:14px}.public-standings-table{font-size:10px}.public-standings-table th,.public-standings-table td{padding:9px 7px}.public-standings-table td:nth-child(2){min-width:145px}.public-standings-monogram{width:26px;height:26px;flex-basis:26px}}
-/* V0.18.13: abas de competição, livescore e TheSportsDB */
+/* V0.18.14: abas de competição, livescore e TheSportsDB */
 .competitions-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px;padding:5px;border:1px solid var(--line);border-radius:13px;background:#ffffff05}
 .competitions-tab{flex:1 1 110px;min-height:39px;border:1px solid transparent;border-radius:9px;background:transparent;color:#8fa5c2;font-size:11px;font-weight:850;cursor:pointer}
 .competitions-tab.active{border-color:#48d9d044;background:#48d9d014;color:#9ce9e2;box-shadow:inset 0 0 0 1px #48d9d011}
@@ -503,12 +503,16 @@
 
 </style>
 <style>
-/* V0.18.13: branco somente na placa atrás dos escudos/logos PNG; superfícies da UI mantêm o tema escuro. */
-img.crest,
+/* V0.18.14: GitHub SVGs podem ser brancos; ficam em placa azul-marinho. Logos raster/competição ficam em placa branca. */
+img.crest:not(.crest-github),
 img.competition-divider-logo,
 .apifootball-team-head-crest {
   background-color: #fff;
   border: 1px solid #e6ebf1;
+}
+img.crest.crest-github {
+  background-color: #0c1b27;
+  border: 1px solid #182436;
 }
 /* As estatísticas usam as cores primárias de cada clube, sem clarear os cartões/painéis. */
 .match-center-panel .apifootball-stat-team-labels strong:first-child { color: var(--stat-home-color, #2563eb); }
@@ -747,7 +751,7 @@ img.competition-divider-logo,
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.13 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.14 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -991,6 +995,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   const FOOTBALL_DATA_STANDINGS_CACHE_KEY = 'nvb_footballdata_standings_v1';
   const FOOTBALL_DATA_SELECTED_COMPETITION_KEY = 'nvb_footballdata_selected_competition_v1';
   const THESPORTSDB_BADGE_CACHE_KEY = 'nvb_thesportsdb_badge_cache_v1';
+  const THESPORTSDB_LEAGUE_BADGE_CACHE_KEY = 'nvb_thesportsdb_league_badge_cache_v1';
+  let theSportsDbLeagueBadgeCache = readStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY, {});
+  if (!theSportsDbLeagueBadgeCache || typeof theSportsDbLeagueBadgeCache !== 'object' || Array.isArray(theSportsDbLeagueBadgeCache)) theSportsDbLeagueBadgeCache = {};
   let theSportsDbBadgeCache = readStore(THESPORTSDB_BADGE_CACHE_KEY, {});
   if (!theSportsDbBadgeCache || typeof theSportsDbBadgeCache !== 'object' || Array.isArray(theSportsDbBadgeCache)) theSportsDbBadgeCache = {};
   const theSportsDbPendingBadges = new Map();
@@ -1805,50 +1812,97 @@ const BROADCASTER_ALIAS_GROUPS = [
       return url.protocol==='https:' && !url.username && !url.password ? url.href : '';
     } catch { return ''; }
   }
+  const THESPORTSDB_PREFERRED_TEAM_LOGOS = new Set(['juventus','juventus fc','juventus turin','juventus torino']);
+  function prefersTheSportsDbClubBadge(name) { return THESPORTSDB_PREFERRED_TEAM_LOGOS.has(teamKey(name)); }
   function logoMarkup(name,apiUrl,countryHint='',teamId='',leagueHint='') {
     const hint=countryHint || leagueCountryHint(state.selected?.league || '');
     const override=teamLogoOverrides[teamRegistryKey(name,hint)] || teamLogoOverrides[teamRegistryKey(name,'')];
     const apiId=Number(teamId);
     const apiIdUrl=Number.isSafeInteger(apiId) && apiId>0 ? `https://media.api-sports.io/football/teams/${apiId}.png` : '';
+    const githubLogo=globalLogoUrl(name,hint);
     const candidates=window.NVBTeamLogoIndex.uniqueHttpsCandidates([
       override,
+      githubLogo,
       apiUrl,
       apiIdUrl,
-      globalLogoUrl(name,hint),
       footyLogoUrl(name,hint)
     ]);
     const unique=[...new Set(candidates)];
+    const preferSportsDb=!override && prefersTheSportsDbClubBadge(name);
     if(unique.length) {
-      return `<img class="crest" loading="lazy" data-team="${escapeHtml(name)}" data-apifootball-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(countryHint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" data-fallbacks="${escapeHtml(JSON.stringify(unique.slice(1)))}" src="${escapeHtml(unique[0])}" alt="Escudo ${escapeHtml(name)}" title="${escapeHtml(name)}">`;
+      const isGithubFirst=Boolean(githubLogo && unique[0]===githubLogo && !override);
+      const cssClass=isGithubFirst?'crest crest-github':'crest crest-raster';
+      return `<img class="${cssClass}" loading="lazy" data-logo-source="${isGithubFirst?'github':(override?'custom':'fallback')}" data-prefer-thesportsdb="${preferSportsDb?'1':'0'}" data-team="${escapeHtml(name)}" data-api-football-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(hint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" data-fallbacks="${escapeHtml(JSON.stringify(unique.slice(1)))}" src="${escapeHtml(unique[0])}" alt="Escudo ${escapeHtml(name)}" title="${escapeHtml(name)}">`;
     }
-    return `<div class="crest crest-fallback" data-team="${escapeHtml(name)}" data-apifootball-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(countryHint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" title="Escudo ainda não encontrado; tentando TheSportsDB.">${escapeHtml(initials(name))}</div>`;
+    return `<div class="crest crest-fallback" data-team="${escapeHtml(name)}" data-api-football-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(hint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" title="Escudo ainda não encontrado; tentando TheSportsDB.">${escapeHtml(initials(name))}</div>`;
   }
-  function theSportsDbLocalKey(teamName,country='') { return `${foldLabel(teamName)}|${foldLabel(country)}`; }
+  function theSportsDbLocalKey(teamName,country='',preferTheSportsDb=false) { return `${foldLabel(teamName)}|${foldLabel(country)}${preferTheSportsDb?'|preferred':''}`; }
   function setTheSportsDbImage(node,url,teamName,key='') {
     if(!node?.isConnected||!url)return;
-    const img=document.createElement('img');img.className='crest';img.loading='lazy';img.alt=`Escudo ${teamName}`;img.title=teamName;img.src=url;
+    const img=document.createElement('img');img.className='crest crest-thesportsdb';img.loading='lazy';img.alt=`Escudo ${teamName}`;img.title=teamName;img.src=url;
     img.dataset.team=teamName;img.dataset.theSportsDb='1';img.dataset.theSportsDbKey=key;img.dataset.theSportsDbAttempted='1';
-    img.dataset.country=node.dataset?.country||'';img.dataset.league=node.dataset?.league||'';img.dataset.apiFootballId=node.dataset?.apiFootballId||'';
+    img.dataset.country=node.dataset?.country||'';img.dataset.league=node.dataset?.league||'';img.dataset.apiFootballId=node.dataset?.apiFootballId||'';img.dataset.logoSource='thesportsdb';
+    if(node.dataset?.pendingFallbacks)img.dataset.fallbacks=node.dataset.pendingFallbacks;
+    else if(node.dataset?.fallbacks)img.dataset.fallbacks=node.dataset.fallbacks;
     node.replaceWith(img);
     attachLogoFallback(img.parentElement||document);
   }
   async function hydrateTheSportsDbBadge(node,teamName,country='',league='') {
-    if(!node?.isConnected||!teamName||node.dataset?.theSportsDbAttempted==='1')return;
+    if(!node?.isConnected||!teamName||node.dataset?.theSportsDbAttempted==='1')return '';
     node.dataset.theSportsDbAttempted='1';
-    const key=theSportsDbLocalKey(teamName,country);const now=Date.now();const cached=theSportsDbBadgeCache[key];
-    if(cached&&Number(cached.expiresAt)>now){if(cached.url)setTheSportsDbImage(node,cached.url,teamName,key);return;}
+    const preferTheSportsDb=prefersTheSportsDbClubBadge(teamName);
+    const key=theSportsDbLocalKey(teamName,country,preferTheSportsDb);const now=Date.now();const cached=theSportsDbBadgeCache[key];
+    if(cached&&Number(cached.expiresAt)>now){if(cached.url)setTheSportsDbImage(node,cached.url,teamName,key);return String(cached.url||'');}
     if(theSportsDbPendingBadges.has(key)){
-      try{const url=await theSportsDbPendingBadges.get(key);if(url)setTheSportsDbImage(node,url,teamName,key);}catch{}return;
+      try{const url=await theSportsDbPendingBadges.get(key);if(url)setTheSportsDbImage(node,url,teamName,key);return String(url||'');}catch{return '';}
     }
     const task=(async()=>{
-      const response=await fetch('/api/thesportsdb/team-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({teamName,country,league,apiFootballId:node.dataset?.apiFootballId||'',cloudSync:readCloudSyncSettings()})});
+      const response=await fetch('/api/thesportsdb/team-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({teamName,country,league,apiFootballId:node.dataset?.apiFootballId||'',preferTheSportsDb,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Busca de escudo indisponível.');
       const url=String(result.badgeUrl||'');theSportsDbBadgeCache[key]={url,found:Boolean(url),expiresAt:Date.now()+(url?30:1)*24*60*60*1000,source:'TheSportsDB'};
       const keys=Object.keys(theSportsDbBadgeCache);while(keys.length>350)delete theSportsDbBadgeCache[keys.shift()];
       writeStore(THESPORTSDB_BADGE_CACHE_KEY,theSportsDbBadgeCache);return url;
     })();
     theSportsDbPendingBadges.set(key,task);
-    try{const url=await task;if(url&&node.isConnected)setTheSportsDbImage(node,url,teamName,key);}catch(error){console.warn('TheSportsDB badge lookup:',error.message);}finally{theSportsDbPendingBadges.delete(key);}
+    try{const url=await task;if(url&&node.isConnected)setTheSportsDbImage(node,url,teamName,key);return String(url||'');}catch(error){console.warn('TheSportsDB badge lookup:',error.message);return '';}finally{theSportsDbPendingBadges.delete(key);}
+  }
+  function useNextCrestFallback(node,fallbackUrls=[]) {
+    if(!node?.isConnected)return;
+    const urls=Array.isArray(fallbackUrls)?fallbackUrls.slice():[];
+    const next=String(urls.shift()||'');
+    if(next){
+      const img=document.createElement('img');img.className='crest crest-raster';img.loading='lazy';img.alt=`Escudo ${node.dataset?.team||'clube'}`;img.title=node.dataset?.team||'';
+      for(const key of ['team','country','league','apiFootballId'])if(node.dataset?.[key])img.dataset[key]=node.dataset[key];
+      img.dataset.logoSource='fallback';img.dataset.theSportsDbAttempted='1';img.dataset.fallbacks=JSON.stringify(urls);img.src=next;
+      node.replaceWith(img);attachLogoFallback(img.parentElement||document);return;
+    }
+    node.textContent=initials(node.dataset?.team||'Time');node.title=`Escudo não encontrado: ${node.dataset?.team||'clube'}`;
+  }
+  function theSportsDbLeagueLocalKey(leagueName,country='') { return `${foldLabel(leagueName)}|${foldLabel(country)}`; }
+  async function hydrateTheSportsDbLeagueBadge(node,leagueName,country='') {
+    if(!node?.isConnected||!leagueName||node.dataset?.theSportsDbLeagueAttempted==='1')return;
+    node.dataset.theSportsDbLeagueAttempted='1';
+    const key=theSportsDbLeagueLocalKey(leagueName,country);const now=Date.now();const cached=theSportsDbLeagueBadgeCache[key];
+    if(cached&&Number(cached.expiresAt)>now){if(cached.url)applyTheSportsDbLeagueBadge(node,cached.url);return;}
+    try {
+      const response=await fetch('/api/thesportsdb/league-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({leagueName,country,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Busca de logo da competição indisponível.');
+      const url=String(result.badgeUrl||'');theSportsDbLeagueBadgeCache[key]={url,found:Boolean(url),expiresAt:Date.now()+(url?30:1)*24*60*60*1000,source:'TheSportsDB'};
+      const keys=Object.keys(theSportsDbLeagueBadgeCache);while(keys.length>250)delete theSportsDbLeagueBadgeCache[keys.shift()];
+      writeStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY,theSportsDbLeagueBadgeCache);
+      if(url&&node.isConnected)applyTheSportsDbLeagueBadge(node,url);
+    } catch(error) { console.warn('TheSportsDB league badge lookup:',error.message); }
+  }
+  function applyTheSportsDbLeagueBadge(node,url) {
+    if(!node?.isConnected||!url)return;
+    if(node.tagName==='IMG') { node.src=url;node.dataset.logoSource='thesportsdb';node.dataset.theSportsDbLeague='1';return; }
+    const img=document.createElement('img');img.className='competition-divider-logo';img.loading='lazy';img.alt='';img.src=url;img.dataset.competitionLogo='1';img.dataset.logoSource='thesportsdb';img.dataset.theSportsDbLeague='1';
+    node.replaceWith(img);
+    attachLogoFallback(img.parentElement||document);
+  }
+  function cachedTheSportsDbLeagueLogo(leagueName,country='') {
+    const cached=theSportsDbLeagueBadgeCache[theSportsDbLeagueLocalKey(leagueName,country)];
+    return cached&&Number(cached.expiresAt)>Date.now()?String(cached.url||''):'';
   }
   function attachLogoFallback(root) {
     if(!root?.querySelectorAll)return;
@@ -1858,19 +1912,29 @@ const BROADCASTER_ALIAS_GROUPS = [
     });
     root.querySelectorAll('img.crest[data-team]').forEach(img=>{
       if(img.dataset.fallbackReady)return;img.dataset.fallbackReady='1';
+      if(img.dataset.preferThesportsdb==='1')hydrateTheSportsDbBadge(img,img.dataset.team||'',img.dataset.country||'',img.dataset.league||'');
       img.addEventListener('error',()=>{
-        if(img.dataset.theSportsDb==='1'){
-          const key=img.dataset.theSportsDbKey||theSportsDbLocalKey(img.dataset.team||'',img.dataset.country||'');
-          theSportsDbBadgeCache[key]={url:'',found:false,expiresAt:Date.now()+24*60*60*1000,source:'TheSportsDB',brokenImage:true};writeStore(THESPORTSDB_BADGE_CACHE_KEY,theSportsDbBadgeCache);
-          const failed=document.createElement('div');failed.className='crest crest-fallback';failed.dataset.team=img.dataset.team||'Time';failed.dataset.country=img.dataset.country||'';failed.dataset.league=img.dataset.league||'';failed.dataset.theSportsDbAttempted='1';failed.textContent=initials(failed.dataset.team);img.replaceWith(failed);return;
-        }
         let fallbacks=[];try{fallbacks=JSON.parse(img.dataset.fallbacks||'[]');}catch{}
-        if(fallbacks.length){img.src=fallbacks.shift();img.dataset.fallbacks=JSON.stringify(fallbacks);return;}
-        const name=img.dataset.team||'Time';const fallback=document.createElement('div');fallback.className='crest crest-fallback';fallback.dataset.team=name;fallback.dataset.country=img.dataset.country||'';fallback.dataset.league=img.dataset.league||'';fallback.dataset.apiFootballId=img.dataset.apiFootballId||'';fallback.textContent=initials(name);
-        img.replaceWith(fallback);hydrateTheSportsDbBadge(fallback,name,fallback.dataset.country,fallback.dataset.league);
+        if(img.dataset.theSportsDb==='1'){
+          const key=img.dataset.theSportsDbKey||theSportsDbLocalKey(img.dataset.team||'',img.dataset.country||'',prefersTheSportsDbClubBadge(img.dataset.team||''));
+          theSportsDbBadgeCache[key]={url:'',found:false,expiresAt:Date.now()+24*60*60*1000,source:'TheSportsDB',brokenImage:true};writeStore(THESPORTSDB_BADGE_CACHE_KEY,theSportsDbBadgeCache);
+          const failed=document.createElement('div');failed.className='crest crest-fallback';failed.dataset.team=img.dataset.team||'Time';failed.dataset.country=img.dataset.country||'';failed.dataset.league=img.dataset.league||'';failed.dataset.apiFootballId=img.dataset.apiFootballId||'';failed.dataset.theSportsDbAttempted='1';
+          failed.dataset.fallbacks=img.dataset.fallbacks||'[]';img.replaceWith(failed);useNextCrestFallback(failed,fallbacks);return;
+        }
+        const name=img.dataset.team||'Time';
+        if(img.dataset.logoSource==='github'){
+          const placeholder=document.createElement('div');placeholder.className='crest crest-fallback';
+          for(const key of ['team','country','league','apiFootballId'])if(img.dataset[key])placeholder.dataset[key]=img.dataset[key];
+          placeholder.dataset.pendingFallbacks=JSON.stringify(fallbacks);img.replaceWith(placeholder);
+          hydrateTheSportsDbBadge(placeholder,name,placeholder.dataset.country,placeholder.dataset.league).then(url=>{if(!url&&placeholder.isConnected)useNextCrestFallback(placeholder,fallbacks);});return;
+        }
+        if(fallbacks.length){img.className='crest crest-raster';img.dataset.fallbacks=JSON.stringify(fallbacks.slice(1));img.dataset.logoSource='fallback';img.src=fallbacks[0];return;}
+        const fallback=document.createElement('div');fallback.className='crest crest-fallback';fallback.dataset.team=name;fallback.dataset.country=img.dataset.country||'';fallback.dataset.league=img.dataset.league||'';fallback.dataset.apiFootballId=img.dataset.apiFootballId||'';fallback.dataset.theSportsDbAttempted='1';
+        img.replaceWith(fallback);hydrateTheSportsDbBadge(fallback,name,fallback.dataset.country,fallback.dataset.league).then(url=>{if(!url&&fallback.isConnected)fallback.textContent=initials(name);});
       });
     });
     root.querySelectorAll('.crest-fallback[data-team]').forEach(node=>hydrateTheSportsDbBadge(node,node.dataset.team||'',node.dataset.country||'',node.dataset.league||''));
+    root.querySelectorAll('[data-thesportsdb-league="1"]').forEach(node=>hydrateTheSportsDbLeagueBadge(node,node.dataset.leagueName||'',node.dataset.leagueCountry||''));
   }
   function statusLabel(status) { return status==='live'?'AO VIVO':status==='finished'?'ENCERRADO':'PROGRAMADO'; }
   function filteredEvents() {
@@ -1906,6 +1970,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     return Number.isSafeInteger(id) && id > 0 ? `https://media.api-sports.io/football/teams/${id}.png` : '';
   }
   function competitionLogoForGroup(group) {
+    const firstEvent=(group?.items||[])[0]||{};
+    const leagueCountry=String(firstEvent.leagueCountry||firstEvent.country||leagueCountryHint(group?.name||''));
+    const thesportsdbLogo=cachedTheSportsDbLeagueLogo(group?.name||'',leagueCountry);
+    if(thesportsdbLogo)return thesportsdbLogo;
     for (const event of group?.items || []) {
       const direct = safeLogoUrl(String(event?.leagueLogo || ''));
       if (direct) return direct;
@@ -1995,7 +2063,9 @@ const BROADCASTER_ALIAS_GROUPS = [
       const label = count === 1 ? '1 partida' : `${count} partidas`;
       const position = String(index + 1).padStart(2, '0');
       const leagueLogo = competitionLogoForGroup(group);
-      const divider = `<div class="competition-divider" role="separator" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo>` : '<span class="competition-divider-mark">🏆</span>'}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></div>`;
+      const leagueCountry=String(group.items?.[0]?.leagueCountry||group.items?.[0]?.country||leagueCountryHint(group.name)||'');
+      const leagueAttrs=`data-thesportsdb-league="1" data-league-name="${escapeHtml(group.name)}" data-league-country="${escapeHtml(leagueCountry)}"`;
+      const divider = `<div class="competition-divider" role="separator" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo ${leagueAttrs}>` : `<span class="competition-divider-mark" ${leagueAttrs}>🏆</span>`}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></div>`;
       return divider + group.items.map(cardMarkup).join('');
     }).join('');
   }
@@ -3680,7 +3750,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.13',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.14',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

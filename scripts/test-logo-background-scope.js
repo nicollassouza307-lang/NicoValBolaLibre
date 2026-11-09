@@ -6,9 +6,11 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.18.13');
-assert.match(html, /img\.crest,\s*img\.competition-divider-logo,\s*\.apifootball-team-head-crest\s*\{\s*background-color:\s*#fff/,
-  'Somente o plano de fundo por trás das imagens de escudos deve ser branco.');
+assert.equal(pkg.version, '0.18.14');
+assert.match(html, /img\.crest:not\(\.crest-github\),\s*img\.competition-divider-logo,\s*\.apifootball-team-head-crest\s*\{\s*background-color:\s*#fff/,
+  'Fundos brancos ficam somente atrás de logos raster/competição, sem afetar SVG do GitHub.');
+assert.match(html, /img\.crest\.crest-github\s*\{\s*background-color:\s*#0c1b27;\s*border:\s*1px solid #182436;/,
+  'SVGs do GitHub ficam em placa escura para preservar escudos brancos, como Juventus.');
 assert.doesNotMatch(html, /\.match-scoreboard \.match-team-home[^}]*background:\s*#fff/,
   'O cartão/área do time não deve ser clareado.');
 assert.doesNotMatch(html, /\.match-center-panel\s*\{[^}]*background:\s*#(?:fff|f[0-9a-f]{3,6})/i,

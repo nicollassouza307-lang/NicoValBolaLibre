@@ -1,89 +1,25 @@
-# NicoValBolaLibre V0.18.13
+# NicoValBolaLibre V0.18.14
 
-Aplicativo desktop para acompanhar a agenda de futebol e enriquecer partidas com dados esportivos. A agenda continua sendo fornecida pelas fontes configuradas do Rei dos Canais/PelotaLibre; provedores esportivos externos apenas complementam eventos já carregados.
+## Prioridade e contraste dos escudos
 
-## Correção visual da V0.18.13
+- Clubes: GitHub Football Logos é a primeira fonte. Se um logo GitHub falhar ao carregar, o app consulta a TheSportsDB antes de tentar as demais imagens de reserva (API-Football/FootyLogos).
+- Juventus: preferência especial pela imagem da TheSportsDB. O registro oficial `133676` é consultado diretamente e validado pelo país e pelo ID API-Football (`496`); se a imagem falhar, o SVG GitHub continua como alternativa.
+- SVGs do GitHub ficam em placa azul-marinho `#0c1b27` com borda `#182436`; escudos brancos deixam de sumir no fundo branco.
+- PNGs/raster da TheSportsDB/API-Football e logos de competições continuam em placa branca. Nenhum cartão, painel, player, aba ou área inferior da partida recebe mudança de fundo.
+- Competições: TheSportsDB é consultada em segundo plano e tem prioridade quando encontra uma liga com nome/país compatíveis. A imagem original da agenda/API-Football continua como fallback. Os resultados ficam no cache local/Cloudflare.
+- Corrigido o atributo `data-api-football-id` para permitir que a TheSportsDB valide o clube pelo ID da API-Football quando a lista de equipes da liga inclui esse clube.
 
-- Fundo branco restrito às placas atrás dos logos PNG de clubes/competições. Os cartões de times, painéis, abas, estatísticas e conteúdo abaixo das partidas mantêm o tema escuro original.
-- Barras e rótulos das estatísticas continuam usando as cores dos dois clubes.
+**Limitação da chave gratuita:** a busca nominal `searchteams.php?t=` na V1 gratuita é limitada a Arsenal. Para os demais clubes, o aplicativo usa IDs TheSportsDB já verificados quando disponíveis ou `search_all_teams.php` por liga/país (até 10 equipes retornadas), confirmando ID/país/nome antes de usar um escudo. <https://www.thesportsdb.com/docs/api>
 
-## Novidades herdadas da V0.18.12
+## Como atualizar
 
-- Removida a página independente **Competições** da navegação principal. Jogos, classificações e livescore ficam dentro da tela de cada partida, no estilo de um Match Center.
-- A central da partida possui as abas **Livescore**, **Escalações**, **Estatísticas** e **Classificação**.
-- **Livescore** mostra placar, estado da partida, horário da última consulta e linha do tempo de gols, assistências, cartões, substituições e eventos fornecidos pela API-Football.
-- **Escalações** e **Estatísticas** permanecem na própria partida. As barras e identificações estatísticas usam cores primárias conhecidas dos clubes, com cores alternativas quando o clube não está no mapa.
-- A aba **Classificação** procura a liga correspondente à competição da partida no football-data.org; se não houver correspondência automática, permite carregar as competições e escolher manualmente. Pode usar a classificação da API-Football quando disponível como alternativa.
-- Somente a placa atrás dos logos PNG de clubes e competições recebe fundo branco. Os cartões dos times, abas, estatísticas, classificação e todo o conteúdo abaixo das partidas mantêm o tema escuro original.
-- TheSportsDB V1 gratuita continua como fonte auxiliar de escudos de clubes e ligas. A chave pública `123` já está no aplicativo; não é necessário criar conta nem colar token.
-- A busca de escudos considera competição, país e ID de equipe da API-Football quando disponível. Correspondências de outro país ou com nome insuficientemente parecido são recusadas.
-- O fallback de logos existente (GitHub/FootyLogos) permanece disponível quando a TheSportsDB não encontrar o clube.
+1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
+2. Faça commit `NicoValBolaLibre V0.18.14` e `Push origin`.
+3. Crie e envie a tag `v0.18.14`.
+4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
-## APIs e limites
+Não é necessário criar token novo nem migrar o Cloudflare para esta alteração. O ZIP contém código-fonte; o instalador não está incluído.
 
-| Provedor | Uso nesta versão | Credencial |
-|---|---|---|
-| API-Football | Escalações, estatísticas, eventos, placares e livescore manual | Chave pessoal configurada localmente |
-| football-data.org | Resultados/calendários complementares e classificações das competições cobertas | Token pessoal configurado localmente |
-| TheSportsDB V1 | Escudos de clubes e competições | Chave gratuita pública `123` integrada; sem cadastro |
-| GitHub/FootyLogos | Fallback de escudos | Sem chave pessoal |
+## Testes
 
-**Limitações da TheSportsDB gratuita:** a pesquisa geral de equipes por liga/país pode retornar no máximo 10 equipes por consulta. Portanto, nem todos os clubes serão encontrados; o aplicativo mantém os fallbacks e não escolhe escudos por semelhança fraca. O limite interno do aplicativo é de 25 chamadas por minuto, abaixo do limite publicado pelo serviço. O livescore V2 da TheSportsDB é Premium; por isso, a aba **Ao vivo** usa API-Football.
-
-A conta gratuita do football-data.org tem cobertura limitada. Resultados/calendários podem sofrer atraso; escalações, assistências e estatísticas detalhadas continuam dependendo da API-Football.
-
-## Como usar
-
-### Central da partida
-
-1. Abra uma partida na agenda.
-2. Abaixo do player, use **Livescore**, **Escalações**, **Estatísticas** e **Classificação**.
-3. Se ainda não houver dados da API-Football, clique em **Buscar dados da API-Football**. A consulta é manual para proteger a cota diária.
-4. Na aba **Classificação**, a liga correspondente é selecionada automaticamente quando possível. Caso contrário, carregue a lista de competições e escolha a liga manualmente.
-5. A tabela vem do football-data.org; quando houver uma tabela da API-Football já disponível para aquela partida, ela pode servir como alternativa.
-
-### Painel Admin
-
-- **API-Football:** configure a chave pessoal neste computador e acompanhe o consumo.
-- **football-data.org:** salve/teste/apague o token. O token fica criptografado pelo Electron `safeStorage` no perfil local do Windows. Não é enviado ao navegador, GitHub, Cloudflare ou computador do Val.
-- **TheSportsDB:** clique em **Testar conexão**. Não há campo de token: o app usa a chave pública gratuita V1 `123` integrada.
-- **Cloudflare:** o cache compartilhado pode permitir que o computador do Val reutilize respostas já publicadas, sem receber as chaves pessoais das APIs.
-
-## Cache e compartilhamento
-
-- Escudos: cache por até 30 dias; resultados negativos por 24 horas.
-- Classificações football-data.org: cache por 6 horas.
-- Competições football-data.org: cache por 12 horas.
-- Partidas football-data.org: cache por 30 minutos.
-- Livescore API-Football: cache por 60 segundos.
-- A TheSportsDB mantém cache separado por provedor e pode reutilizar o cache compartilhado do Cloudflare se estiver configurado.
-
-A V0.18.12 não exige nova migração do Worker/D1 se o cache `provider_cache` da V0.18.7 ou posterior já foi implantado. Não publique chaves de APIs no Worker ou em GitHub Secrets.
-
-## Testes e validação
-
-Os testes automatizados usam respostas simuladas para verificar os fluxos e não substituem a validação ao vivo com os provedores. Depois de instalar, use **Testar conexão** no Painel Admin para verificar a disponibilidade real da TheSportsDB. A disponibilidade e cobertura do serviço podem variar.
-
-Comandos individuais:
-
-```bash
-node scripts/test-thesportsdb-service.js
-node scripts/test-competitions-tabs.js
-node scripts/test-apifootball-livescore.js
-```
-
-## Publicar V0.18.13
-
-1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando a pasta `.git`.
-2. Mantenha os segredos de sincronização já configurados no GitHub Actions. Não adicione tokens pessoais da API-Football ou football-data.org ao repositório.
-3. Faça commit `NicoValBolaLibre V0.18.13` e `Push origin`.
-4. Crie e envie a tag `v0.18.13`.
-5. Confira o GitHub Actions. Considere a release pronta somente quando o instalador `*-Setup.exe` e os arquivos de atualização esperados (`latest.yml`, quando aplicável) estiverem nos assets da Release.
-
-O ZIP contém o código-fonte. O instalador Windows ainda precisa ser compilado pelo GitHub Actions; não está incluído neste pacote.
-
-## Referências oficiais
-
-- TheSportsDB: https://www.thesportsdb.com/docs/api
-- API-Football: https://www.api-football.com/documentation-v3
-- Football-Data.org: https://docs.football-data.org/general/v4/index.html
+Testes automatizados cobrem a prioridade GitHub para clubes, a preferência TheSportsDB para Juventus quando a lista de liga fornece correspondência segura, o fundo escuro para SVGs GitHub e fundo branco para logos raster/competição. Os testes usam respostas simuladas e não substituem a conferência visual online após a instalação.
