@@ -64,6 +64,14 @@ const forwardPositions = ui.playerPlacements(snapshot.lineups[1].startXI, 'home'
 assert.ok(forwardPositions.length, 'A formação de teste deve incluir atacantes.');
 assert.ok(forwardPositions.every(entry => entry.left >= 79), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
 assert.ok(forwardPositions.every(entry => entry.depth >= 79), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
+const fallbackFormation = ui.playerPlacements([
+  { player: { name: 'GK', pos: 'G' } },
+  { player: { name: 'CB', pos: 'D' } },
+  { player: { name: 'CM', pos: 'M' } },
+  { player: { name: 'ST', pos: 'F' } }
+], 'home');
+assert.equal(new Set(fallbackFormation.map(entry => entry.depth)).size, 4, 'Sem coordenadas válidas, goleiro, defesa, meio e ataque devem ocupar linhas diferentes.');
+assert.ok(fallbackFormation.every(entry => entry.left >= 0 && entry.left <= 100 && entry.top >= 0 && entry.top <= 100), 'Todos os marcadores devem permanecer dentro do campo.');
 assert.match(lineupHtml, /Palmeiras/);
 assert.match(lineupHtml, /Flamengo/);
 assert.match(lineupHtml, /4-2-3-1/);
@@ -131,6 +139,8 @@ assert.ok(index.indexOf('${renderApiFootballMatchPanel(e)}') > index.indexOf('cl
 assert.match(index, /bindApiFootballPanelEvents\(e\)/);
 assert.match(index, /renderScores365MatchPanel\(e\)/, 'Partidas com vínculo confirmado devem exibir o painel da 365Scores.');
 assert.match(index, /scores365LineupAsApiSnapshot/, 'Escalações 365Scores devem ser adaptadas ao campo tático existente.');
+assert.match(index, /Number\.isInteger\(line\)&&line>=1&&line<=6&&Number\.isInteger\(row\)&&row>=1&&row<=5/, 'Coordenadas proporcionais ou fora da grade tática devem acionar o posicionamento por função.');
+assert.match(index, /addShotCount\(h,homeName\);addShotCount\(a,awayName\)/, 'Finalizações do gráfico devem aparecer no comparativo coletivo quando a fonte não trouxer o total por equipe.');
 assert.match(index, /scores365LoadStandings/, 'A classificação 365Scores deve poder ser solicitada na central da partida.');
 // O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.
 // Encontramos a declaração pelo nome e isolamos o trecho até emptyMarkup.

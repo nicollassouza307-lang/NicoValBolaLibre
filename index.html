@@ -779,7 +779,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.19 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.20 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -2240,7 +2240,9 @@ const BROADCASTER_ALIAS_GROUPS = [
       const mapPlayer=member=>{
         const formation=member.formationPosition||{};
         const line=Number(formation.line||0), row=Number(formation.fieldLine||formation.fieldSide||0);
-        const grid=line>0&&row>0?`${line}:${row}`:'';
+        // Só usa a coordenada bruta quando ela parece uma linha/coluna tática.
+        // Algumas respostas da 365Scores trazem coordenadas proporcionais ou vazias.
+        const grid=Number.isInteger(line)&&line>=1&&line<=6&&Number.isInteger(row)&&row>=1&&row<=5?`${line}:${row}`:'';
         return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),photoUrl:String(member.photoUrl||'')},grid};
       };
       return {
@@ -2291,10 +2293,16 @@ const BROADCASTER_ALIAS_GROUPS = [
     const homeStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===homeName)||teams[0];
     const awayStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===awayName)||teams.find(row=>row!==homeStats)||teams[1];
     const h=scores365TeamStatRows(homeStats),a=scores365TeamStatRows(awayStats);
+    const shots=Array.isArray(details.shots)?details.shots:[];
+    const addShotCount=(rows,teamName)=>{
+      const count=shots.filter(shot=>shot.team===teamName).length;
+      const exists=rows.some(row=>/^(finalizacoes|total shots|shots)$/i.test(String(row.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()));
+      if(count>0&&!exists)rows.push({name:'Finalizações',value:count});
+    };
+    addShotCount(h,homeName);addShotCount(a,awayName);
     const get=(rows,name)=>rows.find(row=>row.name.toLowerCase()===name.toLowerCase())?.value??'—';
     const commonNames=[...new Set([...h.map(row=>row.name),...a.map(row=>row.name)])].slice(0,24);
     const playerRows=Array.isArray(statistics.playerRows)?statistics.playerRows:[];
-    const shots=Array.isArray(details.shots)?details.shots:[];
     const xgFor=name=>shots.filter(shot=>shot.team===name&&Number.isFinite(shot.xg)).reduce((sum,shot)=>sum+shot.xg,0);
     const xgHome=xgFor(homeName),xgAway=xgFor(awayName);
     let content='';
@@ -4151,7 +4159,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.19',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.20',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

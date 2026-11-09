@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.18.19
+# NicoValBolaLibre V0.18.20
 
 ## V0.18.19 · Correção de gols contra na linha do tempo
 
@@ -22,14 +22,21 @@
 - Consulta sob demanda e cache local/compartilhado; a agenda original permanece intacta.
 - Integração experimental com endpoints web não oficiais. A permissão de reutilização de dados/imagens ainda precisa ser confirmada com a 365Scores.
 
+## V0.18.20 · Correção do campo tático e estatísticas coletivas
+
+- As posições curtas retornadas pela 365Scores (`GK`, `CB`, `CM`, `ST` e equivalentes) agora são normalizadas para goleiro, defesa, meio e ataque. Isso evita que jogadores sem coordenadas táticas válidas sejam agrupados na mesma linha do campo.
+- Coordenadas brutas só são usadas como grade quando estão dentro de uma faixa tática plausível; caso contrário, o campo usa a posição do atleta como fallback.
+- O total de finalizações é agregado a partir dos eventos do gráfico da 365Scores por equipe e passa a aparecer no comparativo coletivo, sem depender de estatísticas individuais.
+- Os demais dados, eventos, vínculos manuais e agenda original permanecem preservados.
+
 ## Como atualizar
 
 1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.18.19` e `Push origin`.
-3. Crie e envie a tag `v0.18.19`.
+2. Faça commit `NicoValBolaLibre V0.18.20` e `Push origin`.
+3. Crie e envie a tag `v0.18.20`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
-O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores não substitui nenhum provedor atual. Os testes da correção de gol contra usam respostas simuladas; confirme também em uma partida real após a instalação.
+O ZIP contém código-fonte; o instalador não está incluído. A integração 365Scores não substitui nenhum provedor atual. Os testes automatizados usam respostas simuladas; confirme o campo e as finalizações em uma partida real após a instalação.
 
 ## Testes
 
@@ -37,3 +44,4 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração 3
 - `npm run test:365scores-agenda-match`: comparação por clubes/data/competição/horário e confirmação manual.
 - Os demais testes cobrem integrações anteriores, interface, agenda, logos e sincronização.
 - Testes automatizados não substituem a validação real de uma partida na interface. Após instalar, atualize os dados da partida e confira os eventos e a classificação da temporada correspondente.
+

@@ -142,12 +142,20 @@ function normalizeStatRows(rows) {
   }).filter(row => row.typeId || row.name || row.value !== null);
 }
 function positionCode(value) {
-  const text = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const raw = String(value || '').trim().toUpperCase();
+  const compact = raw.replace(/[^A-Z]/g, '');
+  // A 365Scores frequentemente devolve abreviações curtas (CB, CM, ST).
+  // Sem normalizá-las, o campo tratava quase todos os atletas como defensores.
+  if (/^(G|GK|GKP|KEEPER)$/.test(compact)) return 'G';
+  if (/^(D|DF|DEF|CB|LCB|RCB|LB|RB|LWB|RWB|FB|WB)$/.test(compact)) return 'D';
+  if (/^(M|MF|MID|CM|LCM|RCM|CDM|DM|CAM|AM|LM|RM)$/.test(compact)) return 'M';
+  if (/^(F|FW|ATT|ST|CF|LW|RW|LF|RF|SS|W)$/.test(compact)) return 'F';
+  const text = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   if (/goal|goleir|keeper/.test(text)) return 'G';
   if (/defen|defens|back|zague|lateral/.test(text)) return 'D';
   if (/mid|meio|volant|meia/.test(text)) return 'M';
   if (/attack|atac|forward|wing|striker|ponta/.test(text)) return 'F';
-  return String(value || '').slice(0, 2).toUpperCase();
+  return raw.slice(0, 2);
 }
 function extractLineup(team, memberMap, isNationalTeam = false) {
   const source = asObject(team);
@@ -284,6 +292,22 @@ function aggregateLineupStats(lineup, teamName) {
     stats: [...totals.entries()].map(([typeId, value]) => ({ typeId, name: LINEUP_STAT_LABELS[typeId], value }))
   };
 }
+function addShotTotalsToCompetitors(rows, shotEvents, teams) {
+  const result = asArray(rows).map(row => ({ ...row, stats: asArray(row?.stats || row?.rows).slice() }));
+  for (const [side, team] of [['home', teams.home], ['away', teams.away]]) {
+    const teamShots = asArray(shotEvents).filter(shot => shot.team && shot.team === team.name);
+    if (!teamShots.length) continue;
+    let row = result.find(item => String(item.team || item.competitor?.name || item.name || '') === team.name);
+    if (!row) {
+      row = { team: team.name, stats: [] };
+      result.push(row);
+    }
+    const names = row.stats.map(stat => String(stat?.name || stat?.typeName || stat?.type?.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+    const hasShots = names.some(name => /^(total shots|shots|finalizacoes|finalizacoes totais)$/.test(name));
+    if (!hasShots) row.stats.push({ typeId: 0, name: 'Finalizações', value: teamShots.length, source: 'chartEvents' });
+  }
+  return result;
+}
 function normalizeShotEvent(event, home, away) {
   const item = asObject(event);
   const competitorNum = Number(item.competitorNum);
@@ -313,9 +337,10 @@ function normalizeGameDetails(payload) {
   const lineupPlayersWithStats = [...homeLineup.members, ...awayLineup.members].filter(member => member.stats.length);
   const athleteStatsCount = rawAthleteStats.length || lineupPlayersWithStats.length;
   const aggregatedCompetitors = [aggregateLineupStats(homeLineup, teams.home.name), aggregateLineupStats(awayLineup, teams.away.name)];
-  const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
   const gameEvents = asArray(game.events).map(event => normalizeGameEvent(event, memberMap, teams.home, teams.away));
   const shotEvents = asArray(game.chartEvents?.events).map(event => normalizeShotEvent(event, teams.home, teams.away));
+  const competitorRows = addShotTotalsToCompetitors(rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors, shotEvents, teams);
+  const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
   return {
     gameId: positiveId(game.id || game.gameId),
     startTime: firstText(game.startTime),
@@ -340,10 +365,10 @@ function normalizeGameDetails(payload) {
     shots: shotEvents,
     statsAvailable: Boolean(rawCompetitorStats.length || rawAthleteStats.length || lineupPlayersWithStats.length || hasAggregatedCompetitorStats),
     statistics: {
-      competitors: rawCompetitorStats.length || (hasAggregatedCompetitorStats ? aggregatedCompetitors.filter(row => row.stats.length).length : 0),
+      competitors: competitorRows.filter(row => asArray(row.stats).length).length,
       athletes: athleteStatsCount,
       lineupPlayers: lineupPlayersWithStats.length,
-      competitorRows: rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors,
+      competitorRows,
       athleteRows: rawAthleteStats,
       playerRows: lineupPlayersWithStats.map(player => ({ athleteId: player.athleteId, name: player.name, team: homeLineup.members.includes(player) ? teams.home.name : teams.away.name, stats: player.stats }))
     },
@@ -617,5 +642,5 @@ class Scores365Service {
 
 module.exports = {
   Scores365Service, API_BASE, DEFAULT_PARAMS, ENDPOINTS,
-  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity
+  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity, positionCode
 };

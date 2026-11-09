@@ -102,6 +102,12 @@ try {
   assert.equal(game.details.lineups.home.members[0].number, 1);
   assert.match(game.details.lineups.home.members[0].photoUrl, /imagecache\.365scores\.com.*Athletes\/1$/);
   assert.equal(game.details.lineups.away.members[0].name, 'Zagueiro Teste');
+  assert.equal(require('../365scores-service').positionCode('GK'), 'G', 'Abreviação GK deve ser reconhecida como goleiro.');
+  assert.equal(require('../365scores-service').positionCode('CB'), 'D', 'Abreviação CB deve ser reconhecida como defensor.');
+  assert.equal(require('../365scores-service').positionCode('CM'), 'M', 'Abreviação CM deve ser reconhecida como meio-campista.');
+  assert.equal(require('../365scores-service').positionCode('ST'), 'F', 'Abreviação ST deve ser reconhecida como atacante.');
+  assert.equal(game.details.statistics.competitorRows.find(row => row.team === 'Flamengo').stats.find(stat => stat.name === 'Finalizações')?.value, 1, 'Finalizações do gráfico devem ser agregadas para o mandante.');
+  assert.equal(game.details.statistics.competitorRows.find(row => row.team === 'Palmeiras').stats.find(stat => stat.name === 'Finalizações')?.value, 1, 'Finalizações do gráfico devem ser agregadas para o visitante.');
   assert.equal(game.details.statsAvailable, true);
   assert.equal(game.details.statistics.lineupPlayers, 3);
   assert.equal(game.details.statistics.competitors, 2, 'Estatísticas por equipe devem ser agregadas dos membros da escalação quando não houver bloco de equipe.');
