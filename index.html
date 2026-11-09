@@ -53,6 +53,35 @@
 .channel-chip.has-link{border-color:#58df9a55;background:#58df9a12;color:#c9f7dd}
 .channel-chip.has-link .market{color:#58df9a}
 
+
+/* V0.19.0: navegação do Admin em abas */
+.admin-tabs{display:flex;gap:7px;overflow-x:auto;padding:6px;margin:14px 0 12px;border:1px solid var(--line);border-radius:14px;background:#081321;scrollbar-width:thin}
+.admin-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;border-radius:10px;background:transparent;color:#91a7c1;padding:10px 13px;font:inherit;font-size:11px;font-weight:850;cursor:pointer;white-space:nowrap;transition:background .16s,border-color .16s,color .16s}
+.admin-tab:hover{background:#ffffff08;color:#edf7ff}
+.admin-tab[aria-selected="true"]{background:linear-gradient(135deg,#164b4d,#17364d);border-color:#48d9d055;color:#eafffb;box-shadow:0 4px 14px #0002}
+.admin-tab-panel{min-width:0}
+.admin-tab-panel[hidden]{display:none!important}
+.admin-tab-panel>.admin-panel:first-child{margin-top:12px}
+.admin-tab-empty{padding:16px;border:1px dashed #60799855;border-radius:12px;background:#ffffff03;color:#a8bad0;font-size:11px;line-height:1.6}
+.admin-tab-empty strong{display:block;color:#e4eefb;font-size:13px;margin-bottom:5px}
+/* V0.19.0: calendário horizontal da agenda */
+.schedule-date-strip{display:flex;gap:8px;overflow-x:auto;padding:3px 1px 11px;margin:4px 0 9px;scrollbar-width:thin}
+.schedule-date-chip{position:relative;flex:1 0 76px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border:1px solid var(--line);border-radius:13px;background:#ffffff05;color:#91a6c0;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+.schedule-date-chip:hover{border-color:#48d9d066;background:#48d9d00b;transform:translateY(-1px)}
+.schedule-date-chip[aria-pressed="true"]{border-color:#48d9d088;background:linear-gradient(145deg,#164b4d55,#17364d77);color:#f0ffff;box-shadow:inset 0 0 0 1px #48d9d018}
+.schedule-date-chip .weekday{font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+.schedule-date-chip .day-number{font-size:20px;font-weight:950;line-height:1.1;color:#e6f0ff}
+.schedule-date-chip .day-month{font-size:9px;color:#7f95b2}
+.schedule-date-chip .today-dot{width:5px;height:5px;border-radius:50%;background:#52dfb0;position:absolute;top:7px;right:8px}
+/* V0.19.0: seções de competição recolhíveis */
+.competition-section{min-width:0;margin:12px 0}
+.competition-section>summary{list-style:none;cursor:pointer;user-select:none}
+.competition-section>summary::-webkit-details-marker{display:none}
+.competition-section>summary .competition-divider-meta:after{content:'⌄';display:inline-block;margin-left:8px;color:#8ba2bf;transition:transform .16s}
+.competition-section:not([open])>summary .competition-divider-meta:after{transform:rotate(-90deg)}
+.competition-section-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+@media(max-width:760px){.schedule-date-chip{flex-basis:68px;min-width:68px}.competition-section-cards{grid-template-columns:1fr}.admin-tabs{margin-left:-2px;margin-right:-2px}}
+
 [hidden]{display:none!important}
 .admin-panel{border:1px solid var(--line);border-radius:17px;background:linear-gradient(150deg,#121f33,#0d1727);padding:19px;margin:16px 0}
 .admin-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start}
@@ -519,82 +548,6 @@ img.crest.crest-github {
 .match-center-panel .apifootball-stat-team-labels strong:last-child { color: var(--stat-away-color, #dc2626); }
 .match-center-panel .apifootball-stat-card .home { background: var(--stat-home-color, #2563eb); }
 .match-center-panel .apifootball-stat-card .away { background: var(--stat-away-color, #dc2626); }
-
-/* V0.18.21: Match Center renovado, leitura tática, eventos nos atletas e estatísticas por categoria. */
-.match-hero{border:1px solid #ffffff16;border-radius:20px;padding:clamp(14px,2vw,22px);background:radial-gradient(circle at 50% 0%,#25476755,transparent 50%),linear-gradient(145deg,#102236,#0b1624);box-shadow:0 18px 45px #0003}
-.match-league-name{font-size:clamp(15px,2vw,18px);letter-spacing:-.025em}
-.match-facts-enriched{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:4px}
-.match-facts-enriched .match-fact{min-height:76px;background:linear-gradient(145deg,#ffffff0b,#ffffff04);border-color:#8ca6c32b}
-.match-facts-enriched .match-fact strong{font-size:11px}
-.match-center-panel{margin-top:15px;border:1px solid #7fa0c42a;border-radius:17px;background:linear-gradient(145deg,#12263a,#0a1625);box-shadow:0 12px 30px #0002;overflow:hidden}
-.match-center-panel .apifootball-panel-head{padding:15px 17px;background:#ffffff06;border-bottom:1px solid #ffffff10}
-.match-center-panel .apifootball-tabs{padding:10px 12px 0;gap:7px}
-.match-center-panel .apifootball-tab{border-radius:10px;font-size:10px;font-weight:850}
-.match-center-panel .apifootball-tab-content{padding:13px}
-.apifootball-pitch-scroll{padding:3px;background:#081521;border:1px solid #ffffff12}
-.apifootball-pitch{min-height:520px;border-radius:13px;box-shadow:inset 0 0 40px #001b12a3;background:repeating-linear-gradient(90deg,#145b3b 0,#145b3b 8.33%,#176941 8.33%,#176941 16.66%)}
-.apifootball-pitch-outline{inset:11px;border-color:#ecfff08c}
-.apifootball-pitch-half{height:100%;min-height:520px}
-.apifootball-pitch-half.home{border-right:1px solid #d9f7e377}
-.apifootball-pitch-player{width:84px;gap:3px}
-.apifootball-pitch-player .apifootball-photo-frame{width:45px;height:45px;flex-basis:45px;border:2px solid #f4fff6;box-shadow:0 3px 12px #001b15b8}
-.apifootball-player-avatar-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:max-content;min-width:30px;min-height:30px}
-.apifootball-player-event-badge{position:absolute;right:-9px;top:-7px;z-index:5;display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 4px;border:1px solid #0c1824;border-radius:99px;background:#e5f7ef;color:#073223;font-size:10px;font-weight:950;box-shadow:0 2px 7px #0008;white-space:nowrap}
-.apifootball-player-event-badge small{font-size:7px;margin-left:1px}
-.apifootball-player-event-badge.goal{background:#f5fff9;color:#087343}
-.apifootball-player-event-badge.assist{background:#a9d8ff;color:#083d68}
-.apifootball-player-event-badge.own-goal{background:#ffe4b4;color:#8a4d00}
-.apifootball-player-event-badge.yellow{background:#ffe16e;color:#6b4a00}
-.apifootball-player-event-badge.red{background:#ff747e;color:#5b0710}
-.apifootball-player-event-badge.substitution-out,.apifootball-player-event-badge.substitution-in{background:#8be8d3;color:#06473c}
-.apifootball-pitch-number{background:#f0faf6;color:#102b29;border-radius:5px;box-shadow:0 1px 3px #001b1580}
-.apifootball-pitch-name{font-size:9px;max-width:84px;text-shadow:0 2px 4px #00140e,0 1px 2px #00140e}
-.apifootball-support-card{border-color:#8ca6c32b;background:linear-gradient(145deg,#142a40,#0c1929);box-shadow:0 8px 20px #0002}
-.apifootball-bench-player{position:relative;grid-template-columns:34px 20px minmax(0,1fr);padding:7px;background:#ffffff07;border:1px solid #ffffff09}
-.apifootball-bench-player .apifootball-photo-frame{width:32px;height:32px;flex-basis:32px}
-.apifootball-bench-player .apifootball-player-event-badge{right:-6px;top:-5px;min-width:16px;height:16px;font-size:8px}
-.apifootball-coach-row{background:linear-gradient(90deg,#1d3c50,#ffffff05);border-color:#7fa0c426}
-.apifootball-coach-row .apifootball-photo-frame{width:36px;height:36px;flex-basis:36px}
-.scores365-stat-categories{display:grid;gap:14px}
-.scores365-stat-category{padding:12px;border:1px solid #ffffff12;border-radius:13px;background:linear-gradient(145deg,#122238,#0c1827)}
-.scores365-stat-category h4{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:#6ce0d3;font-size:9px;font-weight:950;letter-spacing:.14em}
-.scores365-stat-category h4:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#6ce0d355,transparent)}
-.scores365-stat-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.scores365-stat-card{border:1px solid #ffffff0d;border-radius:10px;padding:10px;background:#0715247d;min-width:0}
-.scores365-stat-values{display:grid;grid-template-columns:minmax(34px,.6fr) minmax(0,1.5fr) minmax(34px,.6fr);align-items:center;gap:6px;text-align:center}
-.scores365-stat-values strong{font-size:13px;font-weight:950;font-variant-numeric:tabular-nums;color:#f3f8ff}
-.scores365-stat-values span{font-size:9px;color:#9db2ca;font-weight:750;line-height:1.25}
-.scores365-stat-bar{height:5px;margin-top:9px;background:#ffffff12;border-radius:99px;overflow:hidden;display:flex;gap:2px}
-.scores365-stat-bar i.home{background:var(--stat-home-color,#38c6b7)}
-.scores365-stat-bar i.away{background:var(--stat-away-color,#6c91f1)}
-.scores365-player-stats{margin-top:13px;border:1px solid #ffffff13;border-radius:12px;background:#ffffff05;overflow:hidden}
-.scores365-player-stats summary{padding:12px 14px;color:#c7d8eb;font-size:10px;font-weight:850;cursor:pointer}
-.scores365-player-stats .apifootball-standings-wrap{padding:0 10px 10px}
-.match-fact small{color:#8ea5c0}
-@media(max-width:900px){.match-facts-enriched{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:700px){
-  .match-facts-enriched{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .match-facts-enriched .match-fact:last-child{grid-column:1/-1}
-  .apifootball-pitch-scroll{overflow:hidden}
-  .apifootball-pitch{display:block!important;position:relative;min-width:0!important;min-height:650px!important;height:650px!important;background:repeating-linear-gradient(0deg,#145b3b 0,#145b3b 8.33%,#176941 8.33%,#176941 16.66%)}
-  .apifootball-pitch-half{position:absolute;left:0;width:100%;height:50%!important;min-height:0!important;flex:none!important}
-  .apifootball-pitch-half.away{top:0;order:initial;border:0;border-bottom:1px solid #d9f7e377}
-  .apifootball-pitch-half.home{top:50%;order:initial;border:0;border-top:1px solid #d9f7e377}
-  .apifootball-pitch-center-line{left:10px;right:10px;top:50%;bottom:auto;width:auto;height:1px}
-  .apifootball-pitch-center-circle{width:72px;height:72px}
-  .apifootball-pitch-box{top:auto;left:34%;right:34%;width:auto;height:13%;border:1px solid #d9f7e38a}
-  .apifootball-pitch-box.home{bottom:0;border-bottom:0;border-left:1px solid #d9f7e38a}
-  .apifootball-pitch-box.away{top:0;right:34%;border-top:0;border-right:1px solid #d9f7e38a}
-  .apifootball-pitch-player{width:70px;left:var(--pitch-lane)!important;top:calc(100% - var(--pitch-depth))!important}
-  .apifootball-pitch-half.away .apifootball-pitch-player{top:var(--pitch-depth)!important}
-  .apifootball-pitch-player .apifootball-photo-frame{width:37px;height:37px;flex-basis:37px}
-  .apifootball-pitch-name{font-size:7px;max-width:70px}
-  .apifootball-pitch-number{font-size:7px}
-  .scores365-stat-category-grid{grid-template-columns:1fr}
-  .apifootball-support-grid{grid-template-columns:1fr}
-}
-@media(max-width:390px){.apifootball-pitch{height:620px!important;min-height:620px!important}.apifootball-pitch-player{width:62px}.apifootball-pitch-player .apifootball-photo-frame{width:33px;height:33px;flex-basis:33px}.apifootball-pitch-name{font-size:6px;max-width:62px}.match-facts-enriched .match-fact{padding:9px 10px}}
-
 </style>
 </head>
 <body>
@@ -623,6 +576,8 @@ img.crest.crest-github {
       <div class="stat"><div><div class="stat-label">Ao vivo</div><div class="stat-value" id="liveCount">—</div></div><div class="stat-icon">◉</div></div>
       <div class="stat"><div><div class="stat-label">Favoritos</div><div class="stat-value" id="favCount">0</div></div><div class="stat-icon">☆</div></div>
     </section>
+
+    <div class="schedule-date-strip" id="scheduleDateStrip" aria-label="Calendário de partidas"></div>
 
     <div class="section-head">
       <div><h3 id="sectionTitle">Partidas</h3><p id="sectionSubtitle">Agenda carregada automaticamente</p></div>
@@ -653,7 +608,7 @@ img.crest.crest-github {
         <div class="admin-small" id="competitionRankingStatus">A ordem personalizada fica salva neste computador e não altera as agendas de origem, as partidas ou os players.</div>
       </div>
       <div class="admin-grid">
-        <div class="admin-panel">
+        <div class="admin-panel" id="stationFormPanel">
           <h4>＋ Cadastrar emissora</h4>
           <p>Cadastre uma URL HTTPS uma única vez. Escolha a emissora no catálogo para o NicoValBolaLibre reconhecer automaticamente em quais partidas ela aparece.</p>
           <form class="admin-form" id="stationForm">
@@ -665,7 +620,7 @@ img.crest.crest-github {
           </form>
           <div class="admin-small">Toda URL HTTPS válida cadastrada para uma emissora pode ser associada automaticamente às partidas correspondentes. A correspondência mantém canais numerados separados: ESPN 2 não será confundida com ESPN Premium. O NicoValBolaLibre não contorna bloqueios de incorporação do provedor.</div>
         </div>
-        <div class="admin-panel">
+        <div class="admin-panel" id="stationListPanel">
           <h4>📡 Catálogo de emissoras</h4>
           <p>Fontes cadastradas para reutilizar em diferentes partidas.</p>
           <div class="station-list" id="stationList"></div>
@@ -680,7 +635,7 @@ img.crest.crest-github {
         <div class="completion-track" aria-hidden="true"><span id="stationCompletionBar"></span></div>
         <div class="admin-small" id="stationCompletionNote">Uma emissora é considerada preenchida quando existe uma fonte HTTPS válida associada ao seu nome ou identificador no catálogo.</div>
       </div>
-      <div class="admin-panel">
+      <div class="admin-panel" id="channelDirectoryPanel">
         <h4>📺 Catálogo de emissoras · 138 opções</h4>
         <p>Catálogo pré-carregado de emissoras e variantes. Clique em uma opção para preencher o cadastro; os apelidos são reconhecidos automaticamente nas agendas (por exemplo, Globoplay, TV Globo e Rede Globo são tratados como família Globo).</p>
         <div class="channel-toolbar">
@@ -703,7 +658,7 @@ img.crest.crest-github {
         <div class="rei-channel-grid" id="reiChannelDirectory"><div class="admin-empty">O catálogo será carregado ao abrir o painel.</div></div>
         <div class="admin-small">Este painel exibe metadados, logos e EPG. URLs de embeds vindas da API não são importadas automaticamente; somente URLs cadastradas manualmente no catálogo são reutilizadas. EPG é atualizado na origem a cada cinco minutos; o NicoValBolaLibre mantém cache local por cinco minutos.</div>
       </div>
-      <div class="admin-panel">
+      <div class="admin-panel" id="autoLinkPanel">
         <h4>⚡ Associação automática</h4>
         <p>Depois de cadastrar uma fonte, o NicoValBolaLibre compara os identificadores normalizados da emissora, procura a URL no catálogo e grava o vínculo no mesmo armazenamento usado pelo player. Qualquer URL HTTPS válida cadastrada é elegível para reutilização automática quando a emissora corresponder. A associação roda ao salvar fontes, carregar a agenda, abrir partidas ou usar o botão em lote.</p>
         <div id="autoLinkStatus" class="admin-small">Aguardando a agenda carregar para verificar as associações automáticas.</div>
@@ -714,13 +669,13 @@ img.crest.crest-github {
         <div class="admin-small" id="bulkLinkResult">O primeiro botão associa às partidas carregadas todas as fontes HTTPS cadastradas no catálogo cuja emissora corresponda ao jogo. O segundo limpa os vínculos salvos em todas as partidas e pausa a associação automática, mas preserva o catálogo de emissoras e URLs.</div>
         <div class="admin-small">A correspondência preserva variantes: ESPN 2 combina com ESPN2, mas não com ESPN Premium; SporTV 3 combina com SporTV3. Globo, TV Globo e Globoplay pertencem à mesma família de emissora.</div>
       </div>
-      <div class="admin-panel">
+      <div class="admin-panel" id="manualLinkPanel">
         <h4>Vincular manualmente (exceções)</h4>
         <p>Use quando quiser vincular uma fonte a uma partida específica ou corrigir uma correspondência.</p>
         <select id="adminMatchSelect" class="admin-select" aria-label="Selecionar partida"></select>
         <div class="station-list" id="stationAssignList" style="margin-top:11px"></div>
       </div>
-      <div class="admin-panel">
+      <div class="admin-panel" id="teamLogoPanel">
         <h4>🛡️ Registrar escudos que ainda faltam</h4>
         <p>Use quando um clube não aparecer na base mundial. O vínculo fica salvo pelo nome e país e também vai no arquivo JSON de compartilhamento.</p>
         <form id="teamLogoForm" class="team-registry-form">
@@ -752,7 +707,7 @@ img.crest.crest-github {
       </div>
       <div class="admin-panel" id="scores365Panel">
         <div class="section-head" style="margin:0 0 8px;align-items:center">
-          <div><h4>🧪 365Scores · Integração experimental</h4><p>Teste manual de descoberta de partidas, comparação com a agenda carregada e vínculos de gameId confirmados manualmente. Não altera a agenda nem substitui a API-Football nesta versão.</p></div>
+          <div><h4>⚽ 365Scores · Dados das partidas</h4><p>Busca partidas para comparar com a agenda existente e carregar dados esportivos. A 365Scores não cria partidas nem altera as fontes originais da agenda.</p></div>
           <span class="api-football-status-pill warn" id="scores365Badge">Experimental</span>
         </div>
         <div class="admin-small" id="scores365Status" role="status" aria-live="polite">Aguardando teste. Nenhuma consulta automática é executada.</div>
@@ -847,7 +802,7 @@ img.crest.crest-github {
         </div>
         <div class="admin-small" id="desktopUpdateStatus" role="status" aria-live="polite">Pronto para verificar.</div>
       </div>
-      <div class="admin-actions">
+      <div class="admin-actions" id="adminDataActionsPanel">
         <button class="btn secondary small" id="exportConfig">Exportar configurações para compartilhar</button>
         <label class="btn secondary small" for="importConfigFile">Importar configurações JSON</label>
         <input id="importConfigFile" type="file" accept="application/json,.json" hidden>
@@ -855,7 +810,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.20 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.19.0 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -1127,7 +1082,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   // Idioma da interface: preferência local, independente do JSON de emissoras.
   let currentLanguage = readStore('futeblox_language_v1', 'pt-BR') === 'es-AR' ? 'es-AR' : 'pt-BR';
   const UI_ES = {
-    'Idioma':'Idioma', 'Biblioteca':'Biblioteca', 'Competições':'Competiciones', 'Central de competições':'Centro de competiciones', 'Classificações':'Clasificaciones', 'Jogos':'Partidos', 'TheSportsDB':'TheSportsDB', 'sem entrar no Admin.':', sin entrar al panel.', 'Escolha uma liga':'Elige una liga', 'Atualizar competições':'Actualizar competiciones', 'Ver classificação':'Ver clasificación', 'Carregue as competições primeiro':'Carga las competiciones primero', 'Nenhuma classificação selecionada':'No hay clasificación seleccionada', 'Carregue as competições disponíveis para começar.':'Carga las competiciones disponibles para comenzar.', 'Todos os jogos':'Todos los partidos', 'Ao vivo':'En directo',
+    'Geral':'General', '365Scores':'365Scores', 'Partidas':'Partidos', 'Dados':'Datos', 'Classificações':'Clasificaciones', 'Cache':'Caché', 'Diagnóstico':'Diagnóstico', 'Idioma':'Idioma', 'Biblioteca':'Biblioteca', 'Competições':'Competiciones', 'Central de competições':'Centro de competiciones', 'Classificações':'Clasificaciones', 'Jogos':'Partidos', 'TheSportsDB':'TheSportsDB', 'sem entrar no Admin.':', sin entrar al panel.', 'Escolha uma liga':'Elige una liga', 'Atualizar competições':'Actualizar competiciones', 'Ver classificação':'Ver clasificación', 'Carregue as competições primeiro':'Carga las competiciones primero', 'Nenhuma classificação selecionada':'No hay clasificación seleccionada', 'Carregue as competições disponíveis para começar.':'Carga las competiciones disponibles para comenzar.', 'Todos os jogos':'Todos los partidos', 'Ao vivo':'En directo',
     'Próximos':'Próximos', 'Encerrados':'Finalizados', 'Favoritos':'Favoritos', 'Painel admin':'Panel de administración',
     'Seu espaço':'Tu espacio', '🔒 Área particular':'🔒 Área privada',
     'Seus favoritos e fontes cadastradas ficam salvos somente neste navegador.':'Tus favoritos y fuentes guardadas permanecen solo en este navegador.',
@@ -2169,8 +2124,10 @@ const BROADCASTER_ALIAS_GROUPS = [
       const leagueLogo = competitionLogoForGroup(group);
       const leagueCountry=String(group.items?.[0]?.leagueCountry||group.items?.[0]?.country||leagueCountryHint(group.name)||'');
       const leagueAttrs=`data-thesportsdb-league="1" data-league-name="${escapeHtml(group.name)}" data-league-country="${escapeHtml(leagueCountry)}"`;
-      const divider = `<div class="competition-divider" role="separator" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo ${leagueAttrs}>` : `<span class="competition-divider-mark" ${leagueAttrs}>🏆</span>`}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></div>`;
-      return divider + group.items.map(cardMarkup).join('');
+      const collapsed = readStore('nvb_competition_collapsed_v1', {});
+      const isOpen = collapsed[group.key] !== true;
+      const divider = `<summary class="competition-divider" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo ${leagueAttrs}>` : `<span class="competition-divider-mark" ${leagueAttrs}>🏆</span>`}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></summary>`;
+      return `<details class="competition-section" data-competition-section="${escapeHtml(group.key)}" ${isOpen?'open':''}>${divider}<div class="competition-section-cards">${group.items.map(cardMarkup).join('')}</div></details>`;
     }).join('');
   }
   function moveCompetitionRanking(key, direction) {
@@ -2214,6 +2171,123 @@ const BROADCASTER_ALIAS_GROUPS = [
       : 'Ordem automática por prioridade da competição ativa. Competições principais aparecem primeiro; as demais usam o horário como desempate. Use as setas para personalizar a ordem.';
   }
 
+  function renderScheduleDateStrip() {
+    const root = $('#scheduleDateStrip');
+    if (!root) return;
+    const selected = new Date(`${state.date}T12:00:00`);
+    if (Number.isNaN(selected.getTime())) return;
+    const locale = currentLanguage === 'es-AR' ? 'es-AR' : 'pt-BR';
+    const today = localDateString(new Date());
+    const days = [];
+    for (let offset = -3; offset <= 3; offset++) {
+      const date = new Date(selected);
+      date.setDate(date.getDate() + offset);
+      const key = localDateString(date);
+      const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date).replace('.', '');
+      const month = new Intl.DateTimeFormat(locale, { month: 'short' }).format(date).replace('.', '');
+      days.push(`<button class="schedule-date-chip" type="button" data-schedule-date="${key}" aria-pressed="${key===state.date?'true':'false'}" aria-label="${escapeHtml(dateLabel(key))}">${key===today?'<span class="today-dot" aria-hidden="true"></span>':''}<span class="weekday">${escapeHtml(weekday)}</span><span class="day-number">${String(date.getDate()).padStart(2,'0')}</span><span class="day-month">${escapeHtml(month)}${key===today?' · Hoje':''}</span></button>`);
+    }
+    root.innerHTML = days.join('');
+  }
+
+  function buildAdminTabs() {
+    const root = $('#adminView');
+    if (!root || root.dataset.tabsReady === '1') return;
+    root.dataset.tabsReady = '1';
+    const header = root.querySelector('.section-head');
+    const notice = root.querySelector('.notice');
+    const tabs = [
+      { id:'general', label:'Geral', icon:'⚙', description:'Emissoras, catálogo e fontes de transmissão.' },
+      { id:'scores365', label:'365Scores', icon:'⚽', description:'Busca esportiva e associação com a agenda existente.' },
+      { id:'matches', label:'Partidas', icon:'🗓', description:'Organização e vínculos manuais das partidas.' },
+      { id:'data', label:'Dados', icon:'🗂', description:'Escudos personalizados, sincronização e compartilhamento.' },
+      { id:'standings', label:'Classificações', icon:'🏆', description:'Classificações consultadas no contexto de cada partida.' },
+      { id:'cache', label:'Cache', icon:'💾', description:'Visão rápida dos dados guardados neste computador.' },
+      { id:'diagnostics', label:'Diagnóstico', icon:'🩺', description:'Estado da agenda, integração e versão do aplicativo.' }
+    ];
+    const nav = document.createElement('div');
+    nav.className = 'admin-tabs'; nav.setAttribute('role','tablist'); nav.setAttribute('aria-label','Seções do painel administrativo');
+    const pages = document.createElement('div'); pages.className = 'admin-tab-pages';
+    const pageMap = new Map();
+    for (const tab of tabs) {
+      const button = document.createElement('button');
+      button.className = 'admin-tab'; button.type = 'button'; button.id = `adminTab-${tab.id}`;
+      button.dataset.adminTab = tab.id; button.setAttribute('role','tab'); button.setAttribute('aria-controls',`adminPage-${tab.id}`);
+      button.innerHTML = `<span aria-hidden="true">${tab.icon}</span>${tab.label}`;
+      button.addEventListener('click', () => setAdminTab(tab.id));
+      nav.appendChild(button);
+      const page = document.createElement('div'); page.className = 'admin-tab-panel'; page.id = `adminPage-${tab.id}`;
+      page.dataset.adminPage = tab.id; page.setAttribute('role','tabpanel'); page.setAttribute('aria-labelledby',button.id); page.hidden = true;
+      const intro = document.createElement('div'); intro.className = 'admin-small'; intro.textContent = tab.description; intro.style.margin = '10px 2px 12px';
+      page.appendChild(intro); pages.appendChild(page); pageMap.set(tab.id,page);
+    }
+    if (header) header.insertAdjacentElement('afterend', nav); else root.prepend(nav);
+    if (notice) notice.insertAdjacentElement('afterend', pages); else nav.insertAdjacentElement('afterend', pages);
+
+    const move = (id, tab) => { const node = document.getElementById(id); if (node && pageMap.has(tab)) pageMap.get(tab).appendChild(node); };
+    ['stationFormPanel','stationListPanel','stationCompletionPanel','channelDirectoryPanel','reiChannelPanel','autoLinkPanel'].forEach(id=>move(id,'general'));
+    ['scores365Panel'].forEach(id=>move(id,'scores365'));
+    ['competitionRankingPanel','manualLinkPanel'].forEach(id=>move(id,'matches'));
+    ['teamLogoPanel','cloudSyncPanel','adminDataActionsPanel'].forEach(id=>move(id,'data'));
+    ['apiFootballPanel','footballDataPanel','theSportsDBPanel'].forEach(id=>move(id,'diagnostics'));
+    const updatePanel = document.getElementById('desktopUpdatePanel'); if(updatePanel) pageMap.get('diagnostics').appendChild(updatePanel);
+    const footerNote = root.querySelector(':scope > .admin-small'); if (footerNote) pageMap.get('data').appendChild(footerNote);
+
+    const standings = document.createElement('div'); standings.className = 'admin-tab-empty';
+    standings.innerHTML = '<strong>Classificações dentro da partida</strong>As tabelas ficam no centro da partida, junto com escalações, eventos e estatísticas. Abra uma partida com vínculo 365Scores e selecione a aba Classificação. Esta seção do Admin será usada para configurações e diagnóstico das tabelas.';
+    pageMap.get('standings').appendChild(standings);
+
+    const cachePanel = document.createElement('div'); cachePanel.className = 'admin-panel'; cachePanel.innerHTML = '<h4>💾 Cache local</h4><p>Resumo dos dados esportivos armazenados neste computador. Os vínculos manuais não são apagados ao atualizar o cache.</p><div id="adminCacheSummary" class="admin-empty">Calculando cache local…</div><div class="admin-actions"><button class="btn secondary small" type="button" id="refreshAdminCacheSummary">↻ Atualizar resumo</button></div>';
+    pageMap.get('cache').appendChild(cachePanel);
+    const diagPanel = document.createElement('div'); diagPanel.className = 'admin-panel'; diagPanel.innerHTML = '<h4>🩺 Diagnóstico rápido</h4><p>Estado da agenda atual e dos vínculos esportivos, sem modificar os dados.</p><div id="adminRuntimeDiagnostics" class="admin-empty">Carregando diagnóstico…</div><div class="admin-actions"><button class="btn secondary small" type="button" id="copyAdminDiagnostics">Copiar diagnóstico</button></div>';
+    pageMap.get('diagnostics').appendChild(diagPanel);
+    $('#refreshAdminCacheSummary')?.addEventListener('click', renderAdminCacheSummary);
+    $('#copyAdminDiagnostics')?.addEventListener('click', copyAdminDiagnostics);
+    const saved = readStore('nvb_admin_active_tab_v1','general');
+    setAdminTab(tabs.some(tab=>tab.id===saved)?saved:'general');
+  }
+
+  function setAdminTab(tabId) {
+    const root = $('#adminView'); if (!root) return;
+    const valid = root.querySelector(`[data-admin-page="${tabId}"]`) ? tabId : 'general';
+    root.querySelectorAll('[data-admin-tab]').forEach(button=>{
+      const active = button.dataset.adminTab === valid;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-selected',active?'true':'false');
+      button.tabIndex = active ? 0 : -1;
+    });
+    root.querySelectorAll('[data-admin-page]').forEach(page=>{page.hidden = page.dataset.adminPage !== valid;});
+    writeStore('nvb_admin_active_tab_v1',valid);
+    renderAdminCacheSummary(); renderAdminRuntimeDiagnostics();
+  }
+
+  function renderAdminCacheSummary() {
+    const root = $('#adminCacheSummary'); if (!root) return;
+    const count = value => value && typeof value === 'object' ? Object.keys(value).length : 0;
+    const links = readStore(SCORES365_AGENDA_LINKS_KEY,{});
+    root.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;text-align:left"><div><strong>${count(scores365MatchCache)}</strong><small style="display:block;color:#91a7c1">Partidas 365Scores em cache</small></div><div><strong>${count(scores365StandingsCache)}</strong><small style="display:block;color:#91a7c1">Classificações em cache</small></div><div><strong>${count(links)}</strong><small style="display:block;color:#91a7c1">Vínculos manuais guardados</small></div><div><strong>${count(readStore('futeblox_last_broadcast_schedule_v4',{}).events||[])}</strong><small style="display:block;color:#91a7c1">Partidas na última agenda salva</small></div></div>`;
+  }
+
+  function renderAdminRuntimeDiagnostics() {
+    const root = $('#adminRuntimeDiagnostics'); if (!root) return;
+    const links = readStore(SCORES365_AGENDA_LINKS_KEY,{});
+    const version = document.querySelector('.footer')?.textContent.match(/V0\.\d+\.\d+/)?.[0] || 'Versão não identificada';
+    const rows = [
+      ['Aplicativo',version], ['Agenda carregada',String(state.events.length)], ['Data selecionada',state.date],
+      ['Fonte da agenda',state.provider||'Não identificada'], ['Cache da agenda',state.cached?'Sim':'Não'],
+      ['Vínculos 365Scores',String(Object.keys(links||{}).length)], ['Idioma',currentLanguage],
+      ['Ambiente',window.nvbDesktop?.isDesktop?'Desktop Windows':'Navegador']
+    ];
+    root.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;text-align:left">${rows.map(([label,value])=>`<div style="padding:9px;border:1px solid var(--line);border-radius:9px;background:#ffffff04"><small style="display:block;color:#8195b1">${escapeHtml(label)}</small><strong style="font-size:11px;color:#e4eefb;overflow-wrap:anywhere">${escapeHtml(value)}</strong></div>`).join('')}</div>`;
+  }
+
+  async function copyAdminDiagnostics() {
+    const links = readStore(SCORES365_AGENDA_LINKS_KEY,{});
+    const report = {version:document.querySelector('.footer')?.textContent.match(/V0\.\d+\.\d+/)?.[0]||'unknown',date:state.date,agendaMatches:state.events.length,agendaProvider:state.provider,agendaCached:state.cached,language:currentLanguage,scores365Links:Object.keys(links||{}).length,desktop:Boolean(window.nvbDesktop?.isDesktop),generatedAt:new Date().toISOString()};
+    try { await navigator.clipboard.writeText(JSON.stringify(report,null,2)); toast('Diagnóstico copiado.'); }
+    catch { toast('Não foi possível copiar automaticamente.'); }
+  }
+
   function render() {
     const isAdmin=state.view==='admin';
     $('#scheduleView').hidden=isAdmin;
@@ -2223,6 +2297,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     // Reavalia o catálogo do painel a cada renderização. Assim, uma fonte cadastrada
     // uma vez passa a aparecer em partidas atuais/futuras compatíveis.
     autoLinkCatalogStations(state.events);
+    renderScheduleDateStrip();
     const list=filteredEvents();
     $('#totalCount').textContent=state.events.length;
     $('#liveCount').textContent=state.events.filter(e=>e.status==='live').length;
@@ -2237,6 +2312,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     }
     $('#gamesGrid').innerHTML=renderGroupedGameCards(list);
     $('#gamesGrid').querySelectorAll('.game-card').forEach(card=>{card.addEventListener('click',()=>openMatch(card.dataset.id));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openMatch(card.dataset.id);}});});
+    $('#gamesGrid').querySelectorAll('[data-competition-section]').forEach(section=>section.addEventListener('toggle',()=>{const saved=readStore('nvb_competition_collapsed_v1',{});saved[section.dataset.competitionSection]=!section.open;writeStore('nvb_competition_collapsed_v1',saved);}));
     attachLogoFallback($('#gamesGrid'));
   }
   function openMatch(id) {
@@ -2313,29 +2389,27 @@ const BROADCASTER_ALIAS_GROUPS = [
     const teamLogo=id=>Number(id)>0?`https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${Number(id)}`:'';
     const mapTeam=(team,lineup)=>{
       const members=Array.isArray(lineup?.members)?lineup.members:[];
-      const mapPlayer=member=>({player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),role:String(member.position||''),photoUrl:String(member.photoUrl||'')},grid:''});
-      const rawCoach=lineup?.coach&&typeof lineup.coach==='object'?lineup.coach:{name:String(lineup?.coach||'')};
+      const mapPlayer=member=>{
+        const formation=member.formationPosition||{};
+        const line=Number(formation.line||0), row=Number(formation.fieldLine||formation.fieldSide||0);
+        // Só usa a coordenada bruta quando ela parece uma linha/coluna tática.
+        // Algumas respostas da 365Scores trazem coordenadas proporcionais ou vazias.
+        const grid=Number.isInteger(line)&&line>=1&&line<=6&&Number.isInteger(row)&&row>=1&&row<=5?`${line}:${row}`:'';
+        return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),photoUrl:String(member.photoUrl||'')},grid};
+      };
       return {
         team:{id:Number(team?.id)||0,name:String(team?.name||'Equipe'),logo:teamLogo(team?.id)},
         formation:String(lineup?.formation||''),
         startXI:members.filter(member=>Number(member.status)===1).map(mapPlayer),
         substitutes:members.filter(member=>Number(member.status)===2).map(mapPlayer),
-        coach:{id:Number(rawCoach.id)||0,name:String(rawCoach.name||''),photoUrl:String(rawCoach.photoUrl||'')}
+        coach:{name:String(lineup?.coach||'')}
       };
     };
-    const events=(Array.isArray(details.events)?details.events:[]).map(event=>({
-      type:String(event.type||''),player:{id:Number(event.playerId)||0,name:String(event.player||'')},
-      assist:{id:Number(event.secondaryPlayerId)||0,name:String(event.secondaryPlayer||'')},
-      playerId:Number(event.playerId)||0,secondaryPlayerId:Number(event.secondaryPlayerId)||0,
-      team:{name:String(event.team||'')},minute:String(event.minute||''),detail:String(event.detail||''),score:String(event.score||'')
-    }));
     return {
       fixture:{home:{id:Number(details.home?.id)||0,name:String(details.home?.name||'Mandante'),logo:teamLogo(details.home?.id)},away:{id:Number(details.away?.id)||0,name:String(details.away?.name||'Visitante'),logo:teamLogo(details.away?.id)}},
-      lineups:[mapTeam(details.home,details.lineups?.home),mapTeam(details.away,details.lineups?.away)],
-      events
+      lineups:[mapTeam(details.home,details.lineups?.home),mapTeam(details.away,details.lineups?.away)]
     };
   }
-
   function scores365EventMinute(value) {
     const raw=String(value||'').trim();
     if(!raw)return '—';
@@ -2345,18 +2419,10 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderScores365Events(details) {
     const events=Array.isArray(details?.events)?details.events:[];
     if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
-    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽↩','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
+    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
     const sorted=events.slice().sort((a,b)=>parseInt(String(a.minute||'').match(/\d+/)?.[0]||'0',10)-parseInt(String(b.minute||'').match(/\d+/)?.[0]||'0',10));
-    return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>{
-      const substitution=event.type==='Substituição';
-      const ownGoal=event.type==='Gol contra';
-      const title=substitution?(event.player?`Saiu: ${event.player}`:event.type):(ownGoal?`Gol contra · ${event.player||'Jogador não informado'}`:(event.player||event.type||'Evento'));
-      const note=substitution?(event.secondaryPlayer?`Entrou: ${event.secondaryPlayer}`:'Substituição'):[event.type,event.detail&&event.detail!==event.type?event.detail:'',event.score?`Placar ${event.score}`:''].filter(Boolean).join(' · ');
-      const kind=ownGoal?'own-goal':substitution?'substitution':/amarelo/.test(event.type)?'card yellow':/vermelho/.test(event.type)?'card red':'goal';
-      return `<article class="apifootball-event-row ${kind}"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(note)}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`;
-    }).join('')}</div></div>`;
+    return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>`<article class="apifootball-event-row"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(event.player||event.type||'Evento')}</strong><small>${escapeHtml(event.type||'')}${event.secondaryPlayer?` · ${escapeHtml(event.secondaryPlayer)}`:''}${event.detail&&event.detail!==event.type?` · ${escapeHtml(event.detail)}`:''}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`).join('')}</div></div>`;
   }
-
   function scores365TeamStatRows(row) {
     const source=Array.isArray(row?.stats)?row.stats:(Array.isArray(row?.rows)?row.rows:[]);
     const typeNames=new Map((Array.isArray(row?.statsTypes)?row.statsTypes:[]).map(item=>[Number(item.typeId),String(item.name||'')]));
@@ -2365,116 +2431,39 @@ const BROADCASTER_ALIAS_GROUPS = [
       const statList=Array.isArray(item?.stats)?item.stats:[item];
       for(const stat of statList) {
         const typeId=Number(stat?.typeId||stat?.type?.id||stat?.type||0);
-        const value=stat?.value??stat?.displayValue??stat?.val??null;
+        const value=stat?.value??stat?.displayValue??null;
         const name=String(stat?.name||stat?.typeName||stat?.type?.name||typeNames.get(typeId)||'').trim();
         if(name&&value!==null&&value!==undefined)out.push({name,value});
       }
     }
     return out;
   }
-
-  function scores365CanonicalStatName(rawName) {
-    const name=String(rawName||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[_-]+/g,' ').trim();
-    const rules=[
-      [/shots on target|shots on goal|on target|no gol|finalizacoes no alvo/,'No gol'],
-      [/blocked shots|shots blocked|blocked|bloqueadas/,'Bloqueadas'],
-      [/shots off target|shots off goal|off target|para fora|finalizacoes para fora/,'Para fora'],
-      [/big chances|grandes chances/,'Grandes chances'],
-      [/chances created|chances criadas/,'Chances criadas'],
-      [/shots inside box|inside the box|finalizacoes na area/,'Finalizações na área'],
-      [/shots outside box|outside the box|finalizacoes fora da area/,'Finalizações de fora da área'],
-      [/woodwork|post hit|shots hit post|na trave/,'Na trave'],
-      [/^(total )?(shots|shot attempts|attempts|finalizacoes)( total)?$/,'Finalizações'],
-      [/expected goals|^xg$|gols esperados/,'xG'],
-      [/^(ball )?possession|possession percentage|posse de bola/,'Posse de bola'],
-      [/corner|escanteio/,'Escanteios'],
-      [/key pass|passes decisivos/,'Passes decisivos'],
-      [/accurate long balls|passes longos certos/,'Passes longos certos'],
-      [/passes in final third|passes no ultimo terco/,'Passes no último terço'],
-      [/long pass|passes longos/,'Passes longos'],
-      [/cross|cruzamento/,'Cruzamentos'],
-      [/completed passes|passes completed|successful passes|passes completos/,'Passes completos'],
-      [/pass accuracy|accurate passes percent|passes %|precisao dos passes/,'Precisão dos passes'],
-      [/^total passes$|^passes$|passes tentados/,'Passes'],
-      [/dribble|drible/,'Dribles'],
-      [/save|defesa|defesas do goleiro/,'Defesas'],
-      [/tackle|desarme/,'Desarmes'],
-      [/interception|interceptacao/,'Interceptações'],
-      [/clearance|corte/,'Cortes'],
-      [/recovery|recuperacao/,'Recuperações'],
-      [/possession lost|lost possession|perda de posse|posse perdida/,'Posse perdida'],
-      [/aerial duel|duelo aereo/,'Duelos aéreos'],
-      [/ground duel|duelo no chao/,'Duelos no chão'],
-      [/fouls suffered|fouls drawn|faltas sofridas/,'Faltas sofridas'],
-      [/foul|faltas cometidas/,'Faltas cometidas'],
-      [/yellow card|cartao amarelo/,'Cartões amarelos'],
-      [/red card|cartao vermelho/,'Cartões vermelhos'],
-      [/offside|impedimento/,'Impedimentos']
-    ];
-    const match=rules.find(([pattern])=>pattern.test(name));
-    return match?match[1]:String(rawName||'').trim();
-  }
-
   function renderScores365Statistics(details) {
     const statistics=details?.statistics||{};
     const teams=Array.isArray(statistics.competitorRows)?statistics.competitorRows:[];
     const homeName=String(details.home?.name||'Mandante'),awayName=String(details.away?.name||'Visitante');
-    const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-    const homeStats=teams.find(row=>fold(row.team||row.competitor?.name||row.name)===fold(homeName))||teams.find(row=>Number(row.competitorNum)===1)||teams[0];
-    const awayStats=teams.find(row=>fold(row.team||row.competitor?.name||row.name)===fold(awayName))||teams.find(row=>Number(row.competitorNum)===2)||teams.find(row=>row!==homeStats)||teams[1];
-    const toMap=row=>{
-      const map=new Map();
-      for(const stat of scores365TeamStatRows(row)) {
-        const canonical=scores365CanonicalStatName(stat.name);
-        if(canonical&&!map.has(canonical))map.set(canonical,stat.value);
-      }
-      return map;
-    };
-    const homeMap=toMap(homeStats),awayMap=toMap(awayStats);
+    const homeStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===homeName)||teams[0];
+    const awayStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===awayName)||teams.find(row=>row!==homeStats)||teams[1];
+    const h=scores365TeamStatRows(homeStats),a=scores365TeamStatRows(awayStats);
     const shots=Array.isArray(details.shots)?details.shots:[];
-    const shotsFor=(name,side)=>shots.filter(shot=>fold(shot.team)===fold(name)||(!shot.team&&Number(shot.competitorNum)===side));
-    const addIfMissing=(map,key,value)=>{if(value!==null&&value!==undefined&&!map.has(key))map.set(key,value);};
-    for(const [name,map,side] of [[homeName,homeMap,1],[awayName,awayMap,2]]) {
-      const teamShots=shotsFor(name,side);
-      if(teamShots.length) {
-        addIfMissing(map,'Finalizações',teamShots.length);
-        const countBy=(pattern)=>teamShots.filter(shot=>pattern.test(fold(shot.outcome))).length;
-        addIfMissing(map,'No gol',countBy(/goal|saved|save|on target/));
-        addIfMissing(map,'Bloqueadas',countBy(/blocked/));
-        addIfMissing(map,'Para fora',countBy(/off target|wide|off goal|missed/));
-        addIfMissing(map,'Na trave',countBy(/woodwork|post|crossbar/));
-        const xg=teamShots.reduce((sum,shot)=>sum+(Number.isFinite(Number(shot.xg))?Number(shot.xg):0),0);
-        if(teamShots.some(shot=>shot.xg!==null&&shot.xg!==undefined&&Number.isFinite(Number(shot.xg))))addIfMissing(map,'xG',xg.toFixed(2));
-      }
-    }
-    const categories=[
-      ['ATAQUE',['Finalizações','No gol','Para fora','Bloqueadas','Na trave','Finalizações na área','Finalizações de fora da área','xG','Grandes chances','Chances criadas','Escanteios']],
-      ['POSSE E PASSES',['Posse de bola','Passes','Passes completos','Precisão dos passes','Passes longos','Passes longos certos','Passes decisivos','Passes no último terço','Cruzamentos','Dribles']],
-      ['DEFESA',['Defesas','Desarmes','Interceptações','Cortes','Recuperações','Posse perdida','Duelos aéreos','Duelos no chão']],
-      ['DISCIPLINA',['Faltas cometidas','Faltas sofridas','Cartões amarelos','Cartões vermelhos','Impedimentos']]
-    ];
-    const number=value=>{const parsed=Number(String(value??'').replace('%','').replace(',','.').replace(/[^0-9.+-]/g,''));return Number.isFinite(parsed)?Math.max(0,parsed):null;};
-    const format=value=>value===null||value===undefined?'—':String(value);
-    const homeColor=window.NVBLineupUI?.teamPrimaryColor?.(homeName)||'#32c8b5';
-    const awayColor=window.NVBLineupUI?.teamPrimaryColor?.(awayName)||'#688ef0';
-    const categoryMarkup=categories.map(([category,names])=>{
-      const rows=names.filter(name=>homeMap.has(name)||awayMap.has(name));
-      if(!rows.length)return '';
-      return `<section class="scores365-stat-category"><h4>${category}</h4><div class="scores365-stat-category-grid">${rows.map(name=>{
-        const homeValue=homeMap.get(name),awayValue=awayMap.get(name);
-        const h=number(homeValue),a=number(awayValue);
-        const homeShare=h!==null&&a!==null&&h+a>0?h/(h+a)*100:(h!==null&&a===null?100:0);
-        const awayShare=h!==null&&a!==null&&h+a>0?100-homeShare:(a!==null&&h===null?100:0);
-        return `<article class="scores365-stat-card"><div class="scores365-stat-values"><strong>${escapeHtml(format(homeValue))}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(format(awayValue))}</strong></div><div class="scores365-stat-bar"><i class="home" style="width:${homeShare.toFixed(1)}%"></i><i class="away" style="width:${awayShare.toFixed(1)}%"></i></div></article>`;
-      }).join('')}</div></section>`;
-    }).join('');
+    const addShotCount=(rows,teamName)=>{
+      const count=shots.filter(shot=>shot.team===teamName).length;
+      const exists=rows.some(row=>/^(finalizacoes|total shots|shots)$/i.test(String(row.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()));
+      if(count>0&&!exists)rows.push({name:'Finalizações',value:count});
+    };
+    addShotCount(h,homeName);addShotCount(a,awayName);
+    const get=(rows,name)=>rows.find(row=>row.name.toLowerCase()===name.toLowerCase())?.value??'—';
+    const commonNames=[...new Set([...h.map(row=>row.name),...a.map(row=>row.name)])].slice(0,24);
     const playerRows=Array.isArray(statistics.playerRows)?statistics.playerRows:[];
-    const playerMarkup=playerRows.length?`<details class="scores365-player-stats"><summary>Desempenho individual · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,40).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,6).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
-    const labels=`<div class="apifootball-stat-team-labels" style="--stat-home-color:${escapeHtml(homeColor)};--stat-away-color:${escapeHtml(awayColor)}"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div>`;
-    const content=categoryMarkup?`${labels}<div class="scores365-stat-categories" style="--stat-home-color:${escapeHtml(homeColor)};--stat-away-color:${escapeHtml(awayColor)}">${categoryMarkup}</div>`:'<div class="apifootball-message">A fonte não disponibilizou estatísticas coletivas suficientes para esta partida.</div>';
-    return `${content}${playerMarkup}`;
+    const xgFor=name=>shots.filter(shot=>shot.team===name&&Number.isFinite(shot.xg)).reduce((sum,shot)=>sum+shot.xg,0);
+    const xgHome=xgFor(homeName),xgAway=xgFor(awayName);
+    let content='';
+    if(commonNames.length)content=`<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${commonNames.map(name=>`<article class="apifootball-stat-card"><div class="apifootball-stat-values"><strong>${escapeHtml(get(h,name))}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(get(a,name))}</strong></div></article>`).join('')}</div></div>`;
+    else content='<div class="apifootball-message">Não encontramos estatísticas numéricas por equipe nesta resposta. Isso pode variar conforme a cobertura e os dados fornecidos para cada partida.</div>';
+    const xgMarkup=shots.length?`<div class="multi-api-provider" style="margin-top:10px"><strong>Finalizações · xG somado dos eventos</strong><span>${escapeHtml(homeName)}: ${xgHome.toFixed(2)} · ${escapeHtml(awayName)}: ${xgAway.toFixed(2)} · ${shots.length} finalização(ões) no gráfico.</span></div>`:'';
+    const playerMarkup=playerRows.length?`<details style="margin-top:10px"><summary class="admin-small">Estatísticas individuais · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,30).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,5).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
+    return `${content}${xgMarkup}${playerMarkup}`;
   }
-
   function scores365StandingsCacheKey(competitionId, seasonNum=0, stageNum=0) {
     const id=Number(competitionId)||0;
     return id?`${id}:${Number(seasonNum)||'current'}:${Number(stageNum)||'all'}`:'';
@@ -2517,7 +2506,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     const tabs=[['livescore','Livescore'],['lineups','Escalações'],['statistics','Estatísticas'],['standings','Classificação']];
     const detail=cache?.details||null;
     const content=detail?renderScores365MatchContent(detail,activeTab):'<div class="apifootball-message">Vínculo manual confirmado. Consulte a 365Scores para carregar os dados desta partida.</div>';
-    return `<section class="apifootball-panel match-center-panel scores365-match-panel" id="scores365MatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">FONTE COMPLEMENTAR</div><h3>⚽ Dados da 365Scores</h3><div class="apifootball-muted">Vínculo confirmado manualmente · gameId ${Number(link.gameId)}${link.competitionId?` · competitionId ${Number(link.competitionId)}`:''}</div></div><div class="apifootball-match-actions"><span class="api-football-status-pill ${detail?'ok':'warn'}">${detail?'Dados disponíveis':'Vinculado'}</span><button class="btn small" type="button" id="scores365LoadMatchData">${detail?'Atualizar 365Scores':'Consultar 365Scores'}</button></div></div><div id="scores365MatchStatus" class="apifootball-key-note">${detail?`Dados recebidos pela 365Scores${cache.cached?' · cache':''}.`:'A consulta é manual. A agenda original e a API-Football permanecem inalteradas.'}</div>${detail?`<div class="apifootball-tabs match-center-tabs" role="tablist" aria-label="Dados da 365Scores">${tabs.map(([id,label])=>`<button class="apifootball-tab ${activeTab===id?'active':''}" type="button" role="tab" aria-selected="${activeTab===id}" data-scores365-match-tab="${id}">${label}</button>`).join('')}</div><div class="apifootball-tab-content match-center-tab-content">${content}</div>`:`<div class="apifootball-result">${content}</div>`}</section>`;
+    return `<section class="apifootball-panel match-center-panel scores365-match-panel" id="scores365MatchDataPanel"><div class="apifootball-panel-head"><div><div class="eyebrow">FONTE COMPLEMENTAR</div><h3>⚽ Dados da 365Scores</h3><div class="apifootball-muted">Vínculo confirmado manualmente · gameId ${Number(link.gameId)}${link.competitionId?` · competitionId ${Number(link.competitionId)}`:''}</div></div><div class="apifootball-match-actions"><span class="api-football-status-pill ${detail?'ok':'warn'}">${detail?'Dados disponíveis':'Vinculado'}</span><button class="btn small" type="button" id="scores365LoadMatchData">${detail?'Atualizar 365Scores':'Consultar 365Scores'}</button></div></div><div id="scores365MatchStatus" class="apifootball-key-note">${detail?`Dados recebidos pela 365Scores${cache.cached?' · cache':''}.`:'A consulta é manual. A agenda original permanece intacta.'}</div>${detail?`<div class="apifootball-tabs match-center-tabs" role="tablist" aria-label="Dados da 365Scores">${tabs.map(([id,label])=>`<button class="apifootball-tab ${activeTab===id?'active':''}" type="button" role="tab" aria-selected="${activeTab===id}" data-scores365-match-tab="${id}">${label}</button>`).join('')}</div><div class="apifootball-tab-content match-center-tab-content">${content}</div>`:`<div class="apifootball-result">${content}</div>`}</section>`;
   }
   function bindScores365MatchPanelEvents(event) {
     const panel=$('#scores365MatchDataPanel');
@@ -3225,7 +3214,6 @@ const BROADCASTER_ALIAS_GROUPS = [
     $('#modalTitle').textContent=`${e.home} x ${e.away}`;
     const status=statusLabel(e.status);
     const apiSnapshot=apiFootballMatchCache[String(e.id)]||null;
-    const scores365Details=scores365MatchCache[String(e.id)]?.details||null;
     const apiGoals=apiSnapshot?.fixture?.goals;
     const externalScore=footballDataScoreFor(e);
     const displayHomeScore=apiGoals?.home ?? e.homeScore ?? externalScore.home;
@@ -3238,14 +3226,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     const hasPenaltyScore=displayPenaltyHome!==null&&displayPenaltyHome!==undefined&&displayPenaltyAway!==null&&displayPenaltyAway!==undefined;
     const penaltyScoreMarkup=hasPenaltyScore?`<div class="match-penalty-score">PÊNALTIS <strong>${escapeHtml(displayPenaltyHome)} × ${escapeHtml(displayPenaltyAway)}</strong></div>`:'';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
-    const matchTime=e.timeText || (scores365Details?.startTime?scores365DateTimeLabel(scores365Details.startTime):'Horário a confirmar');
-    const roundValue=scores365Details?.round||e.round||externalScore.match?.matchday||'';
-    const round=roundValue?`Rodada: ${escapeHtml(/^\d+$/.test(String(roundValue))?`Rodada ${roundValue}`:roundValue)}`:'';
-    const venueName=scores365Details?.venue||e.venue||'';
-    const venueLocation=[scores365Details?.venueCity,scores365Details?.venueCountry].filter(Boolean).join(' · ');
-    const venue=venueName?`Estádio: ${escapeHtml(venueName)}`:'';
-    const referee=scores365Details?.referee||'';
-    const venueSub=[venueLocation,scores365Details?.venueAddress,scores365Details?.venueCapacity?`Capacidade ${Number(scores365Details.venueCapacity).toLocaleString('pt-BR')}`:''].filter(Boolean).join(' · ');
+    const matchTime=e.timeText || 'Horário a confirmar';
+    const round=e.round?`Rodada: ${escapeHtml(e.round)}`:'';
+    const venue=e.venue?`Estádio: ${escapeHtml(e.venue)}`:'';
     const origins=(e.sourceNames||[]).join(' + ') || e.sourceProvider || 'Agenda pública';
     const sourceCount=sources.length;
     const player=active?`<iframe src="${escapeHtml(active.url)}" title="${escapeHtml(active.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>`:renderEmptyPlayerState(e,catalogMatches);
@@ -3256,7 +3239,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     $('#modalContent').innerHTML=`
       <section class="match-hero">
         <div class="match-hero-top">
-          <div class="match-league-block"><div class="eyebrow">CENTRAL DA PARTIDA</div><div class="match-league-name">🏆 ${escapeHtml(scores365Details?.competition?.name||e.league)}</div></div>
+          <div class="match-league-block"><div class="eyebrow">CENTRAL DA PARTIDA</div><div class="match-league-name">🏆 ${escapeHtml(e.league)}</div></div>
           <div class="match-hero-actions"><span class="status ${e.status}">${status}</span><button class="btn secondary small" id="favoriteToggle" type="button">${favoriteLabel}</button></div>
         </div>
         <div class="match-scoreboard">
@@ -3264,12 +3247,10 @@ const BROADCASTER_ALIAS_GROUPS = [
           <div class="match-score-center"><div class="match-score">${score}</div>${penaltyScoreMarkup}<div class="match-kickoff">${escapeHtml(matchTime)}</div></div>
           <div class="match-team-away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '',e.league)}<div class="match-team-name">${escapeHtml(e.away)}</div><div class="match-team-role">VISITANTE</div></div>
         </div>
-        <div class="match-facts match-facts-enriched">
+        <div class="match-facts">
           <div class="match-fact"><span>📅 DATA</span><strong>${escapeHtml(matchDate)}</strong></div>
           <div class="match-fact"><span>🕒 HORÁRIO</span><strong>${escapeHtml(matchTime)}</strong><small>Horário local do evento</small></div>
-          <div class="match-fact"><span>📍 LOCAL</span><strong>${venue?venue.replace(/^Estádio: /,''):'Não informado'}</strong><small>${escapeHtml(venueSub||'Estádio / cidade não informados')}</small></div>
-          <div class="match-fact"><span>🏆 RODADA</span><strong>${round?round.replace(/^Rodada: /,''):'Não informada'}</strong><small>${escapeHtml(scores365Details?.competition?.name||e.league||'Competição')}</small></div>
-          <div class="match-fact"><span>🧑‍⚖️ ÁRBITRO</span><strong>${escapeHtml(referee||'Não informado')}</strong><small>${escapeHtml(scores365Details?.status||status||'')}</small></div>
+          <div class="match-fact"><span>📍 LOCAL</span><strong>${venue?venue.replace(/^Estádio: /,''):'Não informado'}</strong><small>${round || 'Detalhes adicionais não informados'}</small></div>
         </div>
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
       </section>
@@ -4330,7 +4311,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.20',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.19.0',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -4413,6 +4394,12 @@ const BROADCASTER_ALIAS_GROUPS = [
     warn.innerHTML = '⚠ Você abriu o arquivo direto (file://). A agenda precisa do servidor local: feche esta aba e abra pelo <b>iniciar-windows.bat</b> (ele abre o navegador sozinho).';
     const sv = $('#scheduleView'); if (sv) sv.prepend(warn);
   }
+  buildAdminTabs();
+  $('#scheduleDateStrip')?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-schedule-date]');
+    if(!button || button.dataset.scheduleDate===state.date)return;
+    state.date=button.dataset.scheduleDate;$('#dateInput').value=state.date;loadEvents({force:false});
+  });
   $('#dateInput').value=state.date;
   $('#broadcastMarketFilter').value=marketKey(state.markets);
   $('#broadcastMarketFilter').addEventListener('change',()=>{state.markets=normalizeMarkets($('#broadcastMarketFilter').value);writeStore('futeblox_broadcast_markets_v1',state.markets);state.events=[];state.cached=false;loadEvents({force:true});});
