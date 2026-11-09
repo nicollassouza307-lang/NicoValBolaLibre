@@ -407,7 +407,7 @@ function normalizeMatchTeam(value) {
   key = key.replace(/\b(?:football club|fc|cf|club|deportivo|futbol club|football|soccer|clube)\b/g, ' ').replace(/\s+/g, ' ').trim();
   // Sufixos comuns de escudos/fontes brasileiras (RJ, MG, SP, RS etc.) não
   // fazem parte do nome principal do clube.
-  key = key.replace(/\s+(?:rj|mg|sp|rs|pr|ba|sc|pe|ce|go|mt|ms|df|pb|rn|al|se|pi|to|fr|paulista|carioca)$/i, '').trim();
+  key = key.replace(/\s+(?:rj|mg|sp|rs|pr|ba|sc|pe|ce|go|mt|ms|df|pb|rn|al|es|se|pi|to|fr|paulista|carioca)$/i, '').trim();
   return MATCH_TEAM_ALIASES.get(key) || key;
 }
 function editDistance(left, right) {
@@ -534,7 +534,7 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
     const away = firstText(event.away, event.awayName, event.awayTeam?.name, event.teams?.away?.name);
     const date = parseAgendaDate(event);
     const competition = firstText(event.league, event.competition, event.competitionName);
-    const diagnostics = { sourceGames: games.length, sameDateGames: 0, adjacentDateGames: 0, gamesWithoutDate: 0, bestTeamScore: 0, bestGame: '' };
+    const diagnostics = { sourceGames: games.length, sameDateGames: 0, adjacentDateGames: 0, gamesWithoutDate: 0, gamesWithoutTeams: 0, bestTeamScore: 0, bestHomeScore: 0, bestAwayScore: 0, bestPairAverage: 0, bestGame: '' };
     if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], diagnostics, reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
     const candidates = [];
     for (const game of games) {
@@ -547,7 +547,7 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       else continue;
 
       const gameHome = firstText(item.home?.name), gameAway = firstText(item.away?.name);
-      if (!gameHome || !gameAway) continue;
+      if (!gameHome || !gameAway) { diagnostics.gamesWithoutTeams++; continue; }
       const directHome = teamNameSimilarity(home, gameHome);
       const directAway = teamNameSimilarity(away, gameAway);
       const reverseHome = teamNameSimilarity(home, gameAway);
@@ -556,36 +556,53 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       const reversedScore = Math.min(reverseHome, reverseAway);
       const isReversed = reversedScore > direct;
       const teamScore = Math.max(direct, reversedScore);
-      if (teamScore > diagnostics.bestTeamScore) {
+      const selectedHomeScore = isReversed ? reverseHome : directHome;
+      const selectedAwayScore = isReversed ? reverseAway : directAway;
+      const pairAverage = (selectedHomeScore + selectedAwayScore) / 2;
+      const strongestSide = Math.max(selectedHomeScore, selectedAwayScore);
+      if (pairAverage > diagnostics.bestPairAverage / 100) {
         diagnostics.bestTeamScore = Math.round(teamScore * 100);
+        diagnostics.bestHomeScore = Math.round(selectedHomeScore * 100);
+        diagnostics.bestAwayScore = Math.round(selectedAwayScore * 100);
+        diagnostics.bestPairAverage = Math.round(pairAverage * 100);
         diagnostics.bestGame = `${gameHome} x ${gameAway} (${gameDate})`;
       }
       const agendaMinutes = parseAgendaMinutes(event);
       const gameMinutes = localMinutesInSaoPaulo(item.startTime || item.startDate || item.date || item.startTimestamp || item.timestamp);
       const rawTimeDiff = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
       const timeDiffMinutes = rawTimeDiff === null ? null : dayDistance === 1 ? Math.min(rawTimeDiff, 1440 - rawTimeDiff) : rawTimeDiff;
-      // Aceita variações de nome oficial/curto. Uma data vizinha só é plausível
-      // se a diferença de relógio indicar cruzamento da meia-noite (ex.: 23:50/00:10).
-      if (teamScore < 0.50 || (dayDistance === 1 && (teamScore < 0.88 || rawTimeDiff === null || rawTimeDiff < 1380 || timeDiffMinutes > 90))) continue;
       const gameCompetition = firstText(item.competition?.name);
       const competitionMatch = compareCompetitionNames(competition, gameCompetition);
       const strictCompetitionMatch = competitionAutoMatch(competition, gameCompetition);
+      // Para a mesma data, um time reconhecido já pode revelar um candidato
+      // útil para revisão. O par fraco nunca é auto-vinculado. Para data vizinha,
+      // mantemos a regra estrita de virada da meia-noite.
+      const sameLocalDate = dayDistance === 0;
+      const broadSameDateCandidate = sameLocalDate && (
+        teamScore >= 0.50 ||
+        (strongestSide >= 0.68 && pairAverage >= 0.30) ||
+        (competitionMatch === true && strongestSide >= 0.50 && pairAverage >= 0.25)
+      );
+      const midnightCandidate = dayDistance === 1 && teamScore >= 0.88 && rawTimeDiff !== null && rawTimeDiff >= 1380 && timeDiffMinutes <= 90;
+      if (!broadSameDateCandidate && !midnightCandidate) continue;
+      const rankingTeamScore = Math.max(teamScore, pairAverage * 0.78);
       const timeScore = timeDiffMinutes === null ? 0.45 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 30 ? 0.9 : timeDiffMinutes <= 60 ? 0.72 : timeDiffMinutes <= 90 ? 0.5 : timeDiffMinutes <= 180 ? 0.2 : 0;
       const competitionScore = competitionMatch === true ? 0.13 : competitionMatch === false ? 0 : 0.07;
       const orientationScore = isReversed ? 0.015 : 0.075;
-      const score = Math.max(0, Math.min(100, Math.round(teamScore * 0.72 * 100 + timeScore * 10 + competitionScore * 100 + orientationScore * 100)));
+      const score = Math.max(0, Math.min(100, Math.round(rankingTeamScore * 0.72 * 100 + timeScore * 10 + competitionScore * 100 + orientationScore * 100)));
       const exactOriented = directHome >= 0.98 && directAway >= 0.98 && !isReversed;
-      const sameLocalDate = dayDistance === 0;
-      const confidence = exactOriented && sameLocalDate && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : 'revisar';
+      const confidence = exactOriented && sameLocalDate && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : teamScore >= 0.50 ? 'revisar' : 'baixa';
+      const reasons = [exactOriented ? 'times correspondentes' : isReversed ? 'ordem invertida ou nomes aproximados' : 'comparação parcial de nomes', sameLocalDate ? 'mesma data local' : 'data vizinha: conferir virada de dia', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`, `mandante ${Math.round(selectedHomeScore * 100)}%`, `visitante ${Math.round(selectedAwayScore * 100)}%`];
+      if (teamScore < 0.50) reasons.push('sugestão fraca: exige confirmação manual');
       candidates.push({
         gameId: positiveId(item.gameId), startTime: item.startTime, home: gameHome, away: gameAway,
         homeId: positiveId(item.home?.id), awayId: positiveId(item.away?.id),
         homeScore: item.home?.score ?? null, awayScore: item.away?.score ?? null,
         status: firstText(item.status), competition: gameCompetition, competitionId: positiveId(item.competition?.id),
         score, confidence, autoEligible: false, reversed: isReversed, exactOriented,
-        teamScore: Math.round(teamScore * 100), competitionMatch,
-        competitionAutoMatch: strictCompetitionMatch, timeDiffMinutes, dateDiffDays: dayDistance,
-        reasons: [exactOriented ? 'times correspondentes' : isReversed ? 'ordem dos times invertida ou nomes aproximados' : 'nomes curtos/oficiais compatíveis', sameLocalDate ? 'mesma data local' : 'data vizinha: conferir fuso ou adiamento', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`]
+        teamScore: Math.round(teamScore * 100), teamAverageScore: Math.round(pairAverage * 100),
+        homeTeamScore: Math.round(selectedHomeScore * 100), awayTeamScore: Math.round(selectedAwayScore * 100),
+        competitionMatch, competitionAutoMatch: strictCompetitionMatch, timeDiffMinutes, dateDiffDays: dayDistance, reasons
       });
     }
     candidates.sort((a, b) => b.score - a.score || b.teamScore - a.teamScore);
@@ -725,8 +742,18 @@ class Scores365Service {
     const formattedDate = isoToBrDate(date);
     const params = { sports: '1', startDate: formattedDate, endDate: formattedDate, showOdds: 'false', onlyMajorGames: 'false', withTop: 'false' };
     const result = await this.request(ENDPOINTS.allScores, params, { cacheKey: this.gamesForDateCacheKey(date), ttlMs: 60_000, force: Boolean(options.force) });
-    const games = extractGames(result.data).map(normalizeGame).filter(game => game.gameId && (game.home.name || game.away.name));
-    return { date, games, count: games.length, cached: result.cached, record: result.record, rawCount: extractGames(result.data).length };
+    const rawGames = extractGames(result.data);
+    const normalizedGames = rawGames.map(normalizeGame);
+    const games = normalizedGames.filter(game => game.gameId && (game.home.name || game.away.name));
+    const normalization = {
+      raw: rawGames.length,
+      normalized: games.length,
+      missingGameId: normalizedGames.filter(game => !game.gameId).length,
+      missingHomeName: normalizedGames.filter(game => !game.home.name).length,
+      missingAwayName: normalizedGames.filter(game => !game.away.name).length,
+      missingBothTeamNames: normalizedGames.filter(game => !game.home.name && !game.away.name).length
+    };
+    return { date, games, count: games.length, cached: result.cached, record: result.record, rawCount: rawGames.length, normalization };
   }
 
   async getGame(gameId, options = {}) {

@@ -1120,7 +1120,7 @@ const requestHandler = async (req, res) => {
       if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
       return json(res, 200, {
         ok: true, provider: '365Scores', experimental: true, date: result.date,
-        games: result.games, count: result.count, rawCount: result.rawCount,
+        games: result.games, count: result.count, rawCount: result.rawCount, normalization: result.normalization,
         cached: Boolean(result.cached || shared), shared: Boolean(shared),
         agendaChanged: false, message: 'Consulta de diagnóstico: nenhuma partida foi adicionada ou alterada na agenda.'
       });
@@ -1148,7 +1148,7 @@ const requestHandler = async (req, res) => {
       const candidateCount = matches.reduce((sum, item) => sum + item.candidates.length, 0);
       return json(res, 200, {
         ok:true, provider:'365Scores', experimental:true, date,
-        agendaCount:agendaEvents.length, sourceGamesCount:result.count,
+        agendaCount:agendaEvents.length, sourceGamesCount:result.count, sourceRawCount:result.rawCount, normalization:result.normalization,
         matches, candidateCount, cached:Boolean(result.cached || shared), shared:Boolean(shared),
         agendaChanged:false,
         message:'Correspondências calculadas para o cliente. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
@@ -1644,7 +1644,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.19.2 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.19.3 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

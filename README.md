@@ -1,3 +1,14 @@
+# NicoValBolaLibre V0.19.3
+
+## V0.19.3 · Diagnóstico e recuperação de candidatos 365Scores
+
+- O comparador agora mostra sugestões de revisão quando pelo menos um dos clubes tem correspondência forte, mesmo que o segundo venha com nome regional ou extenso.
+- Sugestões fracas são identificadas explicitamente, exibem a semelhança separada de mandante e visitante e nunca podem ser associadas automaticamente.
+- O diagnóstico passa a mostrar o melhor par encontrado, com percentuais individuais e média, em vez de depender apenas da menor semelhança dos dois clubes.
+- A busca diária informa quantos registros vieram da 365Scores, quantos foram normalizados e quantos perderam ID ou nomes dos clubes.
+- Incluído o sufixo estadual ES na normalização de nomes de clubes.
+- A associação automática continua restrita às correspondências exatas e inequívocas já exigidas pela versão anterior.
+
 # NicoValBolaLibre V0.19.2
 
 ## V0.19.2 · Correção de correspondências da 365Scores
@@ -34,13 +45,15 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.19.2` e `Push origin`.
-3. Crie e envie a tag `v0.19.2`.
+2. Faça commit `NicoValBolaLibre V0.19.3` e `Push origin`.
+3. Crie e envie a tag `v0.19.3`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
 
 ## Testes
+
+- Nesta versão: 21 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
 - `npm run test:365scores-agenda-match`: aliases, nomes curtos/oficiais, fuso local, virada de data, competição, horário, segurança de inversão e bloqueio de candidatas ambíguas.

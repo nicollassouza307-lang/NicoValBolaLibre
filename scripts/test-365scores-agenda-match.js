@@ -87,4 +87,18 @@ assert.equal(noCandidate[0].diagnostics.sourceGames, 1, 'O diagnóstico deve mos
 assert.equal(noCandidate[0].diagnostics.sameDateGames, 1, 'O diagnóstico deve separar os jogos na mesma data.');
 assert.ok(noCandidate[0].diagnostics.bestTeamScore >= 0, 'O diagnóstico deve registrar a melhor semelhança encontrada.');
 
-console.log('PASSOU: correspondência por clubes, aliases, sufixos oficiais, fuso local, virada de data, competição, horário, diagnóstico e revisão de ambiguidades.');
+// Um clube pode bater exatamente enquanto o outro vem com nome regional/extenso.
+// O jogo deve aparecer como sugestão fraca para revisão, nunca como auto-vínculo.
+const partialName = matchAgendaEvents(
+  [{ id: 'agenda-partial', dateEvent: '2026-11-09', timeText: '20:00', home: 'Flamengo', away: 'Vitória ES', league: 'Brasileirão Série A' }],
+  [{ gameId: 800, startTime: '2026-11-09T20:05:00-03:00', home: { id: 10, name: 'Flamengo' }, away: { id: 11, name: 'Vitória Futebol Clube do Espírito Santo' }, competition: { id: 77, name: 'Brasileirao' } }]
+);
+assert.equal(partialName[0].candidates[0].gameId, 800, 'Um lado reconhecido deve permitir exibir sugestão para revisão manual.');
+assert.equal(partialName[0].candidates[0].confidence, 'baixa', 'Correspondência parcial deve ser marcada como fraca.');
+assert.equal(partialName[0].candidates[0].autoEligible, false, 'Correspondência parcial nunca pode ser auto-vinculada.');
+assert.equal(partialName[0].candidates[0].homeTeamScore, 100);
+assert.ok(partialName[0].candidates[0].reasons.some(reason => reason.includes('visitante')));
+assert.equal(partialName[0].diagnostics.bestHomeScore, 100);
+assert.ok(partialName[0].diagnostics.bestAwayScore < 100);
+
+console.log('PASSOU: correspondência por clubes, aliases, nomes parciais, fuso local, virada de data, competição, horário, diagnóstico e revisão segura de ambiguidades.');

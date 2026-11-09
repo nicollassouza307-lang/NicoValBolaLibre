@@ -88,6 +88,7 @@ try {
   assert.equal(games.games[0].gameId, 12345);
   assert.equal(games.games[0].home.name, 'Flamengo');
   assert.equal(games.games[0].competition.id, 77);
+  assert.deepEqual(games.normalization, { raw: 1, normalized: 1, missingGameId: 0, missingHomeName: 0, missingAwayName: 0, missingBothTeamNames: 0 });
   assert.equal(new URL(urls[1].url).searchParams.get('startDate'), '09/11/2026');
   const cachedGames = await service.getGamesForDate('2026-11-09');
   assert.equal(cachedGames.cached, true);
