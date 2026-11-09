@@ -1,6 +1,6 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "Central de partidas NicoValBolaLibre com agenda, Livescore e integração avançada 365Scores",
   "private": true,
   "main": "electron/main.js",
@@ -30,7 +30,8 @@
     "test:mega-update-foundation": "node scripts/test-mega-update-foundation.js",
     "test:agenda-market": "node scripts/test-agenda-market-filter.js",
     "test:365scores-big-update-ui": "node scripts/test-365scores-big-update-ui.js",
-    "test:player-diagnostic": "node scripts/test-player-diagnostic-station-create.js"
+    "test:player-diagnostic": "node scripts/test-player-diagnostic-station-create.js",
+    "test:365scores-over-500": "node scripts/test-365scores-match-over-500.js"
   },
   "devDependencies": {
     "electron": "^38.0.0",

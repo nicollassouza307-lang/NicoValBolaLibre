@@ -1,4 +1,13 @@
-# NicoValBolaLibre V0.20.0
+# NicoValBolaLibre V0.20.1
+
+
+## V0.20.1 · Correção de cobertura do comparador 365Scores
+
+- Removido o corte arbitrário de 500 jogos na comparação da agenda. Todos os jogos normalizados recebidos na janela de três datas agora são avaliados.
+- O diagnóstico `sourceGames` passa a refletir a quantidade integral de jogos realmente examinados.
+- `bestGame` deixa de ficar vazio quando todas as semelhanças são zero; também são retornados os três melhores registros analisados (`bestGames`).
+- Admin agora exibe os três melhores registros examinados quando uma partida fica sem candidato, facilitando descobrir se o jogo chegou ao comparador.
+- Adicionado teste de regressão com mais de 1.600 jogos e o confronto correto depois da posição 500.
 
 ## V0.20.0 · BIG UPDATE inicial: associação, categorias, Livescore e diagnóstico de emissoras
 
@@ -50,17 +59,18 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.20.0` e `Push origin`.
-3. Crie e envie a tag `v0.20.0`.
+2. Faça commit `NicoValBolaLibre V0.20.1` e `Push origin`.
+3. Crie e envie a tag `v0.20.1`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
 
 ## Testes
 
-- Nesta versão: 23 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
+- Nesta versão: 24 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
+- `npm run test:365scores-over-500`: garante comparação integral acima de 500 jogos e diagnóstico dos três melhores registros.
 - `npm run test:365scores-agenda-match`: aliases, IDs, categorias, nomes curtos/oficiais, fuso local, datas vizinhas, competição, horário auxiliar e bloqueio de candidatas ambíguas.
 - `npm run test:365scores-big-update-ui`: resumo do Livescore, minutos, placares seguros, horário 365Scores e escudos por ID.
 - `npm run test:player-diagnostic`: criação de emissoras pelo diagnóstico de Players e categoria Diversos.

@@ -560,7 +560,10 @@ function competitionAutoMatch(left, right) {
 }
 function matchAgendaEvents(agendaEvents, scoresGames) {
   const events = asArray(agendaEvents).slice(0, 250);
-  const games = asArray(scoresGames).slice(0, 500);
+  // Não cortar a lista por posição: o AllScores agrega jogos de várias datas,
+  // e a ordem da resposta pode colocar centenas de partidas de ontem antes
+  // das partidas da data solicitada. Cada agenda deve avaliar toda a janela.
+  const games = asArray(scoresGames);
   return events.map(eventValue => {
     const event = asObject(eventValue);
     const home = firstText(event.home, event.homeName, event.homeTeam?.name, event.teams?.home?.name);
@@ -573,6 +576,8 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
     const diagnostics = { sourceGames: games.length, sameDateGames: 0, adjacentDateGames: 0, gamesWithoutDate: 0, gamesWithoutTeams: 0, bestTeamScore: 0, bestHomeScore: 0, bestAwayScore: 0, bestPairAverage: 0, bestGame: '' };
     if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], diagnostics, reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
     const candidates = [];
+    let bestDiagnostic = null;
+    const diagnosticGames = [];
     for (const game of games) {
       const item = asObject(game);
       const gameDate = localDateInSaoPaulo(item.startTime || item.startDate || item.date || item.startTimestamp || item.timestamp);
@@ -602,19 +607,41 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       const selectedAwayScore = isReversed ? reverseAway : directAway;
       const pairAverage = (selectedHomeScore + selectedAwayScore) / 2;
       const strongestSide = Math.max(selectedHomeScore, selectedAwayScore);
-      if (pairAverage > diagnostics.bestPairAverage / 100) {
-        diagnostics.bestTeamScore = Math.round(teamScore * 100);
-        diagnostics.bestHomeScore = Math.round(selectedHomeScore * 100);
-        diagnostics.bestAwayScore = Math.round(selectedAwayScore * 100);
-        diagnostics.bestPairAverage = Math.round(pairAverage * 100);
+      const gameCompetition = firstText(item.competition?.name);
+      const competitionMatch = compareCompetitionNames(competition, gameCompetition);
+      const diagnostic = {
+        gameId: positiveId(item.gameId), home: gameHome, away: gameAway,
+        date: gameDate, competition: gameCompetition,
+        teamScore: Math.round(teamScore * 100),
+        homeScore: Math.round(selectedHomeScore * 100),
+        awayScore: Math.round(selectedAwayScore * 100),
+        pairAverage: Math.round(pairAverage * 100),
+        dateDiffDays: dayDistance,
+        competitionMatch
+      };
+      // O diagnóstico também precisa mostrar os melhores nomes quando a
+      // similaridade é zero. Antes, bestGame ficava vazio e escondia os dados
+      // que de fato passaram pelo comparador.
+      diagnosticGames.push(diagnostic);
+      diagnosticGames.sort((a, b) => b.teamScore - a.teamScore || b.pairAverage - a.pairAverage || Number(b.competitionMatch === true) - Number(a.competitionMatch === true) || a.dateDiffDays - b.dateDiffDays);
+      if (diagnosticGames.length > 3) diagnosticGames.pop();
+      const diagnosticIsBetter = !bestDiagnostic ||
+        diagnostic.teamScore > bestDiagnostic.teamScore ||
+        (diagnostic.teamScore === bestDiagnostic.teamScore && diagnostic.pairAverage > bestDiagnostic.pairAverage) ||
+        (diagnostic.teamScore === bestDiagnostic.teamScore && diagnostic.pairAverage === bestDiagnostic.pairAverage && Number(diagnostic.competitionMatch === true) > Number(bestDiagnostic.competitionMatch === true)) ||
+        (diagnostic.teamScore === bestDiagnostic.teamScore && diagnostic.pairAverage === bestDiagnostic.pairAverage && diagnostic.competitionMatch === bestDiagnostic.competitionMatch && diagnostic.dateDiffDays < bestDiagnostic.dateDiffDays);
+      if (diagnosticIsBetter) {
+        bestDiagnostic = diagnostic;
+        diagnostics.bestTeamScore = diagnostic.teamScore;
+        diagnostics.bestHomeScore = diagnostic.homeScore;
+        diagnostics.bestAwayScore = diagnostic.awayScore;
+        diagnostics.bestPairAverage = diagnostic.pairAverage;
         diagnostics.bestGame = `${gameHome} x ${gameAway} (${gameDate})`;
       }
       const agendaMinutes = parseAgendaMinutes(event);
       const gameMinutes = localMinutesInSaoPaulo(item.startTime || item.startDate || item.date || item.startTimestamp || item.timestamp);
       const rawTimeDiff = agendaMinutes === null || gameMinutes === null ? null : Math.abs(agendaMinutes - gameMinutes);
       const timeDiffMinutes = rawTimeDiff === null ? null : dayDistance === 1 ? Math.min(rawTimeDiff, 1440 - rawTimeDiff) : rawTimeDiff;
-      const gameCompetition = firstText(item.competition?.name);
-      const competitionMatch = compareCompetitionNames(competition, gameCompetition);
       const strictCompetitionMatch = competitionAutoMatch(competition, gameCompetition);
       // Para a mesma data, um time reconhecido já pode revelar um candidato
       // útil para revisão. O par fraco nunca é auto-vinculado. Para data vizinha,
@@ -652,6 +679,7 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       });
     }
     candidates.sort((a, b) => b.score - a.score || b.teamScore - a.teamScore);
+    diagnostics.bestGames = diagnosticGames;
     const first = candidates[0];
     const runnerUp = candidates[1];
     // Associação automática permanece muito conservadora. Sugestões de data
