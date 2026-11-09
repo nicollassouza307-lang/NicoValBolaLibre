@@ -285,6 +285,16 @@ class ApiFootballService {
     };
   }
 
+  async liveFixtures(options = {}) {
+    const cacheKey = 'livescore:all:v1';
+    const result = await this.request(`/fixtures?live=all&timezone=${encodeURIComponent(TIME_ZONE)}`, {
+      cacheKey, ttlMs: 60_000, force: Boolean(options.force)
+    });
+    const liveStatuses = new Set(['1H', 'HT', '2H', 'ET', 'P', 'LIVE', 'BT']);
+    const fixtures = asArray(result.data).filter(item => liveStatuses.has(String(item?.fixture?.status?.short || '').toUpperCase()));
+    return { fixtures, count: fixtures.length, cached: result.cached, usage: this.getUsage() };
+  }
+
   findFixture(event, fixtures) {
     const home = normalizeTeamName(event?.home);
     const away = normalizeTeamName(event?.away);

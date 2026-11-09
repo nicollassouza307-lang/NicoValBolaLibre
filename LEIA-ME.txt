@@ -1,211 +1,66 @@
-NicoValBolaLibre V0.18.10 — área pública de Competições
+NICOVALBOLALIBRE V0.18.11
+========================
 
-Esta versão adiciona uma integração opcional com a API-Football. A agenda continua vindo exclusivamente do Rei dos Canais e PelotaLibre. A API-Football não adiciona partidas: ela só tenta enriquecer uma partida que o usuário já abriu na agenda e que corresponda por data, mandante e visitante.
+NOVIDADES
+---------
+- Área Competições com as abas Jogos, Classificação e Ao vivo.
+- Jogos filtra a agenda já carregada pela competição selecionada; não adiciona partidas externas.
+- Classificação usa o football-data.org, fora do Painel Admin.
+- Ao vivo consulta a API-Football sob demanda, com cache de 60 segundos.
+- TheSportsDB V1 gratuita integrada como fonte auxiliar de escudos.
+- A chave pública gratuita TheSportsDB (123) já está integrada. Não crie conta, não procure token e não cole chave no Painel Admin.
+- A busca de escudos considera competição, país e ID da API-Football quando disponível. Correspondências incertas ou de outro país são recusadas.
+- GitHub/FootyLogos continuam como fallback quando um escudo não for encontrado.
 
+CONFIGURAÇÃO DAS APIS
+---------------------
+API-Football:
+- Use a chave pessoal já configurada no Painel Admin.
+- O botão Atualizar ao vivo, na aba Competições > Ao vivo, faz uma consulta manual.
 
-Correção de publicação do atualizador na V0.18.3
+football-data.org:
+- O token pessoal deve ser configurado no Painel Admin.
+- O token é protegido localmente pelo Electron safeStorage no perfil deste Windows.
+- Não compartilhe o token com o Val e não o coloque no GitHub, Worker ou arquivo ZIP.
+- A cobertura gratuita é limitada e resultados/calendários podem ter atraso.
 
-A Release V0.18.1 foi publicada sem o instalador Windows e sem o manifesto `latest.yml`; por isso o botão Verificar atualizações retornava 404. A V0.18.3 verifica explicitamente se `dist/*-Setup.exe` e `dist/latest.yml` foram gerados e anexa ambos à Release com `softprops/action-gh-release`. Se algum deles faltar, o workflow falha em vez de marcar a Release como sucesso incompleto. O aplicativo também apresenta uma mensagem amigável quando encontra esse 404.
+TheSportsDB:
+- Usa a chave pública gratuita V1 123, integrada no código.
+- No Painel Admin, clique em Testar conexão para validar a resposta do serviço.
+- A lista gratuita de equipes pode retornar no máximo 10 equipes por consulta; alguns clubes podem não ser encontrados.
+- O livescore V2 da TheSportsDB é Premium. O livescore desta versão vem da API-Football.
 
-#O que esta versão entrega
+COMO USAR A ABA COMPETIÇÕES
+---------------------------
+1. Instale a V0.18.11.
+2. Clique em Competições na barra superior.
+3. Clique em Atualizar competições, se necessário.
+4. Selecione uma competição.
+5. Jogos: veja os jogos dessa competição que já estão na agenda carregada.
+6. Classificação: clique em Atualizar classificação.
+7. Ao vivo: clique em Atualizar ao vivo. A consulta não ocorre automaticamente em segundo plano.
 
-- Painel Admin para salvar, testar e apagar a chave pessoal da API-Football.
-- A chave é criptografada com `safeStorage` do Electron e guardada no perfil local do Windows (`userData/apifootball-key.bin`). Não vai para o instalador, GitHub, D1 nem computador do Val.
-- Ao abrir uma partida, o botão Buscar dados da API-Football procura o fixture da mesma data, mandante e visitante. Correspondências ambíguas ou inexistentes são recusadas; a agenda original permanece intacta.
-- Para o fixture identificado, a aplicação usa o endpoint combinado `/fixtures?id=...`, que pode trazer eventos, escalações, estatísticas de equipe e jogadores em uma única chamada, conforme a cobertura disponível. A tela exibe placar/status, gols e autores, assistências, substituições, resultado dos pênaltis, posse, finalizações, chutes no gol, escanteios, faltas, cartões, passes e escalações/reservas quando a API os disponibiliza.
-- A classificação é carregada sob demanda por competição e temporada, com cache de 24 horas.
-- As fotografias ainda não fazem parte desta fase; os IDs únicos dos jogadores são preservados para a próxima etapa.
-- Dados consultados no computador administrador podem ser publicados automaticamente para o Cloudflare usando a chave administrativa de sincronização já existente. O Val recebe os snapshots em modo somente leitura. A chave da API-Football não é compartilhada.
-- Contador de chamadas persistente, limite interno de 70 requisições/dia, reserva de 30, limite local de 8 chamadas/minuto e cache em disco. As respostas de `/status` são usadas para testar a chave sem consumir a cota diária.
-- Cache persistente para lista diária de fixtures (uma chamada por data, sem parâmetro page), detalhes combinados, escalações, estatísticas e classificação. Consultas repetidas dentro da validade do cache não fazem nova chamada.
+CACHE
+-----
+- Escudos: até 30 dias; buscas sem resultado: 24 horas.
+- Competições football-data.org: 12 horas.
+- Partidas football-data.org: 30 minutos.
+- Classificações football-data.org: 6 horas.
+- Livescore API-Football: 60 segundos.
+- O cache Cloudflare compartilhado é opcional e usa a tabela provider_cache criada na V0.18.7 ou posterior.
 
-#Importante sobre a cota
+PUBLICAR A VERSÃO
+-----------------
+1. Extraia o ZIP e copie seu conteúdo para a raiz do repositório local, preservando a pasta .git.
+2. Faça commit NicoValBolaLibre V0.18.11 e Push origin.
+3. Crie e envie a tag v0.18.11.
+4. Acompanhe o GitHub Actions.
+5. Confira se a Release contém o instalador *-Setup.exe e os assets de atualização esperados.
 
-O plano Free da API-Football tem uma cota diária e limite por minuto definidos pelo fornecedor. Esta aplicação aplica um teto local de 70 chamadas diárias e para antes de usar a reserva interna de 30. A cota do fornecedor pode ser compartilhada com outras aplicações que usem a mesma chave; por isso, o contador da aplicação não substitui a conferência dos cabeçalhos oficiais de rate limit.
+O ZIP contém código-fonte. O instalador EXE é produzido pelo GitHub Actions, não por este pacote.
 
-A integração é sob demanda: abre-se a partida e clica-se para buscar. O app primeiro localiza o fixture da mesma data e dos mesmos times; depois usa `/fixtures?id=...` para obter eventos, escalações, estatísticas e jogadores em uma única chamada, conforme a cobertura. A API também documenta `ids` para até 20 partidas em uma consulta quando o plano oferece suporte, mas esta primeira versão não depende desse recurso. O placar da agenda é preenchido com dados da fonte ou com snapshots da API-Football já consultados. Não há atualização automática contínua de todos os jogos nesta versão; o botão Atualizar força nova consulta e evita chamadas em excesso. O botão Atualizar força nova consulta; evite clicar repetidamente.
-
-A disponibilidade varia por competição, temporada e partida. Escalações podem aparecer somente perto do início; estatísticas podem não existir antes da partida ou em certas ligas. A documentação publicada em 26/10/2026 informa que o plano Free limita as temporadas disponíveis a Year-4 até Year-2 (em 2026, 2022 a 2024). Portanto, não presuma que a temporada atual de 2026 esteja coberta; valide sua conta no teste real antes de depender desses dados. Quando a API não oferece os dados, o app informa a ausência e conserva os últimos dados armazenados.
-
-#Cloudflare Worker (compartilhamento com o Val)
-
-Na V0.18.7, o Worker usa também a tabela `provider_cache`. Execute novamente cloudflare-sync/schema.sql no D1: o script é idempotente e preserva shared_config e os snapshots existentes.
-
-1. Abra o Cloudflare Dashboard → Workers & Pages → `nicoval-sync` → Edit code.
-2. Substitua o código do Worker pelo arquivo `cloudflare-sync/worker.js` deste projeto.
-3. Clique em Deploy.
-4. No Console do D1 nicoval-db, execute novamente cloudflare-sync/schema.sql para criar provider_cache.
-5. O binding D1 DB e as Secrets SYNC_READ_TOKEN e SYNC_ADMIN_TOKEN continuam iguais. Não crie novas Secrets.
-6. Confirme `https://nicoval-sync.tracker-mps.workers.dev/health` e depois que a sincronização normal do app continua funcionando.
-
-A atualização adiciona a rota protegida `POST /v1/sports-data`, que aceita apenas `SYNC_ADMIN_TOKEN`, e mantém os snapshots ao publicar o catálogo normal. Nenhuma chave API-Football é guardada no Worker.
-
-#Passo B — obter e configurar sua chave API-Football
-
-1. Crie/acesse sua conta em https://dashboard.api-football.com/ e copie a API Key do plano escolhido.
-2. Instale a V0.18.9 no computador administrador (o seu).
-3. Abra Painel Admin → API-Football · Dados das partidas.
-4. Cole a chave em API Key pessoal e clique Salvar chave neste computador.
-5. Clique Testar conexão. O teste consulta `/status`, que não reduz a cota diária.
-6. Não configure a chave no computador do Val. Ele recebe os snapshots pelo Cloudflare.
-
-Não crie um GitHub Secret para a API-Football. A única Secret de GitHub já usada no workflow continua sendo `NVB_SYNC_READ_TOKEN`, necessária para pré-configurar a sincronização de leitura do instalador.
-
-#Passo C — testar uma partida
-
-1. Carregue a agenda normal do dia.
-2. Abra uma partida já encontrada pelo Rei dos Canais/PelotaLibre.
-3. Na seção API-Football, clique em Buscar dados da API-Football.
-4. Se a API tiver um fixture com a mesma data, mandante e visitante, o app mostra o placar, gols, assistências, substituições e resultado dos pênaltis, além de escalações/estatísticas quando cobertos.
-5. Se estiver configurada a chave administrativa de sincronização Cloudflare neste computador, o snapshot é enviado para D1. O Val recebe automaticamente na próxima sincronização.
-6. Para consultar a classificação, use Buscar classificação depois que os dados do fixture estiverem disponíveis.
-
-Se o jogo não for encontrado ou houver mais de uma correspondência ambígua, o app não inventa um vínculo e não adiciona qualquer partida à agenda.
-
-#Segurança e armazenamento
-
-- API Key: criptografada com Electron `safeStorage` em `%APPDATA%\NicoValBolaLibre` (caminho efetivo fornecido pelo Electron `app.getPath('userData')`).
-- Cache e contador: perfil local do Windows; no modo de desenvolvimento, `.nvb-data/` (ignorado pelo Git).
-- O computador do Val não recebe a API Key; ele recebe somente snapshots esportivos publicados com a chave administrativa do serviço de sincronização.
-- Não compartilhe prints que revelem chaves, tokens ou dados de conta.
-
-#Testes automatizados
-
-O workflow executa:
-
-- `node scripts/test-navigation-guard.js`
-- `node scripts/test-competition-ranking.js`
-- `node scripts/test-team-logo-index.js`
-- `node scripts/test-apifootball.js`
-- `node scripts/test-cloudflare-sports-data.js`
-- `node scripts/test-multi-api-engine.js`
-- `node scripts/test-cloudflare-provider-cache.js`
-
-Os testes da API-Football usam respostas simuladas. Eles verificam cache, consulta de fixtures sem parâmetro page, correspondência estrita, consumo, teto local, escalações/estatísticas e classificação; não substituem um teste real com a sua chave e as competições que aparecem na sua agenda.
-
-#Publicar V0.18.9
-
-1. Publique o Worker pelo Passo A.
-2. Execute novamente cloudflare-sync/schema.sql no D1 para criar provider_cache (o script preserva shared_config e os snapshots).
-3. Copie o conteúdo desta pasta para a raiz do repositório local, substituindo arquivos e preservando `.git`.
-4. Confirme que `NVB_SYNC_READ_TOKEN` continua em Settings → Secrets and variables → Actions. Não adicione API-Football key nem `SYNC_ADMIN_TOKEN` ao GitHub.
-5. Faça commit `NicoValBolaLibre V0.18.9` e `Push origin`.
-6. Crie a tag `v0.18.9` nesse commit e faça outro `Push origin`.
-7. Acompanhe o GitHub Actions e a Release `v0.18.9`.
-
-#Limitações conhecidas desta primeira fase
-
-- A integração estatística funciona sob demanda; livescore não se atualiza automaticamente em segundo plano nesta versão.
-- Correspondências usam nome de mandante/visitante e data normalizados. Clubes com nomes muito diferentes entre as fontes podem não casar; isso é preferível a associar a partida errada.
-- Algumas competições não fornecem lineups ou estatísticas detalhadas no plano/temporada consultados.
-- A cota gratuita, cobertura e disponibilidade são controladas pela API-Football e podem mudar.
-
-
-## V0.18.3 — Central da partida: escalações e estatísticas
-
-- O painel de dados esportivos agora fica abaixo do player.
-- Abas separadas para Escalações e Estatísticas, sem recarregar o iframe ao alternar.
-- Escalações exibidas em um campo com mandante e visitante em lados opostos.
-- Jogadores ordenados pela posição `grid` retornada pela API-Football; quando ausente, usa a posição informada.
-- Fotos dos jogadores carregadas pela URL oficial de mídia da API-Football usando o ID do jogador (`media.api-sports.io/football/players/{id}.png`). O carregamento da imagem não faz uma chamada ao endpoint da API; pode não existir foto para todos os IDs.
-- Avatar com iniciais quando a fotografia não estiver disponível, sem pesquisa textual de imagens ou risco de associar outro jogador.
-- Comissão técnica e banco de reservas aparecem em cartões abaixo e fora do campo.
-- Estatísticas exibidas em comparativos visuais entre os dois clubes.
-
-
-## V0.18.6 — placar, lances e escalações aprimoradas
-
-- Agenda: mostra o placar quando disponível; partidas sem resultado continuam exibindo VS.
-- Central: mostra placar principal e resultado da disputa por pênaltis.
-- Lances: gols, autores, assistências, gols contra, pênaltis perdidos, cartões, VAR e substituições com minutos e jogadores envolvidos.
-- Cloudflare: sincroniza placares de intervalo, tempo normal, prorrogação e pênaltis, além dos eventos para o computador do Val.
-- Escalações: fotos maiores, nomes e camisas mais legíveis, jogadores mais próximos e formações com desenho de pontas assimétrico.
-- Corrigida a leitura do formato original da API-Football com `player` aninhado nos titulares e reservas.
-
-A agenda continua vindo do Rei dos Canais/PelotaLibre. A API-Football só complementa partidas já presentes e as consultas permanecem sob demanda para preservar a cota. Publique também o arquivo `cloudflare-sync/worker.js` atualizado para sincronizar lances com o Val.
-
-V0.18.7 - BASE DO MULTI-API ENGINE
-=================================
-
-- Registro unificado de provedores e estado das futuras integrações.
-- Cache local persistente, com chaves separadas por provedor e validade individual.
-- Cache compartilhado opcional no Cloudflare D1 para fixtures, detalhes e classificações da API-Football.
-- A chave administrativa do Cloudflare grava o cache; a chave de leitura permite ao Val reutilizar os dados. Chaves externas de API não são salvas no Worker.
-- O controle atual da API-Football (70 chamadas/dia e 30 de reserva) continua em vigor.
-
-MIGRAÇÃO CLOUDFLARE NECESSÁRIA
-------------------------------
-1. Publique cloudflare-sync/worker.js atualizado no Worker nicoval-sync.
-2. Execute novamente cloudflare-sync/schema.sql no D1 nicoval-db. O script é idempotente e cria a tabela provider_cache sem apagar shared_config.
-3. Preserve SYNC_READ_TOKEN e SYNC_ADMIN_TOKEN. Não coloque API keys de provedores no Worker.
-4. Atualize o app nos dois computadores. Sem a migração, cache remoto não funciona, mas cache local e consultas normais continuam ativos.
-
-Na V0.18.7, football-data.org e TheSportsDB ainda eram integrações planejadas, sem chamadas externas. A integração football-data.org foi ativada na V0.18.9. A agenda continua vindo do Rei dos Canais/PelotaLibre.
-
-
-V0.18.8 - CONFIGURAÇÃO DO FOOTBALL-DATA.ORG
-=========================================
-
-- Painel Admin ganhou a seção football-data.org - Resultados e competições.
-- Cole o token no campo Token pessoal e clique Salvar token neste computador.
-- Clique Testar conexão para validar a credencial com uma chamada ao catálogo /v4/competitions.
-- O token é criptografado com Electron safeStorage no perfil deste Windows, nunca é enviado ao navegador, GitHub, Worker Cloudflare, instalador ou computador do Val.
-- Apagar token local remove a credencial deste computador.
-- Esta versão cadastra e testa o token. A integração de consultas a jogos, resultados e classificações será ativada posteriormente; por enquanto a API-Football continua sendo o provedor efetivo de dados esportivos.
-
-Documentação oficial: https://docs.football-data.org/general/v4/index.html
-Autenticação: cabeçalho HTTP X-Auth-Token.
-
-
-V0.18.9 - INTEGRAÇÃO FOOTBALL-DATA.ORG
-===================================
-
-- O Painel Admin agora tem o botão "Buscar dados para a agenda carregada". Ele consulta a data selecionada e só complementa partidas já carregadas do Rei dos Canais/PelotaLibre. Nunca adiciona jogos externos à agenda.
-- A associação exige data local, mandante e visitante na ordem correta. Se a correspondência não for inequívoca, a partida fica sem alteração.
-- O placar do football-data.org funciona como fallback. O placar da agenda original e os dados da API-Football têm prioridade.
-- Clique "Carregar competições disponíveis" para listar as competições permitidas pela conta. Para tabela, selecione uma liga e clique "Buscar classificação". Copas/playoffs não aparecem como ligas selecionáveis.
-- Cache local persistente: partidas 30 min, competições 12 h e classificações 6 h. Com Cloudflare configurado, o cache pode ser compartilhado entre os computadores; a chave pessoal nunca é compartilhada.
-- O token da V0.18.8 continua salvo e criptografado no Windows. Não é necessário cadastrá-lo novamente.
-- O plano Free anuncia até 12 competições e 10 chamadas/minuto, com placares e calendários atrasados. A lista liberada é carregada da conta.
-- A API gratuita não substitui a API-Football para escalações/estatísticas avançadas. O app não usa escudos/fotos desta fonte, pois os termos exigem comprovação de direitos das imagens.
-- A atribuição "Football data provided by the Football-Data.org API" aparece no rodapé.
-
-PASSO A PASSO
--------------
-1. Carregue a agenda do dia desejado.
-2. Abra Painel Admin -> football-data.org - Resultados e competições.
-3. Clique "Buscar dados para a agenda carregada".
-4. Para classificação: clique "Carregar competições disponíveis", selecione uma liga e clique "Buscar classificação".
-5. Se nada for associado, confira se a competição existe na cobertura da sua conta e se os nomes/data dos clubes coincidem. O app não adiciona nem inventa jogos.
-
-Não é necessária uma nova migração Cloudflare se o Worker e o D1 já receberam a versão V0.18.7 ou posterior com a tabela provider_cache.
-
-Documentação oficial: https://docs.football-data.org/general/v4/index.html
-Cobertura: https://www.football-data.org/coverage
-Planos: https://www.football-data.org/pricing
-FAQ/atribuição: https://www.football-data.org/documentation/faq
-
-
-NOVIDADES DA V0.18.10
-- Nova área pública Competições na barra superior, fora do Painel Admin.
-- Tabelas football-data.org acessíveis pela tela principal.
-- Competições e classificações já consultadas ficam salvas no cache local; Cloudflare continua oferecendo cache compartilhado entre os computadores quando configurado.
-- O token continua criptografado localmente e nunca é enviado ao navegador ou ao computador do Val.
-
-
-V0.18.10 - ÁREA PÚBLICA DE COMPETIÇÕES
-=====================================
-
-- Nova opção Competições na barra superior, fora do Painel Admin.
-- Consulte classificações das ligas disponíveis no football-data.org pela tela principal.
-- O seletor de ligas pode ser atualizado pela própria área Competições.
-- A última classificação escolhida fica salva em cache local para reabrir sem uma nova chamada.
-- Quando o cache compartilhado Cloudflare está configurado, respostas de competições e tabelas podem ser reaproveitadas pelo computador do Val sem compartilhar o token pessoal.
-- O Painel Admin continua responsável por salvar/testar/apagar token e por buscar os dados que complementam a agenda.
-
-PUBLICAR V0.18.10
-----------------
-1. Copie o conteúdo do ZIP para a raiz do repositório, preservando .git.
-2. Faça commit NicoValBolaLibre V0.18.10 e Push origin.
-3. Crie e envie a tag v0.18.10.
-4. Confira o GitHub Actions e a Release, incluindo Setup.exe e latest.yml.
+DOCUMENTAÇÃO
+------------
+TheSportsDB: https://www.thesportsdb.com/docs/api
+API-Football: https://www.api-football.com/documentation-v3
+Football-Data.org: https://docs.football-data.org/general/v4/index.html

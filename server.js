@@ -9,6 +9,7 @@ const path = require('node:path');
 const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
+const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
 
 const ROOT = __dirname;
 const HOST = '127.0.0.1';
@@ -38,6 +39,7 @@ const footballDataService = new FootballDataService({
   getToken: () => String(process.env.NVB_FOOTBALL_DATA_TOKEN || '').trim(),
   engine: apiFootballService.multiApiEngine
 });
+const theSportsDBService = new TheSportsDBService({ engine: apiFootballService.multiApiEngine });
 
 const REQUESTED_PORT = Number(process.env.PORT || 8787);
 let ACTIVE_PORT = REQUESTED_PORT;
@@ -1114,6 +1116,80 @@ const requestHandler = async (req, res) => {
     } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível salvar o cache compartilhado.' }); }
   }
 
+  if (pathname === '/api/apifootball/livescore' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const cloudSync = body.cloudSync || {};
+      const cacheKey = 'livescore:all:v1';
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'api-football');
+        if (shared) apiFootballService.importCacheRecord(cacheKey, shared);
+      }
+      const result = await apiFootballService.liveFixtures({ force: Boolean(body.refresh) });
+      if (!shared && apiFootballService.getCacheRecord(cacheKey)) await writeSharedProviderCache(cloudSync, cacheKey, apiFootballService.getCacheRecord(cacheKey), 'api-football');
+      const fixtures = result.fixtures.map(item => ({
+        fixture: { id: Number(item?.fixture?.id || 0), date: String(item?.fixture?.date || ''), status: { short: String(item?.fixture?.status?.short || ''), long: String(item?.fixture?.status?.long || ''), elapsed: Number(item?.fixture?.status?.elapsed || 0) || null }, venue: String(item?.fixture?.venue?.name || '') },
+        league: { id: Number(item?.league?.id || 0), name: String(item?.league?.name || ''), country: String(item?.league?.country || ''), logo: String(item?.league?.logo || '') },
+        teams: { home: { id: Number(item?.teams?.home?.id || 0), name: String(item?.teams?.home?.name || ''), logo: String(item?.teams?.home?.logo || '') }, away: { id: Number(item?.teams?.away?.id || 0), name: String(item?.teams?.away?.name || ''), logo: String(item?.teams?.away?.logo || '') } },
+        goals: { home: item?.goals?.home ?? null, away: item?.goals?.away ?? null }
+      }));
+      return json(res, 200, { ok: true, provider: 'API-Football', fixtures, count: fixtures.length, cached: result.cached, shared: Boolean(shared), usage: result.usage, keyNeverSentToBrowser: true });
+    } catch (error) {
+      return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar o livescore.', code: error.code || '', usage: apiFootballService.getUsage(), keyNeverSentToBrowser: true });
+    }
+  }
+
+  if (pathname === '/api/thesportsdb/status' && req.method === 'GET') {
+    return json(res, 200, { ok: true, configured: true, provider: 'TheSportsDB', apiVersion: 'v1-free', freeKeyBuiltIn: true, keyRequiredFromUser: false, rateLimitPerMinute: 25 });
+  }
+
+  if (pathname === '/api/thesportsdb/test' && req.method === 'POST') {
+    try { return json(res, 200, await theSportsDBService.testConnection()); }
+    catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível testar TheSportsDB.', code: error.code || '' }); }
+  }
+
+  if (pathname === '/api/thesportsdb/team-badge' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const cloudSync = body.cloudSync || {};
+      const name = String(body.teamName || '').trim();
+      const country = String(body.country || '').trim();
+      const normalized = normalizeSportsDbTeam(name);
+      const countryCacheKey = sportsDbCountryKey(country) || 'any';
+      const apiFootballId = String(Number(body.apiFootballId || 0) || '').slice(0, 16);
+      const cacheKey = `team-badge:${normalized}:${countryCacheKey}:${apiFootballId || 'noid'}`.slice(0, 190);
+      if (!name) return json(res, 400, { ok:false, error:'Informe o nome do clube.' });
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'thesportsdb');
+        if (shared) apiFootballService.multiApiEngine.importRecord('thesportsdb', cacheKey, shared);
+      }
+      const result = await theSportsDBService.getTeamBadge({ teamName:name, country, league:body.league, apiFootballId }, { force:Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'thesportsdb');
+      return json(res, 200, { ok:true, found:result.found, teamName:result.teamName, resolvedName:result.resolvedName, country:result.country, league:result.league, badgeUrl:result.badgeUrl, source:result.source, confidence:result.confidence, cached:result.cached || Boolean(shared), shared:Boolean(shared) });
+    } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível buscar o escudo no TheSportsDB.', code:error.code || '' }); }
+  }
+
+  if (pathname === '/api/thesportsdb/league-badge' && req.method === 'POST') {
+    try {
+      const body = await readRequestJson(req, 16 * 1024);
+      const cloudSync = body.cloudSync || {};
+      const name = String(body.leagueName || '').trim();
+      const country = String(body.country || '').trim();
+      const cacheKey = `league-badge:${sportsDbFold(name)}:${sportsDbCountryKey(country)}`.slice(0, 190);
+      if (!name || !country) return json(res, 400, { ok:false, error:'Informe o nome da competição e o país.' });
+      let shared = null;
+      if (!body.refresh) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, 'thesportsdb');
+        if (shared) apiFootballService.multiApiEngine.importRecord('thesportsdb', cacheKey, shared);
+      }
+      const result = await theSportsDBService.getLeagueBadge({ leagueName:name, country }, { force:Boolean(body.refresh) });
+      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, 'thesportsdb');
+      return json(res, 200, { ok:true, found:result.found, leagueName:result.leagueName, resolvedName:result.resolvedName, country:result.country, badgeUrl:result.badgeUrl, source:result.source, confidence:result.confidence, cached:result.cached || Boolean(shared), shared:Boolean(shared) });
+    } catch (error) { return json(res, error.status || 502, { ok:false, error:error.message || 'Não foi possível buscar a imagem da competição.', code:error.code || '' }); }
+  }
+
   if (pathname === '/api/apifootball/status' && req.method === 'GET') {
     return json(res, 200, {
       configured: Boolean(String(process.env.NVB_APIFOOTBALL_KEY || process.env.APIFOOTBALL_API_KEY || '').trim()),
@@ -1428,7 +1504,7 @@ function listenWithFallback(port, remainingAttempts = 20) {
     server.removeListener('error', onListenError);
     const SITE_NAME = process.env.SITE_NAME || '';
     const siteUrl = SITE_NAME ? `http://${SITE_NAME}${port === 80 ? '' : ':' + port}` : `http://${HOST}:${port}`;
-    console.log(`NicoValBolaLibre V0.18.10 local: ${siteUrl}`);
+    console.log(`NicoValBolaLibre V0.18.11 local: ${siteUrl}`);
     if (SITE_NAME) console.log(`(também funciona em http://${HOST}:${port})`);
     if (port !== REQUESTED_PORT) {
       console.log(`A porta padrão ${REQUESTED_PORT} estava ocupada; esta instância está usando a porta ${port}.`);

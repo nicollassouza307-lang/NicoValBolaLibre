@@ -1,99 +1,85 @@
-# NicoValBolaLibre V0.18.10 — área pública de Competições
+# NicoValBolaLibre V0.18.11
 
-A V0.18.9 transforma o token já configurado na V0.18.8 em uma integração utilizável. O football-data.org agora pode complementar placares/calendários das partidas já carregadas e fornecer classificações das ligas autorizadas pela conta.
+Aplicativo desktop para acompanhar a agenda de futebol e enriquecer partidas com dados esportivos. A agenda continua sendo fornecida pelas fontes configuradas do Rei dos Canais/PelotaLibre; provedores esportivos externos apenas complementam eventos já carregados.
 
+## Novidades da V0.18.11
 
-A V0.18.10 adiciona uma área **Competições** à tela principal. As tabelas do football-data.org podem ser consultadas sem abrir o Painel Admin. Competições e classificações consultadas ficam em cache local; as requisições usam o cache compartilhado Cloudflare já existente quando configurado. O token continua criptografado localmente e nunca é enviado ao navegador ou ao computador do Val.
+- A área pública **Competições** possui as abas **Jogos**, **Classificação** e **Ao vivo**.
+- **Jogos** filtra a agenda já carregada pela competição selecionada. Não busca nem adiciona partidas externas à agenda.
+- **Classificação** consulta as tabelas do football-data.org fora do Painel Admin.
+- **Ao vivo** consulta a rota API-Football `/fixtures?live=all` sob demanda. O cache é de 60 segundos para evitar chamadas repetidas; o livescore não é atualizado em segundo plano.
+- **TheSportsDB V1 gratuita** está integrada como fonte auxiliar de escudos de clubes e ligas. A chave pública `123` já está no aplicativo; não é necessário criar conta nem colar token.
+- A busca de escudos considera competição, país e ID de equipe da API-Football quando disponível. Correspondências de outro país ou com nome insuficientemente parecido são recusadas.
+- O fallback de logos existente (GitHub/FootyLogos) permanece disponível quando a TheSportsDB não encontrar o clube.
+- O teste de conexão da TheSportsDB verifica o retorno de um clube de teste, e não apenas uma resposta HTTP vazia.
 
-## Como usar a área Competições na V0.18.10
+## APIs e limites
 
-1. Instale a V0.18.10. O token football-data.org salvo na V0.18.8 permanece neste Windows.
-2. Clique em **Competições** na barra superior.
-3. Se a lista estiver vazia, clique em **Atualizar competições**.
-4. Escolha uma liga e clique em **Ver classificação**.
-5. A tabela mostrará posição, clube, jogos, vitórias, empates, derrotas, saldo e pontos. A última tabela consultada ficará disponível no cache local.
-6. O Painel Admin continua sendo o local para gerenciar o token, testar a conexão e consultar diagnósticos.
+| Provedor | Uso nesta versão | Credencial |
+|---|---|---|
+| API-Football | Escalações, estatísticas, eventos, placares e livescore manual | Chave pessoal configurada localmente |
+| football-data.org | Resultados/calendários complementares e classificações das competições cobertas | Token pessoal configurado localmente |
+| TheSportsDB V1 | Escudos de clubes e competições | Chave gratuita pública `123` integrada; sem cadastro |
+| GitHub/FootyLogos | Fallback de escudos | Sem chave pessoal |
 
-A lista de competições e classificações é carregada conforme o acesso permitido ao token/conta. O cache Cloudflare compartilhado permite que o computador do Val leia respostas publicadas pelo administrador sem receber a chave pessoal.
+**Limitações da TheSportsDB gratuita:** a pesquisa geral de equipes por liga/país pode retornar no máximo 10 equipes por consulta. Portanto, nem todos os clubes serão encontrados; o aplicativo mantém os fallbacks e não escolhe escudos por semelhança fraca. O limite interno do aplicativo é de 25 chamadas por minuto, abaixo do limite publicado pelo serviço. O livescore V2 da TheSportsDB é Premium; por isso, a aba **Ao vivo** usa API-Football.
 
-## O que mudou na V0.18.9
-
-- Painel Admin ganhou **Buscar dados para a agenda carregada**. A consulta busca partidas do football-data.org para uma janela curta em torno da data selecionada e tenta associá-las aos jogos da agenda.
-- A associação exige data local, mandante e visitante na ordem correta. Nomes são normalizados para tratar diferenças usuais como `FC`/abreviações, mas não há correspondência aproximada arriscada.
-- Apenas eventos já existentes no Rei dos Canais/PelotaLibre podem receber dados. O provedor nunca adiciona partidas à agenda.
-- O placar do football-data.org funciona como fallback: dados da API-Football e placar da agenda original têm prioridade.
-- O painel também carrega as competições permitidas pela conta e permite consultar a classificação de competições do tipo `LEAGUE`.
-- Resultados, competições e classificações usam cache local persistente e o cache compartilhado `provider_cache` do Cloudflare quando ele está configurado.
-- A chave continua criptografada com Electron `safeStorage` no perfil local do Windows. A chave nunca é enviada ao navegador, ao GitHub ou ao Cloudflare.
-- O aplicativo exibe a atribuição exigida: **Football data provided by the Football-Data.org API**.
+A conta gratuita do football-data.org tem cobertura limitada. Resultados/calendários podem sofrer atraso; escalações, assistências e estatísticas detalhadas continuam dependendo da API-Football.
 
 ## Como usar
 
-1. Instale a V0.18.9 no computador administrador e mantenha o token já salvo na V0.18.8. Não é necessário cadastrá-lo novamente.
-2. Carregue a agenda normal para a data desejada.
-3. Abra **Painel Admin → football-data.org · Resultados e competições**.
-4. Clique **Buscar dados para a agenda carregada**. O aplicativo só associa partidas que já existem na agenda e que correspondam por data e equipes.
-5. Para consultar uma tabela, clique **Carregar competições disponíveis**, selecione uma liga no menu e clique **Buscar classificação**.
-6. Os resultados associados aparecem como fallback de placar nos cards e como fonte complementar na central da partida.
+### Área Competições
 
-O botão de buscar dados consulta a data da agenda selecionada, não toda a temporada. Para obter classificações, a competição precisa estar liberada na conta e ser do tipo liga. Copas e playoffs não têm tabela de liga neste fluxo.
+1. Instale a V0.18.11.
+2. Clique em **Competições** na barra superior.
+3. Use **Atualizar competições** para carregar a lista liberada no football-data.org.
+4. Escolha uma competição.
+5. Na aba **Jogos**, visualize somente as partidas da competição que já estão carregadas na agenda.
+6. Na aba **Classificação**, clique em **Atualizar classificação**.
+7. Na aba **Ao vivo**, clique em **Atualizar ao vivo** para consultar as partidas em andamento na API-Football. A consulta é manual para proteger a cota diária.
 
-## Cobertura e limites do plano gratuito
+### Painel Admin
 
-O plano Free anuncia 12 competições, placares e calendários atrasados, tabelas de classificação e limite de 10 chamadas por minuto. A lista efetivamente liberada é carregada da sua conta; não é presumida pelo aplicativo. A consulta de partidas usa uma janela de datas em UTC para cobrir o fuso do Brasil e depois compara a data local.
+- **API-Football:** configure a chave pessoal neste computador e acompanhe o consumo.
+- **football-data.org:** salve/teste/apague o token. O token fica criptografado pelo Electron `safeStorage` no perfil local do Windows. Não é enviado ao navegador, GitHub, Cloudflare ou computador do Val.
+- **TheSportsDB:** clique em **Testar conexão**. Não há campo de token: o app usa a chave pública gratuita V1 `123` integrada.
+- **Cloudflare:** o cache compartilhado pode permitir que o computador do Val reutilize respostas já publicadas, sem receber as chaves pessoais das APIs.
 
-Esta API não substitui a API-Football para escalações, substituições, assistências detalhadas ou estatísticas avançadas no plano gratuito. Não exibimos escudos nem fotos fornecidos pelo football-data.org: os termos do serviço exigem que o usuário tenha direitos/consentimento para usar essas imagens. A integração desta versão utiliza dados textuais de partidas e classificações.
+## Cache e compartilhamento
 
-Fontes oficiais:
-- Cobertura: https://www.football-data.org/coverage
-- Planos: https://www.football-data.org/pricing
-- Documentação v4: https://docs.football-data.org/general/v4/index.html
-- FAQ/atribuição: https://www.football-data.org/documentation/faq
+- Escudos: cache por até 30 dias; resultados negativos por 24 horas.
+- Classificações football-data.org: cache por 6 horas.
+- Competições football-data.org: cache por 12 horas.
+- Partidas football-data.org: cache por 30 minutos.
+- Livescore API-Football: cache por 60 segundos.
+- A TheSportsDB mantém cache separado por provedor e pode reutilizar o cache compartilhado do Cloudflare se estiver configurado.
 
-## Cache compartilhado com o Val
+A V0.18.11 não exige nova migração do Worker/D1 se o cache `provider_cache` da V0.18.7 ou posterior já foi implantado. Não publique chaves de APIs no Worker ou em GitHub Secrets.
 
-O app utiliza a tabela `provider_cache` criada na V0.18.7. Se o Worker `nicoval-sync` já está atualizado e o D1 recebeu `cloudflare-sync/schema.sql` da V0.18.7 ou posterior, **não é necessária uma nova migração**.
+## Testes e validação
 
-- O computador administrador consulta o provedor com seu token local e publica respostas em cache com `SYNC_ADMIN_TOKEN`.
-- O computador do Val pode ler as respostas ainda válidas com `SYNC_READ_TOKEN`, sem receber a chave pessoal da API.
-- Cache de partidas: 30 minutos; competições: 12 horas; classificações: 6 horas.
-- Quando o cache compartilhado expira, o administrador pode consultar novamente. O computador do Val, sem token pessoal, precisa esperar a nova publicação.
-- Se o Cloudflare não estiver configurado, os dados continuam funcionando no cache local deste computador.
+Os testes automatizados usam respostas simuladas para verificar os fluxos e não substituem a validação ao vivo com os provedores. Depois de instalar, use **Testar conexão** no Painel Admin para verificar a disponibilidade real da TheSportsDB. A disponibilidade e cobertura do serviço podem variar.
 
-## Segurança
+Comandos individuais:
 
-- Não coloque o token do football-data.org em `.env`, GitHub Secrets, no repositório, no Worker ou no instalador.
-- O token permanece em `userData/football-data-token.bin`, protegido pelo Electron `safeStorage` do Windows.
-- A chave da API não é sincronizada para o Val. Apenas respostas esportivas normalizadas e sem credenciais entram no cache compartilhado.
+```bash
+node scripts/test-thesportsdb-service.js
+node scripts/test-competitions-tabs.js
+node scripts/test-apifootball-livescore.js
+```
 
-## Testes automatizados
+## Publicar V0.18.11
 
-O workflow executa, entre outros:
+1. Extraia o ZIP e copie todo o conteúdo para a raiz do repositório local, substituindo os arquivos antigos e preservando a pasta `.git`.
+2. Mantenha os segredos de sincronização já configurados no GitHub Actions. Não adicione tokens pessoais da API-Football ou football-data.org ao repositório.
+3. Faça commit `NicoValBolaLibre V0.18.11` e `Push origin`.
+4. Crie e envie a tag `v0.18.11`.
+5. Confira o GitHub Actions. Considere a release pronta somente quando o instalador `*-Setup.exe` e os arquivos de atualização esperados (`latest.yml`, quando aplicável) estiverem nos assets da Release.
 
-- `node scripts/test-football-data-service.js`
-- `node scripts/test-football-data-ui.js`
-- `node scripts/test-cloudflare-provider-cache.js`
-- `node scripts/test-multi-api-engine.js`
-- `node scripts/test-release-assets.js`
+O ZIP contém o código-fonte. O instalador Windows ainda precisa ser compilado pelo GitHub Actions; não está incluído neste pacote.
 
-Os testes usam respostas simuladas e verificam autenticação, cache, limite por minuto, normalização, cruzamento exato de partidas, classificações, cobertura de copas, fallback de placar, atribuição e segurança de credenciais. Eles não substituem um teste real com o token e as competições da conta.
+## Referências oficiais
 
-## Publicar V0.18.10
-
-1. Copie todo o conteúdo desta pasta para a raiz do repositório local, substituindo os arquivos antigos e preservando a pasta `.git`.
-2. Mantenha o segredo existente `NVB_SYNC_READ_TOKEN` em **Settings → Secrets and variables → Actions**. Não adicione o token football-data.org nem `SYNC_ADMIN_TOKEN` ao GitHub.
-3. Faça commit `NicoValBolaLibre V0.18.10` e `Push origin`.
-4. Crie a tag `v0.18.10` nesse commit e envie a tag com outro `Push origin`.
-5. Acompanhe o GitHub Actions. A Release só deve ser considerada pronta se o instalador `*-Setup.exe` e `latest.yml` forem publicados.
-
-A agenda continua vindo exclusivamente do Rei dos Canais/PelotaLibre. API-Football e football-data.org são fontes complementares e não adicionam jogos.
-
-
-## V0.18.10 — Área pública de Competições
-
-- Nova entrada **Competições** na barra superior, fora do Painel Admin.
-- Consulta de classificações football-data.org diretamente na área principal.
-- Lista de ligas e última classificação ficam em cache local para reabertura sem nova chamada.
-- A tela pública usa a mesma API e o cache compartilhado Cloudflare já existentes; não compartilha nem expõe o token.
-- A tabela mostra posição, clube, jogos, vitórias, empates, derrotas, saldo e pontos.
-- O Painel Admin continua com seus controles de configuração e diagnóstico.
+- TheSportsDB: https://www.thesportsdb.com/docs/api
+- API-Football: https://www.api-football.com/documentation-v3
+- Football-Data.org: https://docs.football-data.org/general/v4/index.html

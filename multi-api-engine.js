@@ -11,12 +11,12 @@ const PROVIDER_CATALOG = Object.freeze([
     quota: { dailyLimit: 100, appSoftLimit: 70, reserve: 30, perMinuteSoftLimit: 8 }
   },
   {
-    id: 'football-data', name: 'football-data.org', role: 'resultados', state: 'planned',
+    id: 'football-data', name: 'football-data.org', role: 'resultados', state: 'active',
     description: 'Resultados, calendários e classificações das competições cobertas.', quota: null
   },
   {
-    id: 'thesportsdb', name: 'TheSportsDB', role: 'imagens', state: 'planned',
-    description: 'Escudos, imagens de clubes e competições.', quota: null
+    id: 'thesportsdb', name: 'TheSportsDB', role: 'imagens', state: 'active',
+    description: 'Escudos e imagens via API V1 gratuita (chave pública 123 integrada).', quota: { perMinuteLimit: 25, dailyLimit: null }
   },
   {
     id: 'github-logos', name: 'GitHub Logos', role: 'fallback', state: 'available',

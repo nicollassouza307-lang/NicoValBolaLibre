@@ -377,6 +377,8 @@
 /* V0.18.7: placar e eventos completos + escalações maiores e mais compactas */
 /* V0.18.9: integração football-data.org com token local seguro */
 /* V0.18.10: área pública de competições e tabelas */
+/* V0.18.11: TheSportsDB V1, abas de competições e livescore */
+/* V0.18.11: abas Jogos/Classificação/Ao vivo e logos TheSportsDB */
 .competitions-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:6px 0 22px;padding:21px;border:1px solid #48d9d02a;border-radius:17px;background:linear-gradient(115deg,#142d47,#102039)}
 .competitions-page-head p{max-width:680px;margin:8px 0 0;color:#a9bdd5;font-size:12px;line-height:1.55}
 .competitions-page-title{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:7px 0 0;color:#eef7ff}
@@ -414,6 +416,33 @@
 .competitions-attribution{margin:15px 2px;color:#7187a3;font-size:9px;line-height:1.5}
 .competitions-attribution a{color:#8fa9ca}
 @media(max-width:620px){.competitions-page-head{align-items:flex-start;flex-direction:column;padding:17px}.competitions-select-panel{grid-template-columns:1fr}.competitions-select-panel button{width:100%}.public-standings-head{padding:14px}.public-standings-table{font-size:10px}.public-standings-table th,.public-standings-table td{padding:9px 7px}.public-standings-table td:nth-child(2){min-width:145px}.public-standings-monogram{width:26px;height:26px;flex-basis:26px}}
+/* V0.18.11: abas de competição, livescore e TheSportsDB */
+.competitions-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 12px;padding:5px;border:1px solid var(--line);border-radius:13px;background:#ffffff05}
+.competitions-tab{flex:1 1 110px;min-height:39px;border:1px solid transparent;border-radius:9px;background:transparent;color:#8fa5c2;font-size:11px;font-weight:850;cursor:pointer}
+.competitions-tab.active{border-color:#48d9d044;background:#48d9d014;color:#9ce9e2;box-shadow:inset 0 0 0 1px #48d9d011}
+.competition-tab-panel{min-width:0}
+.competition-games-list,.livescore-list{display:grid;gap:9px}
+.competition-game-row,.livescore-row{display:grid;grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr);align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(135deg,#122238,#0c1726);cursor:pointer}
+.competition-game-row:hover{border-color:#48d9d066;background:#142940}
+.competition-game-team{display:flex;align-items:center;gap:8px;min-width:0;color:#e5effb;font-size:11px;font-weight:800}
+.competition-game-team.away{justify-content:flex-end;text-align:right}
+.competition-game-team .crest{width:28px;height:28px;flex:0 0 28px}
+.competition-game-team span:last-child{overflow-wrap:anywhere}
+.competition-game-score{text-align:center;font-size:19px;font-weight:950;color:#f1f7ff;font-variant-numeric:tabular-nums}
+.competition-game-meta{grid-column:1/-1;display:flex;justify-content:center;gap:9px;flex-wrap:wrap;color:#8da3bf;font-size:9px}
+.livescore-row{cursor:default;grid-template-columns:minmax(0,1fr) 105px minmax(0,1fr)}
+.livescore-center{text-align:center}
+.livescore-score{color:#f4fbff;font-size:22px;font-weight:1000;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.livescore-clock{margin-top:3px;color:#ff858c;font-size:9px;font-weight:950}
+.livescore-league{grid-column:1/-1;color:#91a7c2;font-size:9px;text-align:center}
+.livescore-team{display:flex;align-items:center;gap:8px;min-width:0;color:#e5effb;font-size:11px;font-weight:800}
+.livescore-team.away{justify-content:flex-end;text-align:right}
+.livescore-team img{width:27px;height:27px;object-fit:contain;flex:0 0 27px}
+.competitions-tab-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:3px 0 12px}
+.public-competition-badge{width:44px;height:44px;object-fit:contain;padding:3px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff08}
+.admin-api-note{padding:10px 12px;border:1px solid #48d9d02b;border-radius:10px;background:#48d9d00b;color:#9cb3cc;font-size:10px;line-height:1.55}
+@media(max-width:560px){.competition-game-row,.livescore-row{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);gap:6px;padding:9px}.competition-game-team,.livescore-team{font-size:9px;gap:5px}.competition-game-team .crest,.livescore-team img{width:23px;height:23px;flex-basis:23px}.competition-game-score,.livescore-score{font-size:17px}.competition-tabs{gap:4px}.competitions-tab{font-size:10px;padding:0 5px}}
+
 
 /* V0.18.9: resultados, partidas cruzadas e classificações football-data.org */
 .game-card .teams{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}
@@ -518,24 +547,44 @@
 
     <section id="competitionsView" hidden>
       <div class="competitions-page-head">
-        <div>
-          <div class="eyebrow">Central de competições</div>
-          <h2 class="competitions-page-title">Classificações<span>, sem entrar no Admin.</span></h2>
-          <p>Consulte as tabelas das ligas disponíveis na sua conta football-data.org. Os dados salvos no cache também podem ser exibidos neste computador.</p>
+        <div style="display:flex;align-items:center;gap:13px;min-width:0">
+          <img id="publicCompetitionBadge" class="public-competition-badge" alt="" hidden>
+          <div>
+            <div class="eyebrow">Central de competições</div>
+            <h2 class="competitions-page-title">Competições<span>, jogos e tabelas.</span></h2>
+            <p>Veja os jogos da agenda, a classificação e as partidas ao vivo em abas separadas.</p>
+          </div>
         </div>
         <button class="btn secondary small" id="publicLoadCompetitions" type="button">↻ Atualizar competições</button>
       </div>
       <div class="competitions-select-panel">
-        <label for="publicCompetitionSelect">Escolha uma liga
-          <select id="publicCompetitionSelect" aria-label="Escolha uma liga"><option value="">Carregue as competições primeiro</option></select>
+        <label for="publicCompetitionSelect">Escolha uma competição
+          <select id="publicCompetitionSelect" aria-label="Escolha uma competição"><option value="">Carregue as competições primeiro</option></select>
         </label>
-        <button class="btn" id="publicLoadStandings" type="button" disabled>Ver classificação</button>
+      </div>
+      <div class="competitions-tabs" role="tablist" aria-label="Seções da competição">
+        <button class="competitions-tab active" type="button" data-competition-tab="games" role="tab" aria-selected="true">⚽ Jogos</button>
+        <button class="competitions-tab" type="button" data-competition-tab="standings" role="tab" aria-selected="false">🏆 Classificação</button>
+        <button class="competitions-tab" type="button" data-competition-tab="live" role="tab" aria-selected="false">🔴 Ao vivo</button>
       </div>
       <div class="competitions-status" id="publicCompetitionStatus" role="status" aria-live="polite">Carregue as competições disponíveis para começar.</div>
-      <div id="publicStandingsResult" class="public-standings-result">
-        <div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação selecionada</strong><p>Escolha uma liga e clique em “Ver classificação”.</p></div>
-      </div>
-      <p class="competitions-attribution">Dados de competições e classificações fornecidos por <a href="https://www.football-data.org/" target="_blank" rel="noopener">Football-Data.org</a>. A disponibilidade depende da cobertura da sua conta.</p>
+      <section id="publicCompetitionGamesPanel" class="competition-tab-panel" role="tabpanel">
+        <div id="publicCompetitionGamesResult" class="competition-games-list">
+          <div class="competitions-empty"><span>⚽</span><strong>Jogos da competição</strong><p>Escolha uma competição e carregue a agenda na tela inicial.</p></div>
+        </div>
+      </section>
+      <section id="publicCompetitionStandingsPanel" class="competition-tab-panel" role="tabpanel" hidden>
+        <div class="competitions-tab-toolbar"><span class="admin-small">Classificação da competição selecionada</span><button class="btn small" id="publicLoadStandings" type="button" disabled>↻ Atualizar classificação</button></div>
+        <div id="publicStandingsResult" class="public-standings-result">
+          <div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação selecionada</strong><p>Escolha uma liga e clique em “Atualizar classificação”.</p></div>
+        </div>
+      </section>
+      <section id="publicCompetitionLivePanel" class="competition-tab-panel" role="tabpanel" hidden>
+        <div class="competitions-tab-toolbar"><span class="admin-small">Livescore de todos os campeonatos · API-Football</span><button class="btn small" id="publicLoadLivescore" type="button">↻ Atualizar ao vivo</button></div>
+        <div class="competitions-status" id="publicLivescoreStatus" role="status" aria-live="polite">O livescore é consultado somente quando você solicitar, para economizar sua cota diária.</div>
+        <div id="publicLivescoreResult" class="livescore-list"><div class="competitions-empty"><span>🔴</span><strong>Nenhum livescore carregado</strong><p>Clique em “Atualizar ao vivo” para consultar as partidas em andamento.</p></div></div>
+      </section>
+      <p class="competitions-attribution">Dados de jogos e classificação fornecidos por <a href="https://www.football-data.org/" target="_blank" rel="noopener">Football-Data.org</a>. Livescore fornecido por <a href="https://www.api-football.com/" target="_blank" rel="noopener">API-Football</a>. A disponibilidade depende da cobertura de cada provedor.</p>
     </section>
 
     <section id="adminView" hidden>
@@ -677,6 +726,18 @@
         <p class="admin-small">O token fica criptografado no perfil deste Windows. Nunca é enviado ao navegador, ao GitHub, ao instalador nem ao computador do Val. Resultados e classificações em cache podem ser compartilhados pelo Cloudflare; a chave de API nunca é compartilhada. A busca de agenda consulta uma janela curta e só associa jogos que já existem na agenda.</p>
         <div class="admin-small">Plano gratuito: 12 competições e 10 chamadas por minuto; resultados e calendários podem ter atraso. A API não fornece escalações e estatísticas avançadas no plano gratuito. Consulte <a href="https://docs.football-data.org/general/v4/index.html" target="_blank" rel="noopener">API v4</a> · <a href="https://www.football-data.org/coverage" target="_blank" rel="noopener">Cobertura</a> · <a href="https://www.football-data.org/pricing" target="_blank" rel="noopener">Planos</a>.</div>
       </div>
+      <div class="admin-panel" id="theSportsDBPanel">
+        <div class="section-head" style="margin:0 0 8px;align-items:center">
+          <div><h4>🛡 TheSportsDB · Escudos e imagens</h4><p>Busca complementar de escudos de clubes e imagens de competições, com validação de nome e país.</p></div>
+          <span class="api-football-status-pill ok" id="theSportsDBConfiguredBadge">API gratuita integrada</span>
+        </div>
+        <div class="admin-api-note">A versão gratuita V1 já vem com a chave pública <strong>123</strong> integrada. Não precisa criar outra conta, cadastrar token nem preencher campo de API Key. O app consulta a fonte pelo servidor local e guarda os resultados em cache.</div>
+        <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn secondary small" type="button" id="testTheSportsDB">Testar conexão</button>
+        </div>
+        <div class="admin-small" id="theSportsDBStatus" role="status" aria-live="polite" style="margin-top:9px">TheSportsDB V1 gratuita pronta para teste. Limite interno: 25 chamadas por minuto.</div>
+        <div class="admin-small">A chave pública V1 (123) não exige cadastro. A lista gratuita de equipes é limitada a 10 resultados por consulta; quando o clube não aparecer, os fallbacks GitHub/FootyLogos continuam ativos. Livescore TheSportsDB V2 é Premium; o Ao vivo continua vindo da API-Football. <a href="https://www.thesportsdb.com/docs/api" target="_blank" rel="noopener">Documentação oficial</a>.</div>
+      </div>
       <div class="admin-panel" id="cloudSyncPanel">
         <h4>☁️ Sincronização entre computadores</h4>
         <p>Compartilhe o catálogo de emissoras, vínculos por partida e escudos personalizados. Favoritos e idioma continuam individuais.</p>
@@ -714,7 +775,7 @@
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.10 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.11 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -957,6 +1018,20 @@ const BROADCASTER_ALIAS_GROUPS = [
   const FOOTBALL_DATA_COMPETITIONS_CACHE_KEY = 'nvb_footballdata_competitions_v1';
   const FOOTBALL_DATA_STANDINGS_CACHE_KEY = 'nvb_footballdata_standings_v1';
   const FOOTBALL_DATA_SELECTED_COMPETITION_KEY = 'nvb_footballdata_selected_competition_v1';
+  const API_FOOTBALL_LIVE_CACHE_KEY = 'nvb_apifootball_livescore_v1';
+  const COMPETITION_ACTIVE_TAB_KEY = 'nvb_competition_active_tab_v1';
+  const THESPORTSDB_BADGE_CACHE_KEY = 'nvb_thesportsdb_badge_cache_v1';
+  const THESPORTSDB_LEAGUE_BADGE_CACHE_KEY = 'nvb_thesportsdb_league_badge_cache_v1';
+  let apiFootballLiveSnapshot = readStore(API_FOOTBALL_LIVE_CACHE_KEY, { fixtures:[], fetchedAt:'', cached:true });
+  if (!apiFootballLiveSnapshot || typeof apiFootballLiveSnapshot !== 'object' || !Array.isArray(apiFootballLiveSnapshot.fixtures)) apiFootballLiveSnapshot = { fixtures:[], fetchedAt:'', cached:true };
+  let competitionActiveTab = ['games','standings','live'].includes(readStore(COMPETITION_ACTIVE_TAB_KEY,'games')) ? readStore(COMPETITION_ACTIVE_TAB_KEY,'games') : 'games';
+  let theSportsDbBadgeCache = readStore(THESPORTSDB_BADGE_CACHE_KEY, {});
+  let theSportsDbLeagueBadgeCache = readStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY, {});
+  if (!theSportsDbBadgeCache || typeof theSportsDbBadgeCache !== 'object' || Array.isArray(theSportsDbBadgeCache)) theSportsDbBadgeCache = {};
+  if (!theSportsDbLeagueBadgeCache || typeof theSportsDbLeagueBadgeCache !== 'object' || Array.isArray(theSportsDbLeagueBadgeCache)) theSportsDbLeagueBadgeCache = {};
+  const theSportsDbPendingBadges = new Map();
+  let apiFootballLiveBusy = false;
+  let theSportsDbTestBusy = false;
   let apiFootballMatchCache = readStore(API_FOOTBALL_MATCH_CACHE_KEY, {});
   let apiFootballStandingsCache = readStore(API_FOOTBALL_STANDINGS_CACHE_KEY, {});
   let footballDataMatchCache = readStore(FOOTBALL_DATA_MATCH_CACHE_KEY, {});
@@ -977,7 +1052,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   // Idioma da interface: preferência local, independente do JSON de emissoras.
   let currentLanguage = readStore('futeblox_language_v1', 'pt-BR') === 'es-AR' ? 'es-AR' : 'pt-BR';
   const UI_ES = {
-    'Idioma':'Idioma', 'Biblioteca':'Biblioteca', 'Competições':'Competiciones', 'Central de competições':'Centro de competiciones', 'Classificações':'Clasificaciones', 'sem entrar no Admin.':', sin entrar al panel.', 'Escolha uma liga':'Elige una liga', 'Atualizar competições':'Actualizar competiciones', 'Ver classificação':'Ver clasificación', 'Carregue as competições primeiro':'Carga las competiciones primero', 'Nenhuma classificação selecionada':'No hay clasificación seleccionada', 'Carregue as competições disponíveis para começar.':'Carga las competiciones disponibles para comenzar.', 'Todos os jogos':'Todos los partidos', 'Ao vivo':'En directo',
+    'Idioma':'Idioma', 'Biblioteca':'Biblioteca', 'Competições':'Competiciones', 'Central de competições':'Centro de competiciones', 'Classificações':'Clasificaciones', 'Jogos':'Partidos', 'TheSportsDB':'TheSportsDB', 'sem entrar no Admin.':', sin entrar al panel.', 'Escolha uma liga':'Elige una liga', 'Atualizar competições':'Actualizar competiciones', 'Ver classificação':'Ver clasificación', 'Carregue as competições primeiro':'Carga las competiciones primero', 'Nenhuma classificação selecionada':'No hay clasificación seleccionada', 'Carregue as competições disponíveis para começar.':'Carga las competiciones disponibles para comenzar.', 'Todos os jogos':'Todos los partidos', 'Ao vivo':'En directo',
     'Próximos':'Próximos', 'Encerrados':'Finalizados', 'Favoritos':'Favoritos', 'Painel admin':'Panel de administración',
     'Seu espaço':'Tu espacio', '🔒 Área particular':'🔒 Área privada',
     'Seus favoritos e fontes cadastradas ficam salvos somente neste navegador.':'Tus favoritos y fuentes guardadas permanecen solo en este navegador.',
@@ -1766,7 +1841,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       return url.protocol==='https:' && !url.username && !url.password ? url.href : '';
     } catch { return ''; }
   }
-  function logoMarkup(name,apiUrl,countryHint='',teamId='') {
+  function logoMarkup(name,apiUrl,countryHint='',teamId='',leagueHint='') {
     const hint=countryHint || leagueCountryHint(state.selected?.league || '');
     const override=teamLogoOverrides[teamRegistryKey(name,hint)] || teamLogoOverrides[teamRegistryKey(name,'')];
     const apiId=Number(teamId);
@@ -1780,32 +1855,58 @@ const BROADCASTER_ALIAS_GROUPS = [
     ]);
     const unique=[...new Set(candidates)];
     if(unique.length) {
-      return `<img class="crest" loading="lazy" data-team="${escapeHtml(name)}" data-fallbacks="${escapeHtml(JSON.stringify(unique.slice(1)))}" src="${escapeHtml(unique[0])}" alt="Escudo ${escapeHtml(name)}" title="${escapeHtml(name)}">`;
+      return `<img class="crest" loading="lazy" data-team="${escapeHtml(name)}" data-apifootball-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(countryHint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" data-fallbacks="${escapeHtml(JSON.stringify(unique.slice(1)))}" src="${escapeHtml(unique[0])}" alt="Escudo ${escapeHtml(name)}" title="${escapeHtml(name)}">`;
     }
-    return `<div class="crest crest-fallback" data-team="${escapeHtml(name)}" title="Escudo não encontrado. Pode ser registrado no Painel admin.">${escapeHtml(initials(name))}</div>`;
+    return `<div class="crest crest-fallback" data-team="${escapeHtml(name)}" data-apifootball-id="${Number.isSafeInteger(apiId)&&apiId>0?apiId:''}" data-country="${escapeHtml(countryHint || '')}" data-league="${escapeHtml(leagueHint || state.selected?.league || '')}" title="Escudo ainda não encontrado; tentando TheSportsDB.">${escapeHtml(initials(name))}</div>`;
+  }
+  function theSportsDbLocalKey(teamName,country='') { return `${foldLabel(teamName)}|${foldLabel(country)}`; }
+  function setTheSportsDbImage(node,url,teamName,key='') {
+    if(!node?.isConnected||!url)return;
+    const img=document.createElement('img');img.className='crest';img.loading='lazy';img.alt=`Escudo ${teamName}`;img.title=teamName;img.src=url;
+    img.dataset.team=teamName;img.dataset.theSportsDb='1';img.dataset.theSportsDbKey=key;img.dataset.theSportsDbAttempted='1';
+    img.dataset.country=node.dataset?.country||'';img.dataset.league=node.dataset?.league||'';img.dataset.apiFootballId=node.dataset?.apiFootballId||'';
+    node.replaceWith(img);
+    attachLogoFallback(img.parentElement||document);
+  }
+  async function hydrateTheSportsDbBadge(node,teamName,country='',league='') {
+    if(!node?.isConnected||!teamName||node.dataset?.theSportsDbAttempted==='1')return;
+    node.dataset.theSportsDbAttempted='1';
+    const key=theSportsDbLocalKey(teamName,country);const now=Date.now();const cached=theSportsDbBadgeCache[key];
+    if(cached&&Number(cached.expiresAt)>now){if(cached.url)setTheSportsDbImage(node,cached.url,teamName,key);return;}
+    if(theSportsDbPendingBadges.has(key)){
+      try{const url=await theSportsDbPendingBadges.get(key);if(url)setTheSportsDbImage(node,url,teamName,key);}catch{}return;
+    }
+    const task=(async()=>{
+      const response=await fetch('/api/thesportsdb/team-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({teamName,country,league,apiFootballId:node.dataset?.apiFootballId||'',cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Busca de escudo indisponível.');
+      const url=String(result.badgeUrl||'');theSportsDbBadgeCache[key]={url,found:Boolean(url),expiresAt:Date.now()+(url?30:1)*24*60*60*1000,source:'TheSportsDB'};
+      const keys=Object.keys(theSportsDbBadgeCache);while(keys.length>350)delete theSportsDbBadgeCache[keys.shift()];
+      writeStore(THESPORTSDB_BADGE_CACHE_KEY,theSportsDbBadgeCache);return url;
+    })();
+    theSportsDbPendingBadges.set(key,task);
+    try{const url=await task;if(url&&node.isConnected)setTheSportsDbImage(node,url,teamName,key);}catch(error){console.warn('TheSportsDB badge lookup:',error.message);}finally{theSportsDbPendingBadges.delete(key);}
   }
   function attachLogoFallback(root) {
+    if(!root?.querySelectorAll)return;
     root.querySelectorAll('img[data-competition-logo]').forEach(img=>{
-      if(img.dataset.fallbackReady) return;
-      img.dataset.fallbackReady='1';
-      img.addEventListener('error',()=>{ const fallback=document.createElement('span'); fallback.className='competition-divider-mark'; fallback.textContent='🏆'; img.replaceWith(fallback); }, { once:true });
+      if(img.dataset.fallbackReady)return;img.dataset.fallbackReady='1';
+      img.addEventListener('error',()=>{const fallback=document.createElement('span');fallback.className='competition-divider-mark';fallback.textContent='🏆';img.replaceWith(fallback);},{once:true});
     });
     root.querySelectorAll('img.crest[data-team]').forEach(img=>{
-      if(img.dataset.fallbackReady) return;
-      img.dataset.fallbackReady='1';
+      if(img.dataset.fallbackReady)return;img.dataset.fallbackReady='1';
       img.addEventListener('error',()=>{
-        let fallbacks=[];
-        try { fallbacks=JSON.parse(img.dataset.fallbacks||'[]'); } catch {}
-        if(fallbacks.length) {
-          img.src=fallbacks.shift();
-          img.dataset.fallbacks=JSON.stringify(fallbacks);
-          return;
+        if(img.dataset.theSportsDb==='1'){
+          const key=img.dataset.theSportsDbKey||theSportsDbLocalKey(img.dataset.team||'',img.dataset.country||'');
+          theSportsDbBadgeCache[key]={url:'',found:false,expiresAt:Date.now()+24*60*60*1000,source:'TheSportsDB',brokenImage:true};writeStore(THESPORTSDB_BADGE_CACHE_KEY,theSportsDbBadgeCache);
+          const failed=document.createElement('div');failed.className='crest crest-fallback';failed.dataset.team=img.dataset.team||'Time';failed.dataset.country=img.dataset.country||'';failed.dataset.league=img.dataset.league||'';failed.dataset.theSportsDbAttempted='1';failed.textContent=initials(failed.dataset.team);img.replaceWith(failed);return;
         }
-        const name=img.dataset.team || 'Time';
-        const fallback=document.createElement('div'); fallback.className='crest crest-fallback'; fallback.dataset.team=name; fallback.textContent=initials(name);
-        img.replaceWith(fallback);
+        let fallbacks=[];try{fallbacks=JSON.parse(img.dataset.fallbacks||'[]');}catch{}
+        if(fallbacks.length){img.src=fallbacks.shift();img.dataset.fallbacks=JSON.stringify(fallbacks);return;}
+        const name=img.dataset.team||'Time';const fallback=document.createElement('div');fallback.className='crest crest-fallback';fallback.dataset.team=name;fallback.dataset.country=img.dataset.country||'';fallback.dataset.league=img.dataset.league||'';fallback.dataset.apiFootballId=img.dataset.apiFootballId||'';fallback.textContent=initials(name);
+        img.replaceWith(fallback);hydrateTheSportsDbBadge(fallback,name,fallback.dataset.country,fallback.dataset.league);
       });
     });
+    root.querySelectorAll('.crest-fallback[data-team]').forEach(node=>hydrateTheSportsDbBadge(node,node.dataset.team||'',node.dataset.country||'',node.dataset.league||''));
   }
   function statusLabel(status) { return status==='live'?'AO VIVO':status==='finished'?'ENCERRADO':'PROGRAMADO'; }
   function filteredEvents() {
@@ -1879,9 +1980,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     return `<article class="game-card" data-id="${escapeHtml(e.id)}" tabindex="0" role="button" aria-label="Abrir ${escapeHtml(e.home)} contra ${escapeHtml(e.away)}">
       <div class="card-top"><div class="league">${escapeHtml(e.league)}${demo}</div><span class="status ${e.status}">${statusLabel(e.status)}</span></div>
       <div class="teams">
-        <div class="team">${logoMarkup(e.home,e.homeBadge || apiFootballTeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.home?.id || '')}<div class="team-copy"><div class="team-name">${escapeHtml(e.home)}</div><div class="team-meta">CASA</div></div></div>
+        <div class="team">${logoMarkup(e.home,e.homeBadge || apiFootballTeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.home?.id || '',e.league)}<div class="team-copy"><div class="team-name">${escapeHtml(e.home)}</div><div class="team-meta">CASA</div></div></div>
         ${middle}
-        <div class="team away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '')}<div class="team-copy"><div class="team-name">${escapeHtml(e.away)}</div><div class="team-meta">FORA</div></div></div>
+        <div class="team away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '',e.league)}<div class="team-copy"><div class="team-name">${escapeHtml(e.away)}</div><div class="team-meta">FORA</div></div></div>
       </div>
       <div class="card-bottom"><span>${escapeHtml(e.timeText || 'Horário a confirmar')}</span>${fav?'<span class="watch-label">★ FAVORITO</span>':tv}</div>
     </article>`;
@@ -2136,7 +2237,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const cache=Number(provider.cacheEntries||0);
       const quota=provider.quota?.appSoftLimit?` · teto ${provider.quota.appSoftLimit}/dia`:'';
       return `<div class="multi-api-provider"><strong>${escapeHtml(provider.name||provider.id)}</strong><span>${escapeHtml(provider.description||'')}</span><em class="${active?'':'planned'}">${state} · ${cache} item(ns) em cache${quota}</em></div>`;
-    }).join('')+`<div class="admin-small" style="grid-column:1/-1">Cache local: ${Number(engine.cacheEntries||0)} entrada(s). O cache compartilhado usa o Cloudflare quando as credenciais de leitura/admin estão configuradas. football-data.org já consulta resultados e classificações quando solicitado; TheSportsDB continua planejada.</div>`;
+    }).join('')+`<div class="admin-small" style="grid-column:1/-1">Cache local: ${Number(engine.cacheEntries||0)} entrada(s). O cache compartilhado usa o Cloudflare quando as credenciais de leitura/admin estão configuradas. football-data.org já consulta resultados e classificações quando solicitado; TheSportsDB V1 gratuita já está ativa para escudos e imagens, com cobertura limitada no plano grátis.</div>`;
   }
 
   async function refreshApiFootballAdminStatus() {
@@ -2230,20 +2331,99 @@ const BROADCASTER_ALIAS_GROUPS = [
     ['footballDataCompetitionSelect','publicCompetitionSelect'].forEach(id=>{const select=$(`#${id}`);if(select)select.value=code;});
     renderCompetitionsView();
   }
-  function renderCompetitionsView() {
-    const root=$('#publicStandingsResult'); if(!root)return;
+  function selectedFootballDataCompetition() {
     const select=$('#publicCompetitionSelect');
-    const status=$('#publicCompetitionStatus');
+    const code=String(select?.value||footballDataSelectedCompetition||'').toUpperCase();
+    return footballDataCompetitions.find(item=>String(item.code||'').toUpperCase()===code)||null;
+  }
+  function competitionMatchesAgendaEvent(event, competition) {
+    if(!event||!competition)return false;
+    const eventName=foldLabel(canonicalCompetitionName(event.league||''));
+    const competitionName=foldLabel(canonicalCompetitionName(competition.name||''));
+    const codeAliases={PL:'premier league',PD:'laliga',BL1:'bundesliga',SA:'serie a',FL1:'ligue 1',BSA:'brasileirao',DED:'eredivisie',PPL:'liga portugal',CL:'champions league'};
+    const alias=codeAliases[String(competition.code||'').toUpperCase()]||'';
+    return Boolean(eventName&&((competitionName&&eventName===competitionName)||(alias&&eventName===foldLabel(alias))));
+  }
+  function competitionGameMarkup(event) {
+    const api=apiFootballMatchCache[String(event.id)]||null;const goals=api?.fixture?.goals||{};const external=footballDataScoreFor(event);
+    const home=goals.home??event.homeScore??external.home;const away=goals.away??event.awayScore??external.away;
+    const hasScore=home!==null&&home!==undefined&&away!==null&&away!==undefined;
+    const country=event.leagueCountry||leagueCountryHint(event.league);
+    return `<button class="competition-game-row" type="button" data-competition-open-match="${escapeHtml(event.id)}" aria-label="Abrir ${escapeHtml(event.home)} contra ${escapeHtml(event.away)}"><span class="competition-game-team">${logoMarkup(event.home,event.homeBadge||apiFootballTeamLogoFor(event,'home'),event.homeCountry||country,api?.fixture?.home?.id||'',event.league)}<span>${escapeHtml(event.home)}</span></span><span class="competition-game-score">${hasScore?`${escapeHtml(home)} : ${escapeHtml(away)}`:'VS'}</span><span class="competition-game-team away"><span>${escapeHtml(event.away)}</span>${logoMarkup(event.away,event.awayBadge||apiFootballTeamLogoFor(event,'away'),event.awayCountry||country,api?.fixture?.away?.id||'',event.league)}</span><span class="competition-game-meta"><span>${escapeHtml(event.dateEvent||'Data a confirmar')} · ${escapeHtml(event.timeText||'Horário a confirmar')}</span><span class="status ${event.status}">${statusLabel(event.status)}</span>${event.round?`<span>${escapeHtml(event.round)}</span>`:''}</span></button>`;
+  }
+  function renderCompetitionGames() {
+    const root=$('#publicCompetitionGamesResult');if(!root)return;
+    const competition=selectedFootballDataCompetition();
+    if(!competition){root.innerHTML='<div class="competitions-empty"><span>⚽</span><strong>Escolha uma competição</strong><p>Carregue as competições disponíveis e selecione uma liga.</p></div>';return;}
+    const matches=state.events.filter(event=>competitionMatchesAgendaEvent(event,competition)).sort((a,b)=>(a.start?.getTime()||0)-(b.start?.getTime()||0));
+    if(!matches.length){root.innerHTML=`<div class="competitions-empty"><span>📅</span><strong>Nenhum jogo de ${escapeHtml(competition.name)} na agenda carregada</strong><p>Carregue ou atualize a agenda na tela inicial. Esta aba mostra somente partidas que já existem na agenda original.</p></div>`;return;}
+    root.innerHTML=matches.map(competitionGameMarkup).join('');
+    root.querySelectorAll('[data-competition-open-match]').forEach(button=>button.addEventListener('click',()=>openMatch(button.dataset.competitionOpenMatch)));
+    attachLogoFallback(root);
+  }
+  function renderApiFootballLivescore() {
+    const root=$('#publicLivescoreResult');if(!root)return;
+    const fixtures=Array.isArray(apiFootballLiveSnapshot.fixtures)?apiFootballLiveSnapshot.fixtures:[];
+    if(!fixtures.length){root.innerHTML='<div class="competitions-empty"><span>🔴</span><strong>Nenhuma partida ao vivo encontrada</strong><p>A API-Football não retornou jogos em andamento com cobertura disponível neste momento. Você pode tentar atualizar novamente mais tarde.</p></div>';return;}
+    root.innerHTML=fixtures.map(item=>{
+      const home=item.teams?.home||{};const away=item.teams?.away||{};const status=item.fixture?.status||{};const elapsed=Number(status.elapsed||0);
+      const clock=elapsed?`${elapsed}′`:String(status.long||status.short||'AO VIVO');
+      const goals=item.goals||{};const score=goals.home===null||goals.home===undefined||goals.away===null||goals.away===undefined?'– : –':`${goals.home} : ${goals.away}`;
+      return `<article class="livescore-row"><span class="livescore-team">${home.logo?`<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">`:''}<span>${escapeHtml(home.name||'Mandante')}</span></span><span class="livescore-center"><div class="livescore-score">${escapeHtml(score)}</div><div class="livescore-clock">${escapeHtml(clock)}</div></span><span class="livescore-team away"><span>${escapeHtml(away.name||'Visitante')}</span>${away.logo?`<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">`:''}</span><span class="livescore-league">${escapeHtml(item.league?.name||'Competição')}${item.league?.country?` · ${escapeHtml(item.league.country)}`:''}</span></article>`;
+    }).join('');
+  }
+  async function loadApiFootballLivescore({refresh=false}={}) {
+    const button=$('#publicLoadLivescore');const status=$('#publicLivescoreStatus');
+    if(apiFootballLiveBusy)return;apiFootballLiveBusy=true;if(button)button.disabled=true;
+    if(status)status.textContent='Consultando partidas em andamento na API-Football...';
+    try{
+      const response=await fetch('/api/apifootball/livescore',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({refresh,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(result.usage)updateApiFootballUsage(result.usage);if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar o livescore.');
+      apiFootballLiveSnapshot={fixtures:Array.isArray(result.fixtures)?result.fixtures:[],fetchedAt:new Date().toISOString(),cached:Boolean(result.cached),shared:Boolean(result.shared)};
+      writeStore(API_FOOTBALL_LIVE_CACHE_KEY,apiFootballLiveSnapshot);renderApiFootballLivescore();
+      if(status)status.textContent=`${apiFootballLiveSnapshot.fixtures.length} partida(s) ao vivo${result.cached?' · cache local/compartilhado':''}. Atualização consultada agora.`;
+      toast(apiFootballLiveSnapshot.fixtures.length?`${apiFootballLiveSnapshot.fixtures.length} partida(s) ao vivo carregada(s).`:'Nenhuma partida ao vivo foi encontrada.');
+    }catch(error){if(status)status.textContent=error.message||'Falha ao consultar o livescore.';toast(error.message||'Falha ao consultar o livescore.');}
+    finally{apiFootballLiveBusy=false;if(button)button.disabled=false;}
+  }
+  function setCompetitionActiveTab(tab) {
+    competitionActiveTab=['games','standings','live'].includes(tab)?tab:'games';writeStore(COMPETITION_ACTIVE_TAB_KEY,competitionActiveTab);renderCompetitionsView();
+  }
+  async function hydrateTheSportsDbLeagueBadge(competition) {
+    const img=$('#publicCompetitionBadge');if(!img||!competition)return;
+    const country=String(competition.area?.name||'').trim();const leagueName=String(competition.name||'').trim();if(!country||!leagueName)return;
+    const key=`${foldLabel(leagueName)}|${foldLabel(country)}`;const cached=theSportsDbLeagueBadgeCache[key];
+    if(cached&&Number(cached.expiresAt)>Date.now()){if(cached.url){img.src=cached.url;img.hidden=false;}return;}
+    if(img.dataset.lookupKey===key)return;img.dataset.lookupKey=key;
+    try{
+      const response=await fetch('/api/thesportsdb/league-badge',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({leagueName,country,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Imagem da competição indisponível.');
+      const url=String(result.badgeUrl||'');theSportsDbLeagueBadgeCache[key]={url,expiresAt:Date.now()+(url?30:1)*24*60*60*1000};writeStore(THESPORTSDB_LEAGUE_BADGE_CACHE_KEY,theSportsDbLeagueBadgeCache);
+      if(url){img.src=url;img.hidden=false;img.onerror=()=>{img.hidden=true;};}else img.hidden=true;
+    }catch(error){img.hidden=true;console.warn('TheSportsDB league badge:',error.message);}
+  }
+  function renderCompetitionsView() {
+    const root=$('#publicStandingsResult');if(!root)return;
+    const select=$('#publicCompetitionSelect');const status=$('#publicCompetitionStatus');
     const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
     const selectedCode=String(select?.value||footballDataSelectedCompetition||'').toUpperCase();
+    const selected=leagues.find(item=>String(item.code||'').toUpperCase()===selectedCode)||null;
     const snapshot=selectedCode?footballDataStandingsCache[selectedCode]:null;
-    const publicButton=$('#publicLoadStandings'); if(publicButton)publicButton.disabled=!selectedCode||!leagues.some(item=>item.code===selectedCode);
+    const publicButton=$('#publicLoadStandings');if(publicButton)publicButton.disabled=!selectedCode||!selected;
+    document.querySelectorAll('[data-competition-tab]').forEach(button=>{
+      const active=button.dataset.competitionTab===competitionActiveTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
+    });
+    $('#publicCompetitionGamesPanel').hidden=competitionActiveTab!=='games';
+    $('#publicCompetitionStandingsPanel').hidden=competitionActiveTab!=='standings';
+    $('#publicCompetitionLivePanel').hidden=competitionActiveTab!=='live';
     if(status){
-      if(!leagues.length) status.textContent='Nenhuma liga carregada ainda. Use “Atualizar competições” para consultar as opções da sua conta.';
-      else status.textContent=`${leagues.length} liga(s) disponível(is) · ${snapshot?'classificação salva disponível':'selecione uma liga e carregue a classificação'}.`;
+      if(!leagues.length)status.textContent='Nenhuma liga carregada ainda. Use “Atualizar competições” para consultar as opções da sua conta.';
+      else status.textContent=`${leagues.length} liga(s) disponíveis${selected?` · ${selected.name} selecionada`:' · escolha uma competição'}.`;
     }
-    if(snapshot?.table?.length) root.innerHTML=footballDataStandingMarkup(snapshot,true);
-    else root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação selecionada</strong><p>Escolha uma liga e clique em “Ver classificação”.</p></div>';
+    if(snapshot?.table?.length)root.innerHTML=footballDataStandingMarkup(snapshot,true);
+    else root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Nenhuma classificação carregada</strong><p>Escolha uma liga e clique em “Atualizar classificação”.</p></div>';
+    renderCompetitionGames();renderApiFootballLivescore();
+    if(selected)hydrateTheSportsDbLeagueBadge(selected);else {const badge=$('#publicCompetitionBadge');if(badge)badge.hidden=true;}
   }
   async function refreshFootballDataAdminStatus() {
     const badge=$('#footballDataConfiguredBadge'); const status=$('#footballDataTokenStatus');
@@ -2362,13 +2542,26 @@ const BROADCASTER_ALIAS_GROUPS = [
       footballDataSelectedCompetition=code;writeStore(FOOTBALL_DATA_SELECTED_COMPETITION_KEY,code);
       const cached=code?footballDataStandingsCache[code]:null;
       if(cached) { const root=$('#publicStandingsResult');if(root)root.innerHTML=footballDataStandingMarkup(cached,true); }
-      else { const root=$('#publicStandingsResult');if(root)root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Classificação ainda não carregada</strong><p>Clique em “Ver classificação” para consultar esta liga.</p></div>'; }
+      else { const root=$('#publicStandingsResult');if(root)root.innerHTML='<div class="competitions-empty"><span>🏆</span><strong>Classificação ainda não carregada</strong><p>Abra a aba Classificação e clique em “Atualizar classificação”.</p></div>'; }
+      const badge=$('#publicCompetitionBadge');if(badge){badge.hidden=true;badge.removeAttribute('src');badge.dataset.lookupKey='';}
       renderCompetitionsView();
     });
     renderFootballDataCompetitionOptions(footballDataCompetitions);
     if(footballDataSelectedCompetition && footballDataStandingsCache[footballDataSelectedCompetition]) renderFootballDataStandings(footballDataStandingsCache[footballDataSelectedCompetition]);
     else renderCompetitionsView();
     await refreshFootballDataAdminStatus();
+  }
+
+  async function initTheSportsDBPanel() {
+    const button=$('#testTheSportsDB');const status=$('#theSportsDBStatus');const badge=$('#theSportsDBConfiguredBadge');
+    try{const info=await fetch('/api/thesportsdb/status',{cache:'no-store'}).then(response=>response.json());if(badge){badge.textContent=info?.configured?'API gratuita integrada':'Indisponível';badge.classList.toggle('ok',Boolean(info?.configured));badge.classList.toggle('warn',!info?.configured);}}
+    catch(error){if(status)status.textContent=`Não foi possível consultar TheSportsDB: ${error.message}`;}
+    button?.addEventListener('click',async()=>{
+      if(theSportsDbTestBusy)return;theSportsDbTestBusy=true;button.disabled=true;if(status)status.textContent='Testando a API gratuita TheSportsDB...';
+      try{const response=await fetch('/api/thesportsdb/test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'TheSportsDB não respondeu.');if(status)status.textContent=`Conexão aprovada · ${result.testTeamFound?'clube de teste localizado':'API respondeu'} · chave gratuita 123 integrada. Não é necessário token pessoal.`;toast('TheSportsDB conectada. A chave gratuita já está integrada.');}
+      catch(error){if(status)status.textContent=error.message||'Falha ao testar TheSportsDB.';toast(error.message||'Falha ao testar TheSportsDB.');}
+      finally{theSportsDbTestBusy=false;button.disabled=false;}
+    });
   }
 
   async function shareApiFootballSnapshot(snapshot, type='match') {
@@ -2474,9 +2667,9 @@ const BROADCASTER_ALIAS_GROUPS = [
           <div class="match-hero-actions"><span class="status ${e.status}">${status}</span><button class="btn secondary small" id="favoriteToggle" type="button">${favoriteLabel}</button></div>
         </div>
         <div class="match-scoreboard">
-          <div class="match-team-home">${logoMarkup(e.home,e.homeBadge || apiFootballTeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.home?.id || '')}<div class="match-team-name">${escapeHtml(e.home)}</div><div class="match-team-role">MANDANTE</div></div>
+          <div class="match-team-home">${logoMarkup(e.home,e.homeBadge || apiFootballTeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.home?.id || '',e.league)}<div class="match-team-name">${escapeHtml(e.home)}</div><div class="match-team-role">MANDANTE</div></div>
           <div class="match-score-center"><div class="match-score">${score}</div>${penaltyScoreMarkup}<div class="match-kickoff">${escapeHtml(matchTime)}</div></div>
-          <div class="match-team-away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '')}<div class="match-team-name">${escapeHtml(e.away)}</div><div class="match-team-role">VISITANTE</div></div>
+          <div class="match-team-away">${logoMarkup(e.away,e.awayBadge || apiFootballTeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),apiFootballMatchCache[String(e.id)]?.fixture?.away?.id || '',e.league)}<div class="match-team-name">${escapeHtml(e.away)}</div><div class="match-team-role">VISITANTE</div></div>
         </div>
         <div class="match-facts">
           <div class="match-fact"><span>📅 DATA</span><strong>${escapeHtml(matchDate)}</strong></div>
@@ -3540,7 +3733,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.10',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.11',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -3609,6 +3802,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   initCloudSyncPanel();
   initApiFootballPanel();
   initFootballDataPanel();
+  initTheSportsDBPanel();
+  document.querySelectorAll('[data-competition-tab]').forEach(button=>button.addEventListener('click',()=>setCompetitionActiveTab(button.dataset.competitionTab)));
+  $('#publicLoadLivescore')?.addEventListener('click',()=>loadApiFootballLivescore());
   initDesktopUpdatePanel();
   // V0.15: filtros (Todos / Ao vivo / Próximos / Encerrados / Favoritos) no topo da lista.
   document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.filter)));

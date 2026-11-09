@@ -30,8 +30,8 @@ try {
   assert.equal(restored.getProviderUsage('api-football').requestsUsedByApp, 12);
   const status = restored.status();
   assert.equal(status.engine, 'NicoVal Multi-API Engine');
-  assert.equal(status.activeProviders, 1);
-  assert.equal(status.plannedProviders, 2);
+  assert.equal(status.activeProviders, 3);
+  assert.equal(status.plannedProviders, 0);
   assert.equal(status.providers.find(item => item.id === 'api-football').cacheEntries, 1);
 
   now += 61_000;

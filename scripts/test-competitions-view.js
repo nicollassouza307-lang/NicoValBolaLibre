@@ -7,7 +7,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-assert.equal(pkg.version, '0.18.10');
+assert.equal(pkg.version, '0.18.11');
 for (const id of [
   'competitionsBtn', 'competitionsView', 'publicLoadCompetitions',
   'publicCompetitionSelect', 'publicLoadStandings', 'publicCompetitionStatus',
