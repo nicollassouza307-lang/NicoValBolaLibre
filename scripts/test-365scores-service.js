@@ -29,6 +29,7 @@ try {
     competitions: [{ id: 77, name: 'Brasileirão', countryName: 'Brazil' }],
     roundName: 'Rodada 33', venue: { name: 'Maracanã' }, tvNetworks: [{ name: 'Premiere' }]
   }] });
+  responses.set('/standings/', { standings: [{ seasonNum: 26, stageNum: 1, rows: [{ position: 1, points: 10, gamePlayed: 4 }] }] });
   responses.set('/game/', { game: {
     id: 12345, startTime: '2026-11-09T22:00:00Z', statusText: 'Scheduled',
     homeCompetitor: { id: 10, name: 'Flamengo', lineups: { formation: '4-3-3', members: [
@@ -38,12 +39,18 @@ try {
     awayCompetitor: { id: 20, name: 'Palmeiras', lineups: { formation: '4-2-3-1', members: [
       { id: 3, athleteId: 3, status: 1, stats: [{ type: 39, name: 'Desarmes', value: 5 }] }
     ] } },
-    competitions: [{ id: 77, name: 'Brasileirão' }], roundNum: 33, members: [
+    competitions: [{ id: 77, name: 'Brasileirão', seasonNum: 26, stageNum: 1 }], seasonNum: 26, stageNum: 1, roundNum: 33, members: [
       { id: 1, athleteId: 1, name: 'Goleiro Teste', jerseyNumber: 1, position: { name: 'GK' } },
       { id: 2, athleteId: 2, name: 'Atacante Teste', jerseyNumber: 9, position: { name: 'ST' } },
       { id: 3, athleteId: 3, name: 'Zagueiro Teste', jerseyNumber: 4, position: { name: 'CB' } }
     ],
-    events: [{ typeId: 1, playerId: 1, competitorNum: 1, gameTime: '40', description: 'Gol' }, { typeId: 1000, playerId: 2, assistPlayerId: 3, competitorNum: 2, gameTime: '70' }], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
+    events: [
+      { typeId: 1, playerId: 1, competitorNum: 1, gameTime: '40', description: 'Gol' },
+      { typeId: 1000, playerId: 2, assistPlayerId: 3, competitorNum: 2, gameTime: '70' },
+      { TypeId: 2, PlayerName: 'Jogador Amarelo', Comp: 1, GTD: '75' },
+      { type: 'Substitution', player: 'Saiu', inPlayer: 'Entrou', competitorNum: 2, minute: '80' },
+      { type: 3, player: { name: 'Jogador Expulso' }, competitorNum: 2, minute: '90+2' }
+    ], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
     stats: {},
     venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste' }]
   } });
@@ -99,6 +106,12 @@ try {
   assert.equal(game.details.statistics.playerRows[0].stats[0].typeId, 19);
   assert.equal(game.details.events[0].type, 'Gol');
   assert.equal(game.details.events[0].player, 'Goleiro Teste');
+  assert.equal(game.details.events[1].type, 'Substituição');
+  assert.equal(game.details.events[2].type, 'Cartão amarelo');
+  assert.equal(game.details.events[2].player, 'Jogador Amarelo');
+  assert.equal(game.details.events[3].type, 'Substituição');
+  assert.equal(game.details.events[3].secondaryPlayer, 'Entrou');
+  assert.equal(game.details.events[4].type, 'Cartão vermelho');
   assert.equal(game.details.shots[0].xg, 0.3);
   assert.equal(game.details.round, 'Rodada 33');
   assert.equal(game.details.venueCapacity, 78838);
@@ -106,12 +119,18 @@ try {
   assert.equal(cachedGame.cached, true);
   assert.equal(urls.length, 3, 'Detalhes do mesmo jogo devem usar cache.');
 
+  const standings = await service.getStandings(77, { seasonNum: 26, stageNum: 1 });
+  assert.equal(standings.data.standings[0].seasonNum, 26);
+  const standingsUrl = new URL(urls[3].url);
+  assert.equal(standingsUrl.searchParams.get('seasonNum'), '26');
+  assert.equal(standingsUrl.searchParams.get('stageNum'), '1');
+
   assert.throws(() => service.gameCacheKey('abc'), error => error.code === '365SCORES_GAME_ID_INVALID');
   await assert.rejects(() => service.getGamesForDate('2026-02-30'), error => error.code === '365SCORES_INVALID_DATE');
 
   const catalogStatus = engine.status();
   assert.equal(catalogStatus.providers.find(item => item.id === '365scores').state, 'planned');
-  console.log('PASSOU: parâmetros base, descoberta diária, normalização de partidas, detalhes/escalações, validação de IDs e cache 365Scores. (Testes com respostas simuladas; sem chamada externa.)');
+  console.log('PASSOU: parâmetros base, descoberta diária, detalhes/escalações, eventos em formatos alternativos, classificação por temporada/fase, validação de IDs e cache 365Scores. (Testes com respostas simuladas; sem chamada externa.)');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
 }

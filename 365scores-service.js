@@ -71,7 +71,11 @@ function competitionOf(game) {
   return {
     id: positiveId(first.id || nested.id || game?.competitionId),
     name: firstText(first.name, first.displayName, nested.name, game?.competitionDisplayName, game?.competitionName),
-    country: firstText(first.countryName, first.country?.name, nested.countryName)
+    country: firstText(first.countryName, first.country?.name, nested.countryName),
+    // Keep the season/stage attached to the game so standings requests cannot
+    // accidentally reuse the competition's default season when the game is historical.
+    seasonNum: positiveId(game?.seasonNum || first.seasonNum || nested.seasonNum || game?.season?.num || game?.season?.seasonNum || game?.season?.id),
+    stageNum: positiveId(game?.stageNum || first.stageNum || nested.stageNum || game?.stage?.num)
   };
 }
 function teamsOf(game) {
@@ -181,26 +185,57 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
     members: normalizedMembers.slice(0, 40)
   };
 }
-function eventTypeLabel(typeId) {
+function eventTypeLabel(typeId, typeName = '') {
   const labels = { 1: 'Gol', 2: 'Cartão amarelo', 3: 'Cartão vermelho', 12: 'Bola na trave', 1000: 'Substituição' };
-  return labels[Number(typeId)] || 'Evento';
+  const numeric = Number(typeId);
+  const hasNumericType = Number.isInteger(numeric) && numeric >= 0;
+  if (hasNumericType && labels[numeric]) return labels[numeric];
+  const text = String(typeName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  if (text) {
+    if (/own goal|gol contra/.test(text)) return 'Gol contra';
+    if (/goal|gol|penalty scored/.test(text)) return 'Gol';
+    if (/yellow|amarelo/.test(text)) return 'Cartão amarelo';
+    if (/red card|cartao vermelho|expulsion|expulsao/.test(text)) return 'Cartão vermelho';
+    if (/substitution|substituicao|substituição/.test(text)) return 'Substituição';
+    if (/penalty missed|missed penalty|penalti perdido/.test(text)) return 'Pênalti perdido';
+    if (/post|woodwork|trave/.test(text)) return 'Bola na trave';
+    if (/var/.test(text)) return 'VAR';
+    if (/half.?time|intervalo/.test(text)) return 'Intervalo';
+    if (/full.?time|fim de jogo|match ended/.test(text)) return 'Fim de jogo';
+    return String(typeName).trim();
+  }
+  return hasNumericType ? `Evento (tipo ${numeric})` : 'Evento';
 }
 function normalizeGameEvent(event, memberMap, home, away) {
   const item = asObject(event);
-  const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id);
-  const player = (athleteId && memberMap.get(athleteId)) || asObject(item.player);
-  const secondAthleteId = positiveId(item.assistAthleteId || item.assistPlayerId || item.substituteId || item.inAthleteId || item.assist?.id);
-  const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(item.assist || item.inPlayer);
-  const competitorNum = Number(item.competitorNum ?? item.competitor?.competitorNum);
+  const nestedType = asObject(item.type || item.eventType || item.event?.type || item.EventType);
+  const rawTypeId = item.typeId ?? item.TypeId ?? item.eventTypeId ?? item.EventTypeId ?? nestedType.id ?? nestedType.ID ?? nestedType.typeId ?? item.event?.typeId ?? item.eventType ?? (typeof item.type === 'number' ? item.type : null) ?? item.Type ?? null;
+  const rawTypeName = firstText(
+    item.eventTypeName, item.EventTypeName, item.typeName, item.TypeName,
+    nestedType.name, nestedType.displayName, nestedType.description,
+    typeof item.type === 'string' ? item.type : '',
+    typeof item.eventType === 'string' ? item.eventType : '',
+    typeof item.Type === 'string' ? item.Type : ''
+  );
+  const athleteId = positiveId(item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.PID);
+  const rawPlayer = item.player || item.athlete || item.Player;
+  const player = (athleteId && memberMap.get(athleteId)) || asObject(rawPlayer);
+  const secondAthleteId = positiveId(item.assistAthleteId || item.assistPlayerId || item.substituteId || item.inAthleteId || item.assist?.id || item.PID2 || item.extraPlayerId);
+  const rawSecondPlayer = item.assist || item.inPlayer || item.secondaryPlayer || item.ExtraPlayers?.[0];
+  const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(rawSecondPlayer);
+  const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.Comp ?? item.side;
+  const competitorNum = Number(competitorRaw);
+  const type = eventTypeLabel(rawTypeId, rawTypeName);
+  const detail = firstText(item.description, item.Description, item.comment, item.Comment, item.shortText, item.eventName, item.EventName, item.detail, item.Details, rawTypeName);
   return {
-    typeId: positiveId(item.typeId || item.type?.id),
-    type: eventTypeLabel(item.typeId || item.type?.id),
-    minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime),
-    player: firstText(player.name, player.displayName, item.playerName, item.name),
-    secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, item.assistName, item.inPlayerName),
-    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name),
-    detail: firstText(item.name, item.description, item.comment, item.shortText, item.type?.name),
-    score: firstText(item.score, item.scoreText)
+    typeId: Number.isInteger(Number(rawTypeId)) && rawTypeId !== null && rawTypeId !== undefined ? Number(rawTypeId) : null,
+    type,
+    minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime, item.GTD, item.GT),
+    player: firstText(player.name, player.displayName, player.longName, player.shortName, typeof rawPlayer === 'string' ? rawPlayer : '', item.playerName, item.PlayerName, item.name, item.Player),
+    secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, secondPlayer.longName, secondPlayer.shortName, typeof rawSecondPlayer === 'string' ? rawSecondPlayer : '', item.assistName, item.inPlayerName, item.Player2, item.ExtraPlayers?.[0]),
+    team: competitorNum === 1 ? home.name : competitorNum === 2 ? away.name : firstText(item.competitor?.name, item.team?.name, item.teamName, item.TeamName),
+    detail: detail && detail !== type ? detail : '',
+    score: firstText(item.score, item.scoreText, item.S, item.result?.score)
   };
 }
 const LINEUP_STAT_LABELS = Object.freeze({

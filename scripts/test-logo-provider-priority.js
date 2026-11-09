@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const service = fs.readFileSync(path.join(root, 'thesportsdb-service.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.18.17');
+assert.equal(pkg.version, '0.18.18');
 const logoStart = html.indexOf('function logoMarkup(');
 const logoEnd = html.indexOf('\n  function theSportsDbLocalKey', logoStart);
 assert.ok(logoStart >= 0 && logoEnd > logoStart, 'logoMarkup deve existir.');

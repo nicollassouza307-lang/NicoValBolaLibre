@@ -779,7 +779,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.18.17 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.18.18 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Football data provided by the Football-Data.org API</span></footer>
   </main>
 </div>
 
@@ -2265,7 +2265,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderScores365Events(details) {
     const events=Array.isArray(details?.events)?details.events:[];
     if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
-    const iconFor=event=>({Gol:'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠'}[event.type]||'•');
+    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
     const sorted=events.slice().sort((a,b)=>parseInt(String(a.minute||'').match(/\d+/)?.[0]||'0',10)-parseInt(String(b.minute||'').match(/\d+/)?.[0]||'0',10));
     return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>`<article class="apifootball-event-row"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(event.player||event.type||'Evento')}</strong><small>${escapeHtml(event.type||'')}${event.secondaryPlayer?` · ${escapeHtml(event.secondaryPlayer)}`:''}${event.detail&&event.detail!==event.type?` · ${escapeHtml(event.detail)}`:''}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`).join('')}</div></div>`;
   }
@@ -2304,15 +2304,29 @@ const BROADCASTER_ALIAS_GROUPS = [
     const playerMarkup=playerRows.length?`<details style="margin-top:10px"><summary class="admin-small">Estatísticas individuais · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados</th></tr></thead><tbody>${playerRows.slice(0,30).map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).slice(0,5).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
     return `${content}${xgMarkup}${playerMarkup}`;
   }
+  function scores365StandingsCacheKey(competitionId, seasonNum=0, stageNum=0) {
+    const id=Number(competitionId)||0;
+    return id?`${id}:${Number(seasonNum)||'current'}:${Number(stageNum)||'all'}`:'';
+  }
   function renderScores365Standings(details) {
     const competitionId=Number(details?.competition?.id||0);
-    const cached=competitionId?scores365StandingsCache[String(competitionId)]:null;
-    if(!cached)return `<div class="apifootball-message">Classificação ainda não carregada. ${competitionId?'Use o botão abaixo para consultar a competição.':'A partida não informou um competitionId.'}</div>`;
+    const seasonNum=Number(details?.competition?.seasonNum||0);
+    const stageNum=Number(details?.competition?.stageNum||0);
+    const cacheKey=scores365StandingsCacheKey(competitionId,seasonNum,stageNum);
+    const cached=(cacheKey&&scores365StandingsCache[cacheKey])||(!seasonNum&&!stageNum&&scores365StandingsCache[String(competitionId)])||null;
+    if(!cached)return `<div class="apifootball-message">Classificação ainda não carregada${seasonNum?` para a temporada ${seasonNum}`:''}. ${competitionId?'Use o botão abaixo para consultar a competição.':'A partida não informou um competitionId.'}</div>`;
     const root=cached.data||{};
-    const groups=Array.isArray(root.standings)?root.standings:[];
+    const allGroups=Array.isArray(root.standings)?root.standings:[];
+    const matchingGroups=allGroups.filter(group=>{
+      const groupSeason=Number(group?.seasonNum||group?.season?.num||0);
+      const groupStage=Number(group?.stageNum||group?.stage?.num||0);
+      return (!seasonNum||!groupSeason||groupSeason===seasonNum)&&(!stageNum||!groupStage||groupStage===stageNum);
+    });
+    const groups=matchingGroups.length?matchingGroups:allGroups;
     const rows=groups.flatMap(group=>Array.isArray(group.rows)?group.rows:[]).slice(0,60);
     if(!rows.length)return '<div class="apifootball-message">A 365Scores respondeu, mas não encontramos linhas de classificação no formato esperado. A resposta foi mantida em cache para diagnóstico.</div>';
-    return `<div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${Number(row.position)||'—'}</td><td>${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}</td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`).join('')}</tbody></table></div>`;
+    const seasonLabel=String(groups[0]?.displayName||groups[0]?.seasonName||(seasonNum?`Temporada ${seasonNum}`:'')).trim();
+    return `${seasonLabel?`<div class="admin-small" style="margin-bottom:7px">${escapeHtml(seasonLabel)}${stageNum?` · Fase ${stageNum}`:''}</div>`:''}<div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${Number(row.position)||'—'}</td><td>${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}</td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`).join('')}</tbody></table></div>`;
   }
   function renderScores365MatchContent(details,tab) {
     if(tab==='lineups')return window.NVBLineupUI.renderLineups(scores365LineupAsApiSnapshot(details));
@@ -2371,15 +2385,18 @@ const BROADCASTER_ALIAS_GROUPS = [
     const link=scores365LinkedGameForEvent(event);
     const cached=scores365MatchCache[String(event.id)]?.details;
     const competitionId=Number(cached?.competition?.id||link?.competitionId||0);
+    const seasonNum=Number(cached?.competition?.seasonNum||0);
+    const stageNum=Number(cached?.competition?.stageNum||0);
     if(!competitionId){toast('A partida não informou o competitionId necessário.');return;}
     const button=$('#scores365LoadStandings');if(button)button.disabled=true;
     try {
-      const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,cloudSync:readCloudSyncSettings()})});
+      const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,seasonNum:seasonNum||undefined,stageNum:stageNum||undefined,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação da 365Scores.');
-      scores365StandingsCache[String(competitionId)]={data:result.data,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
+      const cacheKey=scores365StandingsCacheKey(competitionId,seasonNum,stageNum);
+      scores365StandingsCache[cacheKey]={data:result.data,seasonNum,stageNum,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       writeStore(SCORES365_STANDINGS_CACHE_KEY,scores365StandingsCache);
       if(state.selected&&String(state.selected.id)===String(event.id))renderModal();
-      toast('Classificação recebida da 365Scores.');
+      toast(`Classificação recebida da 365Scores${seasonNum?` · temporada ${seasonNum}`:''}.`);
     } catch(error){toast(error.message||'Falha ao carregar a classificação da 365Scores.');}
     finally{if(button)button.disabled=false;}
   }
@@ -4134,7 +4151,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.18.17',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.18.18',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

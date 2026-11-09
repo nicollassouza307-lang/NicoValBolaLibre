@@ -30,7 +30,7 @@ jobs:
         run: node scripts/test-apifootball.js
       - name: Test release updater assets
         run: node scripts/test-release-assets.js
-      - name: Test V0.18.17 365Scores match integration, lineups and schedule
+      - name: Test V0.18.18 365Scores events, season-aware standings and match integration
         run: node scripts/test-apifootball-lineup-ui.js
       - name: Test Cloudflare sports-data sharing and preservation
         run: node scripts/test-cloudflare-sports-data.js
