@@ -1,0 +1,12 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+assert.ok(html.includes('id=\"playerDiagStationName\"'), 'Diagnóstico deve permitir informar o nome da emissora.');
+assert.ok(html.includes('id=\"playerDiagStationUrl\"'), 'Diagnóstico deve oferecer campo para o link.');
+assert.ok(html.includes('id=\"createPlayerDiagStation\"'), 'Diagnóstico deve oferecer ação de criação.');
+assert.ok(html.includes("category:'Diversos',group:'Diversos',createdFrom:'player-diagnostic'"), 'Cadastro criado pelo diagnóstico deve entrar em Diversos.');
+assert.ok(html.includes('normalizedSourceUrl(st.url)===normalizedSourceUrl(url)'), 'Cadastro deve evitar URLs duplicadas.');
+assert.ok(html.includes('normalizeAllowedEmbed(raw)'), 'Cadastro deve validar o link com a regra HTTPS existente.');
+assert.ok(html.includes("String(st.category||'')"), 'Categoria deve ser preservada na sincronização em nuvem.');
+console.log('PASSOU: diagnóstico de Players cria emissora com link validado, evita duplicatas e preserva categoria Diversos.');

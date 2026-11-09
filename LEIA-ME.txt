@@ -1,13 +1,18 @@
-# NicoValBolaLibre V0.19.3
+# NicoValBolaLibre V0.20.0
 
-## V0.19.3 · Diagnóstico e recuperação de candidatos 365Scores
+## V0.20.0 · BIG UPDATE inicial: associação, categorias, Livescore e diagnóstico de emissoras
 
-- O comparador agora mostra sugestões de revisão quando pelo menos um dos clubes tem correspondência forte, mesmo que o segundo venha com nome regional ou extenso.
-- Sugestões fracas são identificadas explicitamente, exibem a semelhança separada de mandante e visitante e nunca podem ser associadas automaticamente.
-- O diagnóstico passa a mostrar o melhor par encontrado, com percentuais individuais e média, em vez de depender apenas da menor semelhança dos dois clubes.
-- A busca diária informa quantos registros vieram da 365Scores, quantos foram normalizados e quantos perderam ID ou nomes dos clubes.
-- Incluído o sufixo estadual ES na normalização de nomes de clubes.
-- A associação automática continua restrita às correspondências exatas e inequívocas já exigidas pela versão anterior.
+- Busca de associação da agenda ampliada para o dia selecionado e os dias anterior/posterior, com deduplicação por gameId e cache local/compartilhado por data.
+- Comparação passou a aproveitar IDs explicitamente identificados como IDs 365Scores, inclusive IDs guardados em vínculos confirmados anteriormente.
+- Horário passou a ter peso menor e deixou de ser um bloqueio isolado para vínculo automático quando times, data e competição são inequívocos.
+- Categorias feminina e de base são identificadas por metadados e nomes de competições; incompatibilidades bloqueiam associação automática e aparecem no diagnóstico.
+- Dados normalizados da 365Scores descartam placares negativos e reconhecem relógios em minutos e intervalo quando esses campos vêm na resposta.
+- Após uma associação confirmada, os cartões e a central da partida priorizam o horário de início da 365Scores, convertido para America/Sao_Paulo; a data original da agenda não é reescrita.
+- Resumo do Livescore da 365Scores ficou mais limpo: status/minuto e eventos, sem placar duplicado, estádio, rodada, finalizações ou evento de fim de jogo. O placar permanece no cartão principal da agenda.
+- Diagnóstico de Players permite criar uma emissora não cadastrada com nome e link HTTPS, evita duplicatas e salva a categoria Diversos; a categoria é preservada na sincronização.
+- Escudos 365Scores já estavam integrados na V0.19.3 como fallback por ID do clube quando a agenda não fornece imagem; mantidos sem duplicar a implementação.
+- Mantidas as fontes da agenda: Rei dos Canais, PelotaLibre e LA18HD. A API 365Scores não insere partidas na agenda.
+
 
 # NicoValBolaLibre V0.19.2
 
@@ -45,18 +50,20 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.19.3` e `Push origin`.
-3. Crie e envie a tag `v0.19.3`.
+2. Faça commit `NicoValBolaLibre V0.20.0` e `Push origin`.
+3. Crie e envie a tag `v0.20.0`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
 
 ## Testes
 
-- Nesta versão: 21 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
+- Nesta versão: 23 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
-- `npm run test:365scores-agenda-match`: aliases, nomes curtos/oficiais, fuso local, virada de data, competição, horário, segurança de inversão e bloqueio de candidatas ambíguas.
+- `npm run test:365scores-agenda-match`: aliases, IDs, categorias, nomes curtos/oficiais, fuso local, datas vizinhas, competição, horário auxiliar e bloqueio de candidatas ambíguas.
+- `npm run test:365scores-big-update-ui`: resumo do Livescore, minutos, placares seguros, horário 365Scores e escudos por ID.
+- `npm run test:player-diagnostic`: criação de emissoras pelo diagnóstico de Players e categoria Diversos.
 - `npm run test:agenda-market`: filtro de emissoras brasileiras, argentinas, pan-regionais e desconhecidas.
 - Os demais testes cobrem interface, agenda, escudos, sincronização e compatibilidade dos módulos legados.
 - A bateria automatizada não substitui teste visual e consulta real em partida disponível na 365Scores.

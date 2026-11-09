@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.19.3');
+assert.equal(pkg.version, '0.20.0');
 for (const tab of ['livescore','lineups','statistics','standings']) {
   assert.match(html, new RegExp(`data-apifootball-tab="${tab}"`), `A aba ${tab} deve existir no centro da partida.`);
 }

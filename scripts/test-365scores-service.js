@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { MultiApiEngine } = require('../multi-api-engine');
-const { Scores365Service, isoToBrDate, ENDPOINTS } = require('../365scores-service');
+const { Scores365Service, isoToBrDate, ENDPOINTS, normalizeGame, normalizeGameDetails, categoryType, validScore } = require('../365scores-service');
 
 (async () => {
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nvb-365scores-'));
@@ -83,6 +83,14 @@ try {
   assert.equal(urls[0].url.includes('langId=31'), true);
   assert.equal(urls[0].options.headers.Authorization, undefined, 'Não deve inventar nem exigir token.');
 
+  const normalizedSample = normalizeGame({ id:44, startTime:'2026-11-09T22:00:00Z', statusText:'65', homeCompetitor:{id:1,name:'Clube A',score:-1}, awayCompetitor:{id:2,name:'Clube B',score:-1}, competitions:[{name:'Brasileirão Feminino'}] });
+  assert.equal(normalizedSample.home.score, null, 'Placar negativo não pode ser tratado como resultado real.');
+  assert.equal(normalizedSample.clock, "65'");
+  assert.equal(normalizedSample.category, 'women');
+  assert.equal(categoryType('Sub-20'), 'youth');
+  assert.equal(categoryType('Brasileirão Feminino Sub-20'), 'women_youth');
+  assert.equal(validScore(-1), null);
+
   const games = await service.getGamesForDate('2026-11-09');
   assert.equal(games.count, 1);
   assert.equal(games.games[0].gameId, 12345);
@@ -93,9 +101,18 @@ try {
   const cachedGames = await service.getGamesForDate('2026-11-09');
   assert.equal(cachedGames.cached, true);
   assert.equal(urls.length, 2, 'A segunda consulta do mesmo dia deve usar cache.');
+  const windowStart = urls.length;
+  const windowGames = await service.getGamesForDateWindow('2026-11-09', { offsets:[-1,0,1] });
+  assert.equal(windowGames.dates.length, 3);
+  assert.equal(windowGames.games.length, 1, 'A janela deve deduplicar o mesmo gameId recebido em dias consultados diferentes.');
+  assert.equal(urls.length - windowStart, 2, 'O dia já em cache não deve gerar nova chamada; apenas os dias vizinhos devem ser consultados.');
+
 
   const game = await service.getGame(12345);
   assert.equal(game.details.gameId, 12345);
+  const invalidScoreDetails = normalizeGameDetails({ game:{id:1,statusText:'Half Time',homeCompetitor:{id:1,name:'A',score:-1},awayCompetitor:{id:2,name:'B',score:-1}} });
+  assert.equal(invalidScoreDetails.score.home, null);
+  assert.equal(invalidScoreDetails.clock, 'INT');
   assert.equal(game.details.lineups.home.formation, '4-3-3');
   assert.equal(game.details.lineups.home.starters, 1);
   assert.equal(game.details.lineups.home.substitutes, 1);
@@ -130,11 +147,11 @@ try {
   assert.equal(game.details.venueCapacity, 78838);
   const cachedGame = await service.getGame(12345);
   assert.equal(cachedGame.cached, true);
-  assert.equal(urls.length, 3, 'Detalhes do mesmo jogo devem usar cache.');
+  assert.equal(urls.length, 5, 'Detalhes do mesmo jogo devem usar cache.');
 
   const standings = await service.getStandings(77, { seasonNum: 26, stageNum: 1 });
   assert.equal(standings.data.standings[0].seasonNum, 26);
-  const standingsUrl = new URL(urls[3].url);
+  const standingsUrl = new URL(urls[5].url);
   assert.equal(standingsUrl.searchParams.get('seasonNum'), '26');
   assert.equal(standingsUrl.searchParams.get('stageNum'), '1');
 

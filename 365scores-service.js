@@ -38,6 +38,35 @@ function positiveId(value) {
   const n = Number(value);
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
+function validScore(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+function categoryType(...values) {
+  const text = values.map(value => String(value || '')).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const women = /\b(women|woman|feminine|feminino|feminina|ladies|womens|female)\b/.test(text);
+  const youth = /\b(u[- ]?1[56789]|u[- ]?20|u[- ]?21|u[- ]?23|sub[- ]?1[56789]|sub[- ]?20|sub[- ]?21|sub[- ]?23|youth|junior|juvenil|juniores|reserves|reserva)\b/.test(text);
+  if (women && youth) return 'women_youth';
+  if (women) return 'women';
+  if (youth) return 'youth';
+  if (/\b(men|masculine|masculino|masculina)\b/.test(text)) return 'men';
+  return text ? 'men' : '';
+}
+function extractLiveClock(game) {
+  const item = asObject(game);
+  const statusText = firstText(item.statusText, item.status?.name, item.status?.shortName);
+  if (/^(?:ht|half time|halftime|intervalo|interval)$/i.test(statusText)) return 'INT';
+  const candidates = [item.gameTimeDisplay, item.gameTime, item.clock, item.timer, item.elapsed, item.minute, item.status?.gameTime, item.status?.time, statusText];
+  for (const value of candidates) {
+    const text = firstText(value);
+    if (!text) continue;
+    if (/^(?:ht|half time|halftime|intervalo|interval)$/i.test(text)) return 'INT';
+    const match = text.match(/^(\d{1,3})(?:\s*\+\s*(\d{1,2}))?\s*'?$/);
+    if (match) return `${match[1]}${match[2] ? `+${match[2]}` : ''}'`;
+  }
+  return '';
+}
 function isoToBrDate(value) {
   const input = String(value || '').trim();
   const match = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -91,8 +120,8 @@ function teamsOf(game) {
     awayTeam = Object.keys(awayTeam).length ? awayTeam : asObject(awayCandidate);
   }
   return {
-    home: { id: positiveId(homeTeam.id || homeTeam.competitorId), name: competitorName(homeTeam), score: homeTeam.score ?? homeTeam.result ?? null },
-    away: { id: positiveId(awayTeam.id || awayTeam.competitorId), name: competitorName(awayTeam), score: awayTeam.score ?? awayTeam.result ?? null }
+    home: { id: positiveId(homeTeam.id || homeTeam.competitorId), name: competitorName(homeTeam), score: validScore(homeTeam.score ?? homeTeam.result), logo: firstText(homeTeam.imageUrl, homeTeam.logoUrl, homeTeam.logo, homeTeam.image?.url, homeTeam.logo?.url) },
+    away: { id: positiveId(awayTeam.id || awayTeam.competitorId), name: competitorName(awayTeam), score: validScore(awayTeam.score ?? awayTeam.result), logo: firstText(awayTeam.imageUrl, awayTeam.logoUrl, awayTeam.logo, awayTeam.image?.url, awayTeam.logo?.url) }
   };
 }
 function normalizeGame(game) {
@@ -104,6 +133,8 @@ function normalizeGame(game) {
     startTime: firstText(item.startTime, item.date, item.startDate),
     status: firstText(item.statusText, item.status?.name, item.status?.shortName, item.statusGroupName),
     statusGroup: item.statusGroup ?? item.status?.group ?? null,
+    clock: extractLiveClock(item),
+    category: categoryType(item.categoryName, item.gender, item.competitorType, competition.name, item.competitionDisplayName, item.competitionName),
     home: teams.home,
     away: teams.away,
     competition,
@@ -346,7 +377,9 @@ function normalizeGameDetails(payload) {
     startTime: firstText(game.startTime),
     status: firstText(game.statusText, game.status?.name),
     statusGroup: game.statusGroup ?? game.status?.group ?? null,
-    score: { home: teams.home.score, away: teams.away.score },
+    clock: extractLiveClock(game),
+    category: categoryType(game.categoryName, game.gender, game.competitorType, competition.name, game.competitionDisplayName, game.competitionName),
+    score: { home: validScore(teams.home.score), away: validScore(teams.away.score) },
     home: teams.home,
     away: teams.away,
     competition,
@@ -534,6 +567,9 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
     const away = firstText(event.away, event.awayName, event.awayTeam?.name, event.teams?.away?.name);
     const date = parseAgendaDate(event);
     const competition = firstText(event.league, event.competition, event.competitionName);
+    const agendaCategory = categoryType(event.category, event.gender, event.competitionCategory, competition);
+    const agendaHomeId = positiveId(event.scores365HomeId || event.home365Id || event.homeTeam365Id);
+    const agendaAwayId = positiveId(event.scores365AwayId || event.away365Id || event.awayTeam365Id);
     const diagnostics = { sourceGames: games.length, sameDateGames: 0, adjacentDateGames: 0, gamesWithoutDate: 0, gamesWithoutTeams: 0, bestTeamScore: 0, bestHomeScore: 0, bestAwayScore: 0, bestPairAverage: 0, bestGame: '' };
     if (!home || !away || !date) return { eventId: firstText(event.id), home, away, date, competition, candidates: [], diagnostics, reason: 'Partida da agenda sem times ou data suficientes para comparar.' };
     const candidates = [];
@@ -548,10 +584,16 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
 
       const gameHome = firstText(item.home?.name), gameAway = firstText(item.away?.name);
       if (!gameHome || !gameAway) { diagnostics.gamesWithoutTeams++; continue; }
-      const directHome = teamNameSimilarity(home, gameHome);
-      const directAway = teamNameSimilarity(away, gameAway);
-      const reverseHome = teamNameSimilarity(home, gameAway);
-      const reverseAway = teamNameSimilarity(away, gameHome);
+      const gameCategory = categoryType(item.category, item.competition?.category, item.competition?.gender, item.competition?.name);
+      const categoryMismatch = Boolean(agendaCategory && gameCategory && agendaCategory !== gameCategory);
+      const directHomeName = teamNameSimilarity(home, gameHome);
+      const directAwayName = teamNameSimilarity(away, gameAway);
+      const reverseHomeName = teamNameSimilarity(home, gameAway);
+      const reverseAwayName = teamNameSimilarity(away, gameHome);
+      const directHome = agendaHomeId && positiveId(item.home?.id) === agendaHomeId ? 1 : directHomeName;
+      const directAway = agendaAwayId && positiveId(item.away?.id) === agendaAwayId ? 1 : directAwayName;
+      const reverseHome = agendaHomeId && positiveId(item.away?.id) === agendaHomeId ? 1 : reverseHomeName;
+      const reverseAway = agendaAwayId && positiveId(item.home?.id) === agendaAwayId ? 1 : reverseAwayName;
       const direct = Math.min(directHome, directAway);
       const reversedScore = Math.min(reverseHome, reverseAway);
       const isReversed = reversedScore > direct;
@@ -588,17 +630,21 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       const rankingTeamScore = Math.max(teamScore, pairAverage * 0.78);
       const timeScore = timeDiffMinutes === null ? 0.45 : timeDiffMinutes <= 15 ? 1 : timeDiffMinutes <= 30 ? 0.9 : timeDiffMinutes <= 60 ? 0.72 : timeDiffMinutes <= 90 ? 0.5 : timeDiffMinutes <= 180 ? 0.2 : 0;
       const competitionScore = competitionMatch === true ? 0.13 : competitionMatch === false ? 0 : 0.07;
+      const idBonus = (agendaHomeId && ((isReversed ? positiveId(item.away?.id) : positiveId(item.home?.id)) === agendaHomeId) ? 0.08 : 0) + (agendaAwayId && ((isReversed ? positiveId(item.home?.id) : positiveId(item.away?.id)) === agendaAwayId) ? 0.08 : 0);
       const orientationScore = isReversed ? 0.015 : 0.075;
-      const score = Math.max(0, Math.min(100, Math.round(rankingTeamScore * 0.72 * 100 + timeScore * 10 + competitionScore * 100 + orientationScore * 100)));
+      const score = Math.max(0, Math.min(100, Math.round(rankingTeamScore * 0.72 * 100 + timeScore * 3 + competitionScore * 100 + orientationScore * 100 + idBonus * 100)));
+      if (categoryMismatch) { /* Mantém a sugestão visível para diagnóstico, mas bloqueia qualquer associação automática. */ }
       const exactOriented = directHome >= 0.98 && directAway >= 0.98 && !isReversed;
-      const confidence = exactOriented && sameLocalDate && competitionMatch !== false && (timeDiffMinutes === null || timeDiffMinutes <= 90) ? 'alta' : teamScore >= 0.50 ? 'revisar' : 'baixa';
-      const reasons = [exactOriented ? 'times correspondentes' : isReversed ? 'ordem invertida ou nomes aproximados' : 'comparação parcial de nomes', sameLocalDate ? 'mesma data local' : 'data vizinha: conferir virada de dia', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença`, `mandante ${Math.round(selectedHomeScore * 100)}%`, `visitante ${Math.round(selectedAwayScore * 100)}%`];
+      const confidence = exactOriented && sameLocalDate && competitionMatch !== false && !categoryMismatch ? 'alta' : teamScore >= 0.50 ? 'revisar' : 'baixa';
+      const reasons = [exactOriented ? 'times correspondentes' : isReversed ? 'ordem invertida ou nomes aproximados' : 'comparação parcial de nomes', sameLocalDate ? 'mesma data local' : 'data vizinha: conferir virada de dia', competitionMatch === true ? 'competição compatível' : competitionMatch === false ? 'competição diferente: conferir' : 'competição não comparável', timeDiffMinutes === null ? 'horário não comparável' : `${timeDiffMinutes} min de diferença (peso auxiliar)`, `mandante ${Math.round(selectedHomeScore * 100)}%`, `visitante ${Math.round(selectedAwayScore * 100)}%`];
+      if (agendaHomeId || agendaAwayId) reasons.push(`IDs 365Scores: ${Number(Boolean(agendaHomeId && ((isReversed ? positiveId(item.away?.id) : positiveId(item.home?.id)) === agendaHomeId))) + Number(Boolean(agendaAwayId && ((isReversed ? positiveId(item.home?.id) : positiveId(item.away?.id)) === agendaAwayId)))} correspondência(s)`);
+      if (categoryMismatch) reasons.push(`categoria incompatível: agenda ${agendaCategory} x 365Scores ${gameCategory}`);
       if (teamScore < 0.50) reasons.push('sugestão fraca: exige confirmação manual');
       candidates.push({
         gameId: positiveId(item.gameId), startTime: item.startTime, home: gameHome, away: gameAway,
         homeId: positiveId(item.home?.id), awayId: positiveId(item.away?.id),
         homeScore: item.home?.score ?? null, awayScore: item.away?.score ?? null,
-        status: firstText(item.status), competition: gameCompetition, competitionId: positiveId(item.competition?.id),
+        status: firstText(item.status), category: gameCategory, categoryCompatible: !categoryMismatch, competition: gameCompetition, competitionId: positiveId(item.competition?.id),
         score, confidence, autoEligible: false, reversed: isReversed, exactOriented,
         teamScore: Math.round(teamScore * 100), teamAverageScore: Math.round(pairAverage * 100),
         homeTeamScore: Math.round(selectedHomeScore * 100), awayTeamScore: Math.round(selectedAwayScore * 100),
@@ -614,11 +660,11 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
       const margin = runnerUp ? first.score - runnerUp.score : 100;
       first.autoEligible = Boolean(
         first.gameId && first.exactOriented && first.dateDiffDays === 0 && first.competitionAutoMatch === true &&
-        first.timeDiffMinutes !== null && first.timeDiffMinutes <= 45 &&
-        first.score >= 95 && margin >= 12
+        first.categoryCompatible !== false && first.score >= 90 && margin >= 12
       );
       first.autoMargin = margin;
       if (first.autoEligible) first.reasons.push('correspondência inequívoca: apta para vínculo automático');
+      else if (first.categoryCompatible === false) first.reasons.push('vínculo automático bloqueado por categoria incompatível');
     }
     return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3), diagnostics };
   });
@@ -756,6 +802,36 @@ class Scores365Service {
     return { date, games, count: games.length, cached: result.cached, record: result.record, rawCount: rawGames.length, normalization };
   }
 
+  async getGamesForDateWindow(date, options = {}) {
+    const offsets = Array.isArray(options.offsets) ? options.offsets : [-1, 0, 1];
+    isoToBrDate(date);
+    const [year, month, day] = String(date).split('-').map(Number);
+    const base = new Date(Date.UTC(year, month - 1, day, 12));
+    if (!Number.isFinite(base.getTime())) throw Object.assign(new Error('Informe uma data válida.'), { status: 400, code: '365SCORES_INVALID_DATE' });
+    const dates = [...new Set(offsets.map(offset => {
+      const value = new Date(base); value.setUTCDate(value.getUTCDate() + Number(offset || 0));
+      return value.toISOString().slice(0, 10);
+    }))];
+    const results = [];
+    for (const targetDate of dates) results.push(await this.getGamesForDate(targetDate, options));
+    const byId = new Map();
+    for (const result of results) for (const game of result.games) if (game.gameId && !byId.has(game.gameId)) byId.set(game.gameId, game);
+    const games = [...byId.values()];
+    return {
+      date, dates, games, count: games.length,
+      rawCount: results.reduce((sum, item) => sum + Number(item.rawCount || 0), 0),
+      normalization: {
+        raw: results.reduce((sum, item) => sum + Number(item.normalization?.raw || 0), 0),
+        normalized: games.length,
+        missingGameId: results.reduce((sum, item) => sum + Number(item.normalization?.missingGameId || 0), 0),
+        missingHomeName: results.reduce((sum, item) => sum + Number(item.normalization?.missingHomeName || 0), 0),
+        missingAwayName: results.reduce((sum, item) => sum + Number(item.normalization?.missingAwayName || 0), 0),
+        missingBothTeamNames: results.reduce((sum, item) => sum + Number(item.normalization?.missingBothTeamNames || 0), 0)
+      },
+      cached: results.every(item => item.cached), records: results.map(item => item.record).filter(Boolean)
+    };
+  }
+
   async getGame(gameId, options = {}) {
     const id = positiveId(gameId);
     if (!id) throw Object.assign(new Error('Informe um gameId numérico válido.'), { status: 400, code: '365SCORES_GAME_ID_INVALID' });
@@ -791,5 +867,5 @@ class Scores365Service {
 
 module.exports = {
   Scores365Service, API_BASE, DEFAULT_PARAMS, ENDPOINTS,
-  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity, positionCode
+  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity, positionCode, categoryType, validScore, extractLiveClock
 };

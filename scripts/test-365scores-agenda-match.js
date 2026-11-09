@@ -101,4 +101,32 @@ assert.ok(partialName[0].candidates[0].reasons.some(reason => reason.includes('v
 assert.equal(partialName[0].diagnostics.bestHomeScore, 100);
 assert.ok(partialName[0].diagnostics.bestAwayScore < 100);
 
-console.log('PASSOU: correspondência por clubes, aliases, nomes parciais, fuso local, virada de data, competição, horário, diagnóstico e revisão segura de ambiguidades.');
+
+
+// O horário é auxiliar: uma diferença grande não deve, sozinha, bloquear um vínculo inequívoco.
+const timeMismatch = matchAgendaEvents(
+  [{ id:'agenda-time-mismatch', dateEvent:'2026-11-09', timeText:'19:00', home:'Flamengo', away:'Palmeiras', league:'Brasileirão Série A' }],
+  [{ gameId:901, startTime:'2026-11-09T23:00:00-03:00', home:{name:'Flamengo'}, away:{name:'Palmeiras'}, competition:{name:'Brasileirao'} }]
+);
+assert.equal(timeMismatch[0].candidates[0].timeDiffMinutes, 240);
+assert.equal(timeMismatch[0].candidates[0].autoEligible, true, 'Diferença de horário não deve ser bloqueio isolado quando clubes, data e competição são inequívocos.');
+
+// Categoria feminina ou de base incompatível nunca pode ser autoassociada.
+const categoryMismatch = matchAgendaEvents(
+  [{ id:'agenda-men', dateEvent:'2026-11-09', timeText:'19:00', home:'Flamengo', away:'Palmeiras', league:'Brasileirão Série A' }],
+  [{ gameId:902, startTime:'2026-11-09T22:00:00Z', home:{name:'Flamengo'}, away:{name:'Palmeiras'}, competition:{name:'Brasileirão Feminino'} }]
+);
+assert.equal(categoryMismatch[0].candidates[0].categoryCompatible, false);
+assert.equal(categoryMismatch[0].candidates[0].autoEligible, false);
+assert.ok(categoryMismatch[0].candidates[0].reasons.some(reason=>reason.includes('categoria incompatível')));
+
+// IDs explicitamente identificados como IDs 365Scores têm prioridade sobre pequenas diferenças de nomes.
+const idMatch = matchAgendaEvents(
+  [{ id:'agenda-id', dateEvent:'2026-11-09', timeText:'19:00', home:'Flamengo RJ', away:'Palmeiras SP', league:'Brasileirão Série A', scores365HomeId:10, scores365AwayId:20 }],
+  [{ gameId:903, startTime:'2026-11-09T22:00:00Z', home:{id:10,name:'Flamengo'}, away:{id:20,name:'Palmeiras'}, competition:{name:'Brasileirao'} }]
+);
+assert.equal(idMatch[0].candidates[0].homeTeamScore, 100);
+assert.equal(idMatch[0].candidates[0].awayTeamScore, 100);
+assert.equal(idMatch[0].candidates[0].autoEligible, true);
+
+console.log('PASSOU: correspondência por clubes/IDs, aliases, categorias, nomes parciais, fuso local, datas vizinhas, competição, horário auxiliar, diagnóstico e revisão segura de ambiguidades.');

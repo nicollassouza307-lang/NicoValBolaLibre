@@ -830,7 +830,7 @@ img.crest.crest-github {
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.19.3 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB (escudos)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.20.0 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> + FootyLogos + <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB (escudos)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -1489,8 +1489,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     const titleParts = title.split(/\s+(?:x|vs\.?)\s+/i);
     const home = homeObj.name || e.home || e.homeTeamName || (typeof e.homeTeam === 'string' ? e.homeTeam : '') || titleParts[0] || 'Time da casa';
     const away = awayObj.name || e.away || e.awayTeamName || (typeof e.awayTeam === 'string' ? e.awayTeam : '') || titleParts[1] || 'Visitante';
-    const homeScore = e.home_score ?? e.homeScore ?? e.score?.home ?? e.teams?.home?.score ?? e.homeTeam?.score ?? null;
-    const awayScore = e.away_score ?? e.awayScore ?? e.score?.away ?? e.teams?.away?.score ?? e.awayTeam?.score ?? null;
+    const cleanScore=value=>value===null||value===undefined||value===''||!Number.isFinite(Number(value))||Number(value)<0?null:Number(value);
+    const homeScore = cleanScore(e.home_score ?? e.homeScore ?? e.score?.home ?? e.teams?.home?.score ?? e.homeTeam?.score ?? null);
+    const awayScore = cleanScore(e.away_score ?? e.awayScore ?? e.score?.away ?? e.teams?.away?.score ?? e.awayTeam?.score ?? null);
     const penaltyScore = e.penalty_score || e.penaltyScore || e.score?.penalty || {};
     const homePenaltyScore = penaltyScore.home ?? e.home_penalty_score ?? e.homePenaltyScore ?? null;
     const awayPenaltyScore = penaltyScore.away ?? e.away_penalty_score ?? e.awayPenaltyScore ?? null;
@@ -1504,6 +1505,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     return {
       id: String(e.id || e.event_id || e.matchId || e.match_id || `${home}-${away}-${dateEvent}`).replace(/[^\w-]/g, '-'),
       home, away,
+      category: String(e.category || e.competitionCategory || e.gender || ''),
       homeTeamId: String(homeObj.id || e.homeTeamId || ''),
       awayTeamId: String(awayObj.id || e.awayTeamId || ''),
       homeBadge: homeObj.logo || e.home_logo || e.homeBadge || '',
@@ -2079,6 +2081,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     const fav=favorites.has(e.id);
     const scores365=scores365MatchInfoForEvent(e);
     const cardStatus=scores365NormalizedStatus(e);
+    const kickoff=scores365KickoffForEvent(e);
+    const cardTime=kickoff.text||e.timeText||'Horário a confirmar';
     const cardHomeScore=scores365.homeScore ?? e.homeScore ?? null;
     const cardAwayScore=scores365.awayScore ?? e.awayScore ?? null;
     const hasCardScore=cardHomeScore!==null&&cardHomeScore!==undefined&&cardHomeScore!==''&&cardAwayScore!==null&&cardAwayScore!==undefined&&cardAwayScore!=='';
@@ -2095,7 +2099,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         ${middle}
         <div class="team away">${logoMarkup(e.away,e.awayBadge || scores365TeamLogoFor(e,'away'),e.awayCountry || e.leagueCountry || leagueCountryHint(e.league),'',e.league)}<div class="team-copy"><div class="team-name">${escapeHtml(e.away)}</div><div class="team-meta">FORA</div></div></div>
       </div>
-      <div class="card-bottom"><span>${escapeHtml(e.timeText || 'Horário a confirmar')}</span>${fav?'<span class="watch-label">★ FAVORITO</span>':tv}</div>
+      <div class="card-bottom"><span title="${kickoff.synced?'Horário confirmado pela 365Scores':'Horário informado pela agenda'}">${escapeHtml(cardTime)}</span>${fav?'<span class="watch-label">★ FAVORITO</span>':tv}</div>
     </article>`;
   }
   function emptyMarkup() {
@@ -2386,7 +2390,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       return `<div class="player-placeholder"><div class="big">▣</div><strong>Fonte encontrada no catálogo, mas o player não foi iniciado</strong><p>O NicoValBolaLibre reconheceu ${escapeHtml(detected.join(', '))} e encontrou ${catalogMatches.length} fonte(s) correspondente(s). Porém, nenhuma está associada a esta partida, então nenhum iframe foi criado. Isto ainda não é um erro de reprodução: o navegador nem tentou abrir um player.</p><ul style="display:inline-block;text-align:left;font-size:11px;line-height:1.7;margin:8px auto;padding-left:20px">${items}</ul><details class="player-diagnostic" open><summary>Leitor de diagnóstico</summary><div class="diag-grid"><div class="diag-item"><b>Partida</b>${escapeHtml(event.home)} x ${escapeHtml(event.away)}</div><div class="diag-item"><b>Emissoras detectadas</b>${escapeHtml(detected.join(', ')||'Nenhuma')}</div><div class="diag-item"><b>Fontes correspondentes</b>${catalogMatches.length}</div><div class="diag-item"><b>Fontes já vinculadas</b>0</div><div class="diag-item"><b>Iframe iniciado</b><span class="diag-warning">Não</span></div><div class="diag-item"><b>URLs inválidas</b>${manualOnly}</div></div><p class="diag-warning" style="margin:10px 0 0">Causa: ${manualOnly?`${manualOnly} URL(s) não passaram pela validação HTTPS.`:'O vínculo ainda não foi persistido.'} Uma URL de página também não garante que o provedor permita iframe; políticas como X-Frame-Options e CSP frame-ancestors podem bloquear a incorporação.</p><button class="btn secondary small player-diag-copy" type="button" id="copyPlayerDiag">Copiar diagnóstico</button></details></div>`;
     }
     if(detected.length) {
-      return `<div class="player-placeholder"><div class="big">▣</div><strong>Emissora identificada, mas sem fonte correspondente</strong><p>A agenda reconheceu ${escapeHtml(detected.join(', '))}, porém não encontrou uma URL correspondente no catálogo. Cadastre uma URL HTTPS para esta emissora no painel Admin.</p><details class="player-diagnostic"><summary>Leitor de diagnóstico</summary><div class="diag-grid"><div class="diag-item"><b>Partida</b>${escapeHtml(event.home)} x ${escapeHtml(event.away)}</div><div class="diag-item"><b>Emissoras</b>${escapeHtml(detected.join(', '))}</div><div class="diag-item"><b>Fonte no catálogo</b>Não encontrada</div><div class="diag-item"><b>Iframe iniciado</b><span class="diag-warning">Não</span></div></div></details></div>`;
+      return `<div class="player-placeholder"><div class="big">▣</div><strong>Emissora identificada, mas sem fonte correspondente</strong><p>A agenda reconheceu ${escapeHtml(detected.join(', '))}, porém não encontrou uma URL correspondente no catálogo.</p><details class="player-diagnostic"><summary>Leitor de diagnóstico</summary><div class="diag-grid"><div class="diag-item"><b>Partida</b>${escapeHtml(event.home)} x ${escapeHtml(event.away)}</div><div class="diag-item"><b>Emissoras</b>${escapeHtml(detected.join(', '))}</div><div class="diag-item"><b>Fonte no catálogo</b>Não encontrada</div><div class="diag-item"><b>Iframe iniciado</b><span class="diag-warning">Não</span></div></div><div style="display:grid;gap:7px;margin-top:12px"><strong>Criar esta emissora</strong><input id="playerDiagStationName" type="text" maxlength="70" value="${escapeHtml(detected[0]||'')}" placeholder="Nome da emissora"><input id="playerDiagStationUrl" type="url" maxlength="2000" placeholder="https://... (link HTTPS da emissora)"><button class="btn secondary small" type="button" id="createPlayerDiagStation">＋ Criar emissora</button><small>Ela será cadastrada em Admin → Diversos. O link precisa ser HTTPS e permitir incorporação.</small></div></details></div>`;
     }
     return `<div class="player-placeholder"><div class="big">▣</div><strong>Nenhuma emissora ou fonte identificada</strong><p>Esta partida não trouxe uma emissora reconhecida. O painel Admin pode receber uma fonte cadastrada quando houver uma disponível.</p></div>`;
   }
@@ -2412,11 +2416,22 @@ const BROADCASTER_ALIAS_GROUPS = [
     const details=scores365MatchCache[String(event?.id||'')]?.details||null;
     return {
       link, details,
-      homeScore:details?.score?.home ?? details?.home?.score ?? link?.homeScore ?? null,
-      awayScore:details?.score?.away ?? details?.away?.score ?? link?.awayScore ?? null,
+      homeScore:[details?.score?.home,details?.home?.score,link?.homeScore].find(value=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=0) ?? null,
+      awayScore:[details?.score?.away,details?.away?.score,link?.awayScore].find(value=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=0) ?? null,
       status:details?.status || link?.status || '',
       gameId:Number(link?.gameId||details?.gameId||0)
     };
+  }
+  function scores365KickoffForEvent(event) {
+    const link=scores365LinkedGameForEvent(event);
+    const details=scores365MatchCache[String(event?.id||'')]?.details||null;
+    const raw=String(details?.startTime||link?.startTime||'').trim();
+    if(!raw)return {text:'',synced:false};
+    const hasZone=/(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+    const normalized=/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(raw)&&!hasZone?`${raw.replace(' ','T')}-03:00`:raw;
+    const date=new Date(normalized);
+    if(Number.isNaN(date.getTime()))return {text:'',synced:false};
+    return {text:new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(date),synced:true};
   }
   function scores365TeamLogoFor(event,side) {
     const details=scores365MatchCache[String(event?.id||'')]?.details||null;
@@ -2458,9 +2473,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     return match?`${match[0]}′`:raw;
   }
   function renderScores365Events(details) {
-    const events=Array.isArray(details?.events)?details.events:[];
+    const events=(Array.isArray(details?.events)?details.events:[]).filter(event=>!/(?:fim de jogo|full time|match ended)/i.test(String(event?.type||'')));
     if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
-    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸','Fim de jogo':'🏁'}[event.type]||'•');
+    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸'}[event.type]||'•');
     const sorted=events.slice().sort((a,b)=>parseInt(String(a.minute||'').match(/\d+/)?.[0]||'0',10)-parseInt(String(b.minute||'').match(/\d+/)?.[0]||'0',10));
     return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>`<article class="apifootball-event-row"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(event.player||event.type||'Evento')}</strong><small>${escapeHtml(event.type||'')}${event.secondaryPlayer?` · ${escapeHtml(event.secondaryPlayer)}`:''}${event.detail&&event.detail!==event.type?` · ${escapeHtml(event.detail)}`:''}</small></div><span class="apifootball-event-team">${escapeHtml(event.team||'')}</span></article>`).join('')}</div></div>`;
   }
@@ -2533,11 +2548,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(tab==='lineups')return window.NVBLineupUI.renderLineups(scores365LineupAsApiSnapshot(details));
     if(tab==='statistics')return renderScores365Statistics(details);
     if(tab==='standings')return `${renderScores365Standings(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadStandings">Buscar/atualizar classificação</button></div>':''}`;
-    const homeScore=details.score?.home??details.home?.score??'—';
-    const awayScore=details.score?.away??details.away?.score??'—';
-    const shotCount=Number(details.chartEventsCount)||0;
-    const shotText=shotCount?` · ${shotCount} finalização(ões) no gráfico`:'';
-    return `<div class="match-livescore-summary"><div class="match-livescore-score"><strong>${escapeHtml(homeScore)}</strong><span>:</span><strong>${escapeHtml(awayScore)}</strong></div><div class="match-livescore-status">${escapeHtml(details.status||'Status não informado')}</div><small>${escapeHtml(details.round||'Rodada não informada')} · ${escapeHtml(details.venue||'Estádio não informado')}${shotText}</small></div>${renderScores365Events(details)}`;
+    const rawStatus=String(details.status||'').trim();
+    const statusLabel=details.clock || (/^(?:ht|half time|halftime|intervalo)$/i.test(rawStatus)?'INT':(/live|ao vivo|1st half|2nd half|1st|2nd/i.test(rawStatus)?'Ao Vivo':(/finished|full time|fim|fim de jogo/i.test(rawStatus)?'Encerrado':rawStatus||'Status não informado')));
+    return `<div class="match-livescore-summary"><div class="match-livescore-status">${escapeHtml(statusLabel)}</div></div>${renderScores365Events(details)}`;
   }
   function renderScores365MatchPanel(event) {
     const link=scores365LinkedGameForEvent(event);
@@ -3016,6 +3029,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         ...(existing||{}),eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,
         gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,
         homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,
+        agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,
         matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,
         homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),
         score:Number(candidate.score)||0,confidence:'alta',autoMargin:Number(candidate.autoMargin)||0,
@@ -3059,7 +3073,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
       const duplicate=Object.entries(links).find(([existingKey,value])=>existingKey!==key&&Number(value?.gameId)===Number(candidate.gameId));
       if(duplicate){toast('Esse gameId já está vinculado a outra partida. Confira antes de reutilizá-lo.');return;}
-      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt:new Date().toISOString(),source:'365scores-manual-confirmation'};
+      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt:new Date().toISOString(),source:'365scores-manual-confirmation'};
       writeStore(SCORES365_AGENDA_LINKS_KEY,links);
       toast(`Vínculo salvo neste computador: gameId ${candidate.gameId}.`);
       renderScores365AgendaMatches(scores365AgendaMatchSnapshot);
@@ -3082,7 +3096,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(status)status.textContent=`Comparando ${state.events.length} partida(s) da agenda de ${date} com a 365Scores…`;
     if(root)root.innerHTML='';
     try {
-      const agendaEvents=state.events.map(event=>({id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||'')}));
+      const agendaEvents=state.events.map(event=>{const linked=scores365LinkedGameForEvent(event);return {id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||''),category:String(event.category||event.gender||''),scores365HomeId:event.scores365HomeId||event.home365Id||linked?.agendaHome365Id||null,scores365AwayId:event.scores365AwayId||event.away365Id||linked?.agendaAway365Id||null};});
       const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível comparar a agenda com a 365Scores.');
@@ -3091,7 +3105,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const matched=Number(result.matches?.filter(item=>item.candidates?.length).length)||0;
       const high=Number(result.matches?.filter(item=>item.candidates?.[0]?.confidence==='alta').length)||0;
       const review=Math.max(0,matched-automatic.added);
-      if(status)status.textContent=`Comparação concluída: ${Number(result.agendaCount)||0} partida(s) da agenda · ${Number(result.sourceGamesCount)||0} jogos normalizados (${Number(result.sourceRawCount??result.sourceGamesCount)||0} registros recebidos) da 365Scores${result.normalization?.missingBothTeamNames?` · ${Number(result.normalization.missingBothTeamNames)} sem nomes dos times`:''}${result.cached?' (cache local/compartilhado)':''} · ${matched} possíveis correspondências · ${automatic.added} vínculo(s) automático(s) seguro(s) · ${review} para revisão manual${automatic.skipped?` · ${automatic.skipped} preservado(s)/bloqueado(s)`:''}. A agenda não foi alterada.`;
+      if(status)status.textContent=`Comparação concluída: ${Number(result.agendaCount)||0} partida(s) da agenda · ${Number(result.sourceGamesCount)||0} jogos normalizados (${Number(result.sourceRawCount??result.sourceGamesCount)||0} registros recebidos) da 365Scores${result.normalization?.missingBothTeamNames?` · ${Number(result.normalization.missingBothTeamNames)} sem nomes dos times`:''}${Array.isArray(result.queryDates)?` · janela consultada: ${result.queryDates.join(', ')}`:''}${result.cached?' (cache local/compartilhado)':''} · ${matched} possíveis correspondências · ${automatic.added} vínculo(s) automático(s) seguro(s) · ${review} para revisão manual${automatic.skipped?` · ${automatic.skipped} preservado(s)/bloqueado(s)`:''}. A agenda não foi alterada.`;
     } catch(error){if(status)status.textContent=error.message||'Falha ao comparar a agenda com a 365Scores.';toast(error.message||'Falha na comparação da agenda.');}
     finally{if(button)button.disabled=false;}
   }
@@ -3292,7 +3306,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     const hasPenaltyScore=displayPenaltyHome!==null&&displayPenaltyHome!==undefined&&displayPenaltyAway!==null&&displayPenaltyAway!==undefined;
     const penaltyScoreMarkup=hasPenaltyScore?`<div class="match-penalty-score">PÊNALTIS <strong>${escapeHtml(displayPenaltyHome)} × ${escapeHtml(displayPenaltyAway)}</strong></div>`:'';
     const matchDate=e.dateEvent?dateLabel(e.dateEvent):'Data não informada';
-    const matchTime=e.timeText || 'Horário a confirmar';
+    const kickoff=scores365KickoffForEvent(e);
+    const matchTime=kickoff.text || e.timeText || 'Horário a confirmar';
     const round=e.round?`Rodada: ${escapeHtml(e.round)}`:'';
     const venue=e.venue?`Estádio: ${escapeHtml(e.venue)}`:'';
     const origins=(e.sourceNames||[]).join(' + ') || e.sourceProvider || 'Agenda pública';
@@ -3315,7 +3330,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         </div>
         <div class="match-facts">
           <div class="match-fact"><span>📅 DATA</span><strong>${escapeHtml(matchDate)}</strong></div>
-          <div class="match-fact"><span>🕒 HORÁRIO</span><strong>${escapeHtml(matchTime)}</strong><small>Horário local do evento</small></div>
+          <div class="match-fact"><span>🕒 HORÁRIO</span><strong>${escapeHtml(matchTime)}</strong><small>${kickoff.synced?'Horário sincronizado pela 365Scores':'Horário local informado pela agenda'}</small></div>
           <div class="match-fact"><span>📍 LOCAL</span><strong>${venue?venue.replace(/^Estádio: /,''):'Não informado'}</strong><small>${round || 'Detalhes adicionais não informados'}</small></div>
         </div>
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
@@ -3338,6 +3353,23 @@ const BROADCASTER_ALIAS_GROUPS = [
       const report=buildPlayerDiagnostic(e,catalogMatches,active);
       try { await navigator.clipboard.writeText(JSON.stringify(report,null,2)); toast('Diagnóstico copiado.'); }
       catch { toast('Não foi possível copiar automaticamente. Abra o diagnóstico e copie o texto manualmente.'); }
+    });
+    const createDiagStation=$('#createPlayerDiagStation');
+    if(createDiagStation) createDiagStation.addEventListener('click',()=>{
+      const name=$('#playerDiagStationName')?.value.trim()||'';
+      const raw=$('#playerDiagStationUrl')?.value.trim()||'';
+      const url=normalizeAllowedEmbed(raw);
+      if(!name){toast('Informe o nome da emissora.');return;}
+      if(!url){toast('Informe um link HTTPS válido para a emissora.');return;}
+      const duplicate=stationCatalog.find(st=>foldBroadcaster(st.name)===foldBroadcaster(name)||normalizedSourceUrl(st.url)===normalizedSourceUrl(url));
+      if(duplicate){toast('Essa emissora ou URL já está cadastrada no catálogo.');return;}
+      const station={id:`st-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`,name,url,broadcasterId:'',linkedBroadcasterIds:[],category:'Diversos',group:'Diversos',createdFrom:'player-diagnostic'};
+      stationCatalog.push(station);
+      writeStore('futeblox_station_catalog',stationCatalog);
+      const linked=autoLinkCatalogStations(state.events);
+      renderAdmin();
+      if(state.selected)renderModal();
+      toast(`Emissora ${name} cadastrada em Admin → Diversos.${linked.added?` ${linked.added} vínculo(s) automático(s) criado(s).`:''}`);
     });
     const frame=$('#playerScreen iframe');
     if(frame) {
@@ -4009,19 +4041,23 @@ const BROADCASTER_ALIAS_GROUPS = [
     loadReiChannelDirectory(false);
     const list=$('#stationList');
     if(!stationCatalog.length) list.innerHTML='<div class="admin-empty">Nenhum player cadastrado ainda. Escolha uma emissora, cadastre uma fonte HTTPS incorporável e ela será associada automaticamente aos jogos correspondentes.</div>';
-    else list.innerHTML=stationCatalog.map(st=>{
-      const auto=isAutoLinkableCatalogStation(st);
-      const extras=(Array.isArray(st.linkedBroadcasterIds)?st.linkedBroadcasterIds:[]).map(broadcasterById).filter(Boolean);
-      const extraHtml=extras.length?`<div class="linked-chips">🔗 também vale para: ${extras.map(ch=>`${MARKET_FLAGS[ch.market]||''} ${escapeHtml(ch.name)}`).join(' · ')}</div>`:'';
-      return `<div class="station-row-wrap"><div class="station-row"><div class="station-copy"><div class="station-name">${escapeHtml(st.name)}${marketBadgeHtml(stationMarket(st))} <span style="font-size:9px;color:${auto?'#58df9a':'#ffc76b'}">${auto?'· associação automática':'· URL inválida'}</span></div>${extraHtml}<div class="station-url">${escapeHtml(st.url)}</div></div><div class="station-actions"><button class="btn secondary small" data-link-station="${escapeHtml(st.id)}">🔗 Interligar</button><button class="btn secondary small" data-assign-station="${escapeHtml(st.id)}">Vincular</button><button class="btn danger small" data-delete-station="${escapeHtml(st.id)}">Excluir</button></div></div><div class="link-panel" data-link-panel="${escapeHtml(st.id)}" hidden></div></div>`;
-    }).join('');
+    else {
+      const stationGroups=new Map();
+      for(const station of stationCatalog){const group=String(station.category||'Emissoras cadastradas');if(!stationGroups.has(group))stationGroups.set(group,[]);stationGroups.get(group).push(station);}
+      list.innerHTML=[...stationGroups.entries()].map(([group,items])=>`<section class="station-category-group"><h4>${escapeHtml(group)}</h4>${items.map(st=>{
+        const auto=isAutoLinkableCatalogStation(st);
+        const extras=(Array.isArray(st.linkedBroadcasterIds)?st.linkedBroadcasterIds:[]).map(broadcasterById).filter(Boolean);
+        const extraHtml=extras.length?`<div class="linked-chips">🔗 também vale para: ${extras.map(ch=>`${MARKET_FLAGS[ch.market]||''} ${escapeHtml(ch.name)}`).join(' · ')}</div>`:'';
+        return `<div class="station-row-wrap"><div class="station-row"><div class="station-copy"><div class="station-name">${escapeHtml(st.name)}${marketBadgeHtml(stationMarket(st))} <span style="font-size:9px;color:${auto?'#58df9a':'#ffc76b'}">${auto?'· associação automática':'· URL inválida'}</span></div>${extraHtml}<div class="station-url">${escapeHtml(st.url)}</div></div><div class="station-actions"><button class="btn secondary small" data-link-station="${escapeHtml(st.id)}">🔗 Interligar</button><button class="btn secondary small" data-assign-station="${escapeHtml(st.id)}">Vincular</button><button class="btn danger small" data-delete-station="${escapeHtml(st.id)}">Excluir</button></div></div><div class="link-panel" data-link-panel="${escapeHtml(st.id)}" hidden></div></div>`;
+      }).join('')}</section>`).join('');
+    }
     const select=$('#adminMatchSelect');
     const previous=select.value;
     const options=state.events.map(e=>`<option value="${escapeHtml(e.id)}">${escapeHtml(e.home)} x ${escapeHtml(e.away)} · ${escapeHtml(e.league)}</option>`).join('');
     select.innerHTML=options || '<option value="">Nenhuma partida carregada</option>';
     if(previous && state.events.some(e=>e.id===previous)) select.value=previous;
     $('#stationAssignList').innerHTML=stationCatalog.length
-      ? stationCatalog.map(st=>`<div class="station-row"><div class="station-copy"><div class="station-name">${escapeHtml(st.name)}${marketBadgeHtml(stationMarket(st))}</div><div class="station-url">${escapeHtml(st.url)}</div></div><div class="station-actions"><button class="btn small" data-assign-station="${escapeHtml(st.id)}">Vincular manualmente</button></div></div>`).join('')
+      ? stationCatalog.map(st=>`<div class="station-row"><div class="station-copy"><div class="station-name">${escapeHtml(st.name)}${marketBadgeHtml(stationMarket(st))}${st.category==='Diversos'?'<span class="mk-badge">Diversos</span>':''}</div><div class="station-url">${escapeHtml(st.url)}</div></div><div class="station-actions"><button class="btn small" data-assign-station="${escapeHtml(st.id)}">Vincular manualmente</button></div></div>`).join('')
       : '<div class="admin-empty">Cadastre uma emissora acima para poder vinculá-la às partidas.</div>';
     renderAutoLinkStatus();
     $('#adminView').querySelectorAll('[data-delete-station]').forEach(btn=>btn.addEventListener('click',()=>deleteStation(btn.dataset.deleteStation)));
@@ -4137,13 +4173,16 @@ const BROADCASTER_ALIAS_GROUPS = [
     for (const st of incomingStations) {
       const url=normalizeAllowedEmbed(st?.url);
       if (!url) continue;
-      const clean={id:String(st.id||`cloud-${Date.now().toString(36)}`),name:String(st.name||'Emissora').slice(0,50),url,broadcasterId:String(st.broadcasterId||''),linkedBroadcasterIds:Array.isArray(st.linkedBroadcasterIds)?st.linkedBroadcasterIds.map(String).slice(0,80):[]};
+      const clean={id:String(st.id||`cloud-${Date.now().toString(36)}`),name:String(st.name||'Emissora').slice(0,50),url,broadcasterId:String(st.broadcasterId||''),linkedBroadcasterIds:Array.isArray(st.linkedBroadcasterIds)?st.linkedBroadcasterIds.map(String).slice(0,80):[],category:String(st.category||''),group:String(st.group||''),createdFrom:String(st.createdFrom||'')};
       const existing=mergedStations.find(old=>old.id===clean.id || normalizedSourceUrl(old.url)===normalizedSourceUrl(clean.url));
       if (existing) {
         existing.name=clean.name;
         existing.url=clean.url;
         existing.broadcasterId=clean.broadcasterId || existing.broadcasterId || '';
         existing.linkedBroadcasterIds=[...new Set([...(existing.linkedBroadcasterIds||[]),...clean.linkedBroadcasterIds])];
+        if(clean.category)existing.category=clean.category;
+        if(clean.group)existing.group=clean.group;
+        if(clean.createdFrom)existing.createdFrom=clean.createdFrom;
       } else { mergedStations.push(clean); stationAdded++; }
     }
     stationCatalog=mergedStations;
@@ -4374,7 +4413,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.19.3',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.20.0',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

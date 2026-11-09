@@ -4,7 +4,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const checks = [
-  ['version 0.19.3', pkg.version === '0.19.3' && html.includes('V0.19.3')],
+  ['version 0.20.0', pkg.version === '0.20.0' && html.includes('V0.20.0')],
   ['seven Admin tabs', ['general','scores365','matches','data','standings','cache','diagnostics'].every(id => html.includes(`id:'${id}'`))],
   ['Admin navigation roles', html.includes("setAttribute('role','tablist')") && html.includes('data-admin-page')],
   ['horizontal date strip', html.includes('id="scheduleDateStrip"') && html.includes('renderScheduleDateStrip')],

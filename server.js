@@ -1135,23 +1135,47 @@ const requestHandler = async (req, res) => {
       const date = String(body.date || '').trim();
       const agendaEvents = Array.isArray(body.agendaEvents) ? body.agendaEvents.slice(0, 250) : [];
       if (!agendaEvents.length) return json(res, 400, { ok:false, error:'Carregue uma agenda com partidas antes de procurar correspondências.' });
-      const cacheKey = scores365Service.gamesForDateCacheKey(date);
       const cloudSync = body.cloudSync || {};
-      let shared = null;
-      if (!body.refresh) {
-        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
-        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      scores365Service.gamesForDateCacheKey(date); // valida a data sem aceitar normalizações silenciosas
+      const [year, month, day] = date.split('-').map(Number);
+      const baseDate = new Date(Date.UTC(year, month - 1, day, 12));
+      if (!Number.isFinite(baseDate.getTime())) throw Object.assign(new Error('Informe uma data válida.'), { status:400, code:'365SCORES_INVALID_DATE' });
+      const queryDates = [-1, 0, 1].map(offset => { const d = new Date(baseDate); d.setUTCDate(d.getUTCDate() + offset); return d.toISOString().slice(0,10); });
+      const dateResults = [];
+      let sharedCount = 0;
+      for (const queryDate of queryDates) {
+        const cacheKey = scores365Service.gamesForDateCacheKey(queryDate);
+        let shared = null;
+        if (!body.refresh) {
+          shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+          if (shared) { apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared); sharedCount++; }
+        }
+        const result = await scores365Service.getGamesForDate(queryDate, { force: Boolean(body.refresh) });
+        if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+        dateResults.push(result);
       }
-      const result = await scores365Service.getGamesForDate(date, { force: Boolean(body.refresh) });
-      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      const uniqueGames = new Map();
+      for (const result of dateResults) for (const game of result.games) if (game.gameId && !uniqueGames.has(game.gameId)) uniqueGames.set(game.gameId, game);
+      const games = [...uniqueGames.values()];
+      const result = {
+        games, count:games.length,
+        rawCount:dateResults.reduce((sum,item)=>sum+Number(item.rawCount||0),0),
+        normalization:{
+          raw:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.raw||0),0), normalized:games.length,
+          missingGameId:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.missingGameId||0),0),
+          missingHomeName:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.missingHomeName||0),0),
+          missingAwayName:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.missingAwayName||0),0),
+          missingBothTeamNames:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.missingBothTeamNames||0),0)
+        }, cached:dateResults.every(item=>item.cached)
+      };
       const matches = matchAgendaEvents(agendaEvents, result.games);
       const candidateCount = matches.reduce((sum, item) => sum + item.candidates.length, 0);
       return json(res, 200, {
-        ok:true, provider:'365Scores', experimental:true, date,
+        ok:true, provider:'365Scores', experimental:true, date, queryDates,
         agendaCount:agendaEvents.length, sourceGamesCount:result.count, sourceRawCount:result.rawCount, normalization:result.normalization,
-        matches, candidateCount, cached:Boolean(result.cached || shared), shared:Boolean(shared),
+        matches, candidateCount, cached:result.cached, shared:sharedCount===queryDates.length, sharedDates:sharedCount,
         agendaChanged:false,
-        message:'Correspondências calculadas para o cliente. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
+        message:'Comparação feita com partidas do dia selecionado e dos dias vizinhos. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
       });
     } catch (error) {
       return json(res, error.status || 502, { ok:false, provider:'365Scores', error:error.message || 'Não foi possível comparar a agenda com a 365Scores.', code:error.code || '' });
