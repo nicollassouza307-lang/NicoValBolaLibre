@@ -53,8 +53,8 @@ try {
       { typeId: 1, eventTypeName: 'Goal', description: 'Own goal', playerName: 'Defensor Teste', competitorNum: 2, gameTime: '48' },
       { typeId: 1, eventTypeName: 'Goal', isOwnGoal: true, playerName: 'Outro Defensor', competitorNum: 2, gameTime: '52' }
     ], chartEvents: { events: [{ xg: 0.3, outcome: { name: 'Goal' }, competitorNum: 1, gameTime: '40' }, { xg: 0.1, outcome: { name: 'Saved' }, competitorNum: 2 }] },
-    stats: {},
-    venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste' }]
+    stats: {}, tvNetworks: [{ name: 'Premiere', countryName: 'Brazil' }],
+    venue: { name: 'Maracanã', capacity: 78838 }, officials: [{ name: 'Árbitro Teste', role: 'Referee' }]
   } });
 
   const memberMapGuard = require('../365scores-service').normalizeGameDetails({ game: {
@@ -145,6 +145,9 @@ try {
   assert.equal(game.details.shots[0].xg, 0.3);
   assert.equal(game.details.round, 'Rodada 33');
   assert.equal(game.details.venueCapacity, 78838);
+  assert.equal(game.details.venue, 'Maracanã');
+  assert.equal(game.details.referee, 'Árbitro Teste');
+  assert.equal(game.details.tvNetworks[0].name, 'Premiere');
   const cachedGame = await service.getGame(12345);
   assert.equal(cachedGame.cached, true);
   assert.equal(urls.length, 5, 'Detalhes do mesmo jogo devem usar cache.');

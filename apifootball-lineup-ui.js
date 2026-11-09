@@ -33,12 +33,15 @@
     return (words.length === 1 ? words[0].slice(0, 2) : `${words[0][0]}${words[words.length - 1][0]}`).toUpperCase();
   }
 
-  function sortLineupPlayers(players) {
-    return (Array.isArray(players) ? players : []).map((player, index) => {
+  function sortLineupPlayers(players, formation = '') {
+    const rows=Array.isArray(players)?players:[];
+    const formationLines=String(formation||'').match(/^\s*(\d+(?:-\d+){2,4})\s*$/)?.[1].split('-').map(Number)||[];
+    const depthForIndex=index=>{if(index===0)return 1;let cursor=1;for(let line=0;line<formationLines.length;line++){cursor+=formationLines[line];if(index<cursor)return line+2;}return formationLines.length+1;};
+    return rows.map((player, index) => {
       const record = player?.player && typeof player.player === 'object' ? player.player : player;
       const gridMatch = String(record?.grid || player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
       const position = String(record?.pos || player?.pos || '').toUpperCase();
-      const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : 2;
+      const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : (formationLines.length ? depthForIndex(index) : 2);
       return {
         ...player,
         __player: record,
@@ -50,8 +53,8 @@
       (a.__row ?? Number.MAX_SAFE_INTEGER) - (b.__row ?? Number.MAX_SAFE_INTEGER) || a.__index - b.__index);
   }
 
-  function playerPlacements(players, side = 'home') {
-    const ordered = sortLineupPlayers(players);
+  function playerPlacements(players, side = 'home', formation = '') {
+    const ordered = sortLineupPlayers(players, formation);
     if (!ordered.length) return [];
     const depths = ordered.map(player => player.__depth);
     const minDepth = Math.min(...depths);
@@ -88,7 +91,7 @@
         const position = String(player.__player?.pos || player.pos || '').toUpperCase();
         // Laterais dão amplitude e avançam um pouco. Pontas ficam mais abertos
         // e alguns passos à frente, criando o desenho assimétrico de um FC/FIFA.
-        if (count >= 3 && wideLane && depth === minDepth + 1) xForward += 2;
+        if (count >= 3 && wideLane && depth === minDepth + 1 && position.startsWith('D')) xForward += 2;
         if (position.startsWith('F')) xForward += 3.5;
         if (position.startsWith('F') && wideLane) xForward += 2;
         if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1 : 2.5;
@@ -135,8 +138,14 @@
     const name = String(player.name || 'Jogador');
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
     const label = `${name}, camisa ${number}`;
+    const events=Array.isArray(player.events)?player.events:[];
+    const left=events.filter(item=>['yellow','red','double-yellow','substitution'].includes(item.kind));
+    const right=events.filter(item=>['goal','assist'].includes(item.kind));
+    const badges=(items,side)=>items.map(item=>`<span class="nvb-player-event ${side} ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${escapeHtml(item.icon||'•')}</span>`).join('');
+    const rating=player.rating!==null&&player.rating!==undefined&&player.rating!==''?`<span class="nvb-player-rating" title="Nota 365Scores">${escapeHtml(player.rating)}</span>`:'';
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
-      ${renderPhoto(player)}
+      <div class="nvb-player-event-rail left">${badges(left,'left')}</div><div class="nvb-player-event-rail right">${badges(right,'right')}</div>
+      ${renderPhoto(player)}${rating}
       <span class="apifootball-pitch-name">${escapeHtml(name)}</span>
       <span class="apifootball-pitch-number">${escapeHtml(number)}</span>
     </div>`;
@@ -147,7 +156,8 @@
     const name = String(record?.name || 'Jogador');
     const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
     const position = String(record?.pos || player?.pos || '').toUpperCase();
-    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}</div>`;
+    const rating=record?.rating!==null&&record?.rating!==undefined&&record?.rating!==''?`<span class="apifootball-bench-rating">${escapeHtml(record.rating)}</span>`:'';
+    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<span class="apifootball-bench-number">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${position ? `<span class="apifootball-bench-position">${escapeHtml(position)}</span>` : ''}${rating}</div>`;
   }
 
   function renderTeamHead(lineup, fixtureTeam, label) {
@@ -179,7 +189,7 @@
     const renderHalf = (lineup, side) => {
       if (!lineup) return `<div class="apifootball-pitch-half ${side} apifootball-pitch-half-empty"><div class="apifootball-half-empty-label">Escalação não disponível</div></div>`;
       const players = Array.isArray(lineup.startXI) ? lineup.startXI : [];
-      const placed = playerPlacements(players, side);
+      const placed = playerPlacements(players, side, lineup.formation);
       return `<div class="apifootball-pitch-half ${side}">${placed.map(renderPitchPlayer).join('')}</div>`;
     };
     return `<div class="apifootball-lineups-view">

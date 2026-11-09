@@ -1,4 +1,16 @@
-# NicoValBolaLibre V0.20.1
+# NicoValBolaLibre V0.21.0
+
+## V0.21.0 · Mega atualização de partidas, Livescore e imagens
+
+- Livescore 365Scores atualiza em segundo plano a cada 30 segundos enquanto a partida estiver ao vivo. O refresh substitui apenas o painel esportivo e atualiza placar/status, sem reconstruir o modal ou o iframe do player.
+- Associação 365Scores protegida por exclusividade 1:1: o mesmo gameId não pode ser autoassociado a duas partidas da agenda. Conflitos viram revisão manual.
+- Campo tático 16:9 mais minimalista, jogadores compactados, eventos individuais ao redor dos atletas: participações em gols à direita; cartões e substituições à esquerda. Nota aparece somente quando a resposta trouxer rating.
+- Dados de estádio, localidade, árbitro, demais oficiais, público, emissoras e rodada aparecem na área Local quando a 365Scores fornecer esses campos.
+- Estatísticas de equipe e de atletas ampliadas para exibir todas as linhas normalizadas recebidas, com agrupamento visual por tema e barras comparativas quando há valores numéricos.
+- Escudos de clubes/seleções priorizam imagens 365Scores; GitHub é o fallback. Logos de competições também tentam 365Scores por competitionId. TheSportsDB foi aposentada do fluxo visual ativo, mantendo módulos/rotas legados por compatibilidade.
+- Eventos do Livescore mostram o time responsável com escudo e nome. Tabelas de classificação exibem escudos dos clubes.
+- Espanhol argentino ampliado com vocabulário de futebol local.
+- Mantidas as fontes da agenda e a regra de que 365Scores enriquece jogos existentes, sem inserir novas partidas. Sem port para iPhone nesta versão.
 
 
 ## V0.20.1 · Correção de cobertura do comparador 365Scores
@@ -43,7 +55,7 @@
 - Correspondências automáticas são salvas localmente somente quando os clubes correspondem na ordem correta, a competição é compatível, o horário difere no máximo 45 minutos, a confiança é alta e não há candidata concorrente próxima. Casos invertidos ou ambíguos continuam manuais.
 - Placar e status das partidas vinculadas passam a priorizar dados normalizados da 365Scores; a agenda original continua sendo a origem dos jogos e nunca recebe partidas novas da API.
 - API-Football e football-data.org foram retiradas do fluxo ativo de placares, eventos, escalações e classificações. Seus módulos e rotas permanecem temporariamente no código para compatibilidade, mas estão pausados e não são expostos no Admin.
-- TheSportsDB fica limitado ao fallback visual de escudos, sem fornecer dados esportivos.
+- TheSportsDB foi retirada do fluxo visual ativo na V0.21.0; módulo e rotas permanecem no código apenas por compatibilidade.
 - Cartões da agenda ficam compactos em uma lista vertical, com escudos menores, placar central, status e emissoras em espaço reduzido.
 - O filtro Emissoras: Argentina/Brasil agora filtra também os canais após a consolidação das fontes, removendo canais exclusivos do outro mercado e preservando canais pan-regionais ou sem país identificado.
 - O catálogo de canais do Rei preserva metadados de país para melhorar o filtro por mercado.
@@ -58,21 +70,24 @@
 
 ## Como atualizar
 
-1. Extraia o ZIP e copie o conteúdo da pasta `nvb_logo_fix` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.20.1` e `Push origin`.
-3. Crie e envie a tag `v0.20.1`.
+1. Extraia o ZIP e copie o conteúdo da pasta `NicoValBolaLibre_V0_21_0` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
+2. Faça commit `NicoValBolaLibre V0.21.0` e `Push origin`.
+3. Crie e envie a tag `v0.21.0`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
 
 ## Testes
 
-- Nesta versão: 24 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
+- Nesta versão: 26 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
 - `npm run test:365scores-over-500`: garante comparação integral acima de 500 jogos e diagnóstico dos três melhores registros.
 - `npm run test:365scores-agenda-match`: aliases, IDs, categorias, nomes curtos/oficiais, fuso local, datas vizinhas, competição, horário auxiliar e bloqueio de candidatas ambíguas.
 - `npm run test:365scores-big-update-ui`: resumo do Livescore, minutos, placares seguros, horário 365Scores e escudos por ID.
+- `npm run test:365scores-one-to-one`: garante que cada gameId só seja associado automaticamente a uma partida da agenda.
+- `npm run test:nvbl-021`: verifica polling sem recriar o player, eventos por atleta, metadados, estatísticas, logos e UI.
+- `npm run test:all`: executa os 26 testes da versão.
 - `npm run test:player-diagnostic`: criação de emissoras pelo diagnóstico de Players e categoria Diversos.
 - `npm run test:agenda-market`: filtro de emissoras brasileiras, argentinas, pan-regionais e desconhecidas.
 - Os demais testes cobrem interface, agenda, escudos, sincronização e compatibilidade dos módulos legados.

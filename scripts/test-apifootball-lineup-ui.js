@@ -72,6 +72,8 @@ const fallbackFormation = ui.playerPlacements([
 ], 'home');
 assert.equal(new Set(fallbackFormation.map(entry => entry.depth)).size, 4, 'Sem coordenadas válidas, goleiro, defesa, meio e ataque devem ocupar linhas diferentes.');
 assert.ok(fallbackFormation.every(entry => entry.left >= 0 && entry.left <= 100 && entry.top >= 0 && entry.top <= 100), 'Todos os marcadores devem permanecer dentro do campo.');
+const unknownPositionFormation=ui.playerPlacements(Array.from({length:11},(_,index)=>({player:{name:`Jogador ${index+1}`,pos:''}})),'home','4-2-3-1');
+assert.equal(new Set(unknownPositionFormation.map(entry=>entry.depth)).size,5,'Formações 4-2-3-1 devem preservar cinco linhas mesmo quando a API omite os códigos de posição.');
 assert.match(lineupHtml, /Palmeiras/);
 assert.match(lineupHtml, /Flamengo/);
 assert.match(lineupHtml, /4-2-3-1/);

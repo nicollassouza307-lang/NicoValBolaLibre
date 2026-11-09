@@ -6,7 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.20.1');
+assert.equal(pkg.version, '0.21.0');
 assert.match(html, /img\.crest:not\(\.crest-github\),\s*img\.competition-divider-logo,\s*\.apifootball-team-head-crest\s*\{\s*background-color:\s*#fff/,
   'Fundos brancos ficam somente atrás de logos raster/competição, sem afetar SVG do GitHub.');
 assert.match(html, /img\.crest\.crest-github\s*\{\s*background-color:\s*#0c1b27;\s*border:\s*1px solid #182436;/,
@@ -19,4 +19,6 @@ assert.match(html, /\.match-center-panel \.apifootball-stat-card \.home \{\s*bac
   'A barra do mandante continua colorida pela cor do clube.');
 assert.match(html, /\.match-center-panel \.apifootball-stat-card \.away \{\s*background:\s*var\(--stat-away-color/,
   'A barra do visitante continua colorida pela cor do clube.');
-console.log('PASSOU: fundo branco restrito às placas dos logos; Match Center preserva tema escuro; barras usam cores dos clubes.');
+assert.match(html,/img\.crest:not\(\.crest-github\),\.apifootball-team-head-crest\{background-color:transparent!important;border-color:transparent!important\}/,'Escudos de clubes/seleções devem ficar sem placa branca.');
+assert.match(html,/img\.competition-divider-logo[\s\S]*?background-color:\s*#fff/i,'A placa de logo de competição deve permanecer separada.');
+console.log('PASSOU: transparência limitada aos escudos de clubes/seleções; logos de competições e fotos preservados.');

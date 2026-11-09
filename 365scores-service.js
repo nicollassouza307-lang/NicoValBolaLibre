@@ -240,6 +240,7 @@ function eventTypeLabel(typeId, typeName = '', ownGoal = false) {
   // Um gol contra também pode chegar com typeId=1 (Gol). A indicação específica
   // do evento deve prevalecer sobre o código genérico.
   if (ownGoal || isOwnGoalText(typeName)) return 'Gol contra';
+  if (/second yellow|double yellow|2nd yellow|duplo amarelo|segundo amarelo/.test(text)) return 'Duplo amarelo';
   if (hasNumericType && labels[numeric]) return labels[numeric];
   if (text) {
     if (/goal|gol|penalty scored/.test(text)) return 'Gol';
@@ -386,10 +387,15 @@ function normalizeGameDetails(payload) {
     round: firstText(game.roundName, Number(game.roundNum) > 0 ? `Rodada ${Number(game.roundNum)}` : '', game.stageName, Number(game.stageNum) > 0 ? `Fase ${Number(game.stageNum)}` : ''),
     roundNum: positiveId(game.roundNum),
     stageNum: positiveId(game.stageNum),
-    venue: firstText(game.venue?.name),
-    venueCapacity: game.venue?.capacity ?? null,
-    referee: firstText(game.officials?.[0]?.name),
-    tvNetworks: asArray(game.tvNetworks).map(x => firstText(x.name, x.displayName, x)).filter(Boolean).slice(0, 20),
+    venue: firstText(game.venue?.name, game.venueName, game.stadium?.name),
+    venueAddress: firstText(game.venue?.address, game.venue?.city, game.venue?.location, game.stadium?.address, game.stadium?.city),
+    venueCapacity: game.venue?.capacity ?? game.stadium?.capacity ?? null,
+    referee: firstText(...asArray(game.officials).filter(x => /referee|arbitro|árbitro/i.test(firstText(x.role, x.type, x.position))).map(x => x.name), game.referee?.name, game.refereeName, game.officials?.[0]?.name),
+    officials: asArray(game.officials).map(x => ({ name:firstText(x.name, x.displayName), role:firstText(x.role, x.type, x.position) })).filter(x => x.name).slice(0, 12),
+    tvNetworks: asArray(game.tvNetworks || game.broadcasts || game.tvChannels).map(x => ({ name:firstText(x.name, x.displayName, x), displayName:firstText(x.displayName, x.name, x), country:firstText(x.countryName, x.country?.name), logo:firstText(x.imageUrl, x.logoUrl, x.logo) })).filter(x => x.name).slice(0, 20),
+    attendance: game.attendance ?? game.attendanceCount ?? null,
+    weather: firstText(game.weather?.description, game.weather?.name),
+    refereeCount: asArray(game.officials).length,
     lineups: { home: homeLineup, away: awayLineup },
     membersCount: members.length,
     eventsCount: gameEvents.length,
@@ -403,7 +409,24 @@ function normalizeGameDetails(payload) {
       lineupPlayers: lineupPlayersWithStats.length,
       competitorRows,
       athleteRows: rawAthleteStats,
-      playerRows: lineupPlayersWithStats.map(player => ({ athleteId: player.athleteId, name: player.name, team: homeLineup.members.includes(player) ? teams.home.name : teams.away.name, stats: player.stats }))
+      rawCompetitorStats,
+      rawAthleteStats,
+      playerRows: (() => {
+        const rows = new Map();
+        for (const player of lineupPlayersWithStats) rows.set(String(player.athleteId || player.id || player.name), { athleteId:player.athleteId, name:player.name, team:homeLineup.members.includes(player)?teams.home.name:teams.away.name, stats:player.stats });
+        for (const raw of rawAthleteStats) {
+          const item=asObject(raw); const id=positiveId(item.athleteId||item.playerId||item.id||item.athlete?.id);
+          const member=id?memberMap.get(id):null;
+          const name=firstText(item.name,item.athlete?.name,item.player?.name,member?.name);
+          const stats=normalizeStatRows(item.stats||item.values||item.statistics);
+          if(!name||!stats.length)continue;
+          const side=Number(item.competitorNum||item.competitor?.competitorNum);
+          const key=String(id||name);
+          const existing=rows.get(key);
+          rows.set(key,{athleteId:id||existing?.athleteId||null,name,team:side===1?teams.home.name:side===2?teams.away.name:(existing?.team||''),stats:stats.length?stats:(existing?.stats||[])});
+        }
+        return [...rows.values()];
+      })()
     },
     responseKeys: Object.keys(game).slice(0, 100)
   };
@@ -564,7 +587,7 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
   // e a ordem da resposta pode colocar centenas de partidas de ontem antes
   // das partidas da data solicitada. Cada agenda deve avaliar toda a janela.
   const games = asArray(scoresGames);
-  return events.map(eventValue => {
+  const matches = events.map(eventValue => {
     const event = asObject(eventValue);
     const home = firstText(event.home, event.homeName, event.homeTeam?.name, event.teams?.home?.name);
     const away = firstText(event.away, event.awayName, event.awayTeam?.name, event.teams?.away?.name);
@@ -696,6 +719,25 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
     }
     return { eventId: firstText(event.id), home, away, date, competition, candidates: candidates.slice(0, 3), diagnostics };
   });
+  // Um jogo do 365Scores só pode pertencer a uma partida da agenda. Quando duas
+  // entradas disputam o mesmo gameId, mantém a proposta mais forte e rebaixa
+  // a outra para revisão manual, sem apagar a sugestão.
+  const claims = new Map();
+  for (const match of matches) {
+    const candidate=match.candidates?.[0];
+    if(!candidate?.autoEligible||!candidate.gameId)continue;
+    const key=String(candidate.gameId);
+    const current=claims.get(key);
+    const strength=(item)=>Number(item.score||0)*10000+Number(item.teamScore||0)*100+Number(item.homeTeamScore||0)+Number(item.awayTeamScore||0);
+    if(!current||strength(candidate)>strength(current.candidate))claims.set(key,{match,candidate});
+  }
+  for (const match of matches) {
+    const candidate=match.candidates?.[0];
+    if(!candidate?.autoEligible||!candidate.gameId)continue;
+    const winner=claims.get(String(candidate.gameId));
+    if(winner&&winner.match!==match){candidate.autoEligible=false;candidate.confidence='revisar';candidate.reasons.push('vínculo automático bloqueado: este gameId já foi reivindicado por outra partida da agenda');}
+  }
+  return matches;
 }
 
 class Scores365Service {
