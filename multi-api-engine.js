@@ -21,7 +21,7 @@ const PROVIDER_CATALOG = Object.freeze([
   {
     id: '365scores', name: '365Scores', role: 'principal', state: 'active',
     description: 'Fonte esportiva principal para enriquecer partidas da agenda. Integração experimental com endpoints web não oficiais; autorização de reutilização ainda precisa ser confirmada.',
-    quota: { perMinuteSoftLimit: 12, dailySoftLimit: 200, note: 'Teto local experimental, não é limite oficial da 365Scores.' }
+    quota: null
   },
   {
     id: 'github-logos', name: 'GitHub Logos', role: 'fallback', state: 'available',

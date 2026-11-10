@@ -110,6 +110,27 @@ const fullIndividualStats=ui.playerRatingInfo({name:'Meio-campista',pos:'M',stat
   {name:'Desarmes',value:2},{name:'Cortes',value:1},{name:'Bloqueios',value:1}
 ]});
 assert.ok(fullIndividualStats.value!==null&&fullIndividualStats.value>=0&&fullIndividualStats.value<=10,'Todas as estatísticas individuais do quadro devem alimentar uma nota válida entre 0 e 10.');
+const xgotWithout=ui.playerRatingInfo({name:'Meia',pos:'M',stats:[{name:'Minutos',value:90},{name:'Gols',value:0},{name:'Assistências',value:0}]});
+const xgotWith=ui.playerRatingInfo({name:'Meia',pos:'M',stats:[{name:'Minutos',value:90},{name:'Gols',value:0},{name:'Assistências',value:0},{name:'Gols esperados em chutes no alvo (xGOT)',value:.6}]});
+assert.equal(xgotWithout.value,6,'A ausência de percentuais não pode penalizar a nota-base.');
+assert.ok(xgotWith.value>xgotWithout.value,'xGOT no rótulo completo em português deve influenciar a nota.');
+
+const roleConflictPlayers=[
+  {player:{name:'Goleiro',pos:'G',grid:'1:1'}},
+  ...['Zagueiro 1','Zagueiro 2','Zagueiro 3','Zagueiro 4'].map((name,index)=>({player:{name,pos:'D',grid:`2:${index+1}`} })),
+  ...['Meia 1','Meia 2','Meia 3','Meia 4'].map((name,index)=>({player:{name,pos:'M',grid:`3:${index+1}`} })),
+  {player:{name:'Marc Bernal',pos:'CM',grid:'5:1'}},
+  {player:{name:'Lamine Yamal',pos:'RW',grid:'2:5'}}
+];
+const repairedRoles=ui.sortLineupPlayers(roleConflictPlayers,'4-2-3-1');
+const depthOf=name=>repairedRoles.find(player=>player.player.name===name).__depth;
+assert.ok(depthOf('Lamine Yamal')>depthOf('Zagueiro 1'),'Atacante que vier na linha defensiva deve ser reposicionado pela função.');
+assert.ok(depthOf('Marc Bernal')<depthOf('Lamine Yamal'),'Meio-campista que vier na última linha deve voltar para o meio.');
+
+const ratedLineupHtml=ui.renderLineups({...snapshot,lineups:[{...snapshot.lineups[0],startXI:[{player:{name:'Nota Colorida',number:10,pos:'F',stats:[{name:'Minutos',value:90},{name:'Gols',value:1}]}}]}]});
+assert.match(ratedLineupHtml,/apifootball-pitch-rating rating-(?:excellent|good|average|low|poor)/,'Nota do titular deve receber cor conforme a avaliação.');
+assert.match(ratedLineupHtml,/apifootball-pitch-rating [^>]*>[^<]+<\/span>\s*<div class="apifootball-pitch-name-row"/,'Badge de nota fica sobre a foto e antes do nome, sem invadir a linha do texto.');
+
 
 const fallbackFormation = ui.playerPlacements([
   { player: { name: 'GK', pos: 'G' } },
@@ -224,5 +245,9 @@ assert.match(index, /data-competition-logo/, 'A agenda deve aceitar o logo da co
 assert.match(index, /competition-divider-mark/, 'Se o logo da competição falhar, a agenda deve voltar ao ícone de troféu.');
 assert.match(index, /--pitch-depth/, 'O campo deve adaptar a profundidade dos jogadores quando a tela fica estreita.');
 assert.match(index, /apifootball-pitch-half\.away \.apifootball-pitch-player/, 'O time visitante deve atacar na direção oposta no campo vertical.');
+assert.match(index,/background:#132638!important;color:#f8fafc!important;box-shadow:0 1px 3px #0005!important;line-height:1!important/,'Todos os eventos devem usar uma base visual única #132638.');
+assert.match(index,/border-radius:50%!important;background:#132638!important/,'Cartões, gols e substituições devem ter marcadores circulares padronizados.');
+assert.match(index,/rating-excellent/,'A interface deve colorir as notas conforme a faixa de desempenho.');
+
 
 console.log('PASSOU: escalações; wrappers originais da API; fotos; campo ampliado/compactado; gols, assistências, substituições e pênaltis; placar na agenda e central; estatísticas; escape HTML.');

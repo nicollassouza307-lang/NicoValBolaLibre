@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const lineup=fs.readFileSync(path.join(root,'apifootball-lineup-ui.js'),'utf8');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.22.2');
+assert.equal(pkg.version,'0.22.3');
 assert.match(html,/setInterval\(async\(\)=>[\s\S]*?90000/,'Livescore precisa consultar em intervalo moderado de 90 segundos.');
 assert.match(html,/loadScores365MatchData\(event,false,true\)/,'Polling automático deve respeitar o cache do servidor.');
 assert.match(html,/refreshScores365PanelInModal/,'Atualização deve mexer só no painel esportivo.');
@@ -27,4 +27,4 @@ assert.match(lineup,/nvb-player-event-rail right/,'Participações em gol ficam 
 assert.match(html,/aspect-ratio:16\/9/,'Campo deve respeitar proporção 16:9.');
 assert.match(html,/TheSportsDB aposentada do fluxo ativo/,'TheSportsDB não deve ser consultada no fluxo ativo.');
 assert.match(service,/vínculo automático bloqueado: este gameId já foi reivindicado/,'Associações devem respeitar exclusividade do gameId.');
-console.log('PASSOU: V0.22.2 mega-update, polling isolado do player, eventos individuais, estatísticas completas, metadados, logos e exclusividade 1:1.');
+console.log('PASSOU: V0.22.3 mega-update, polling isolado do player, eventos individuais, estatísticas completas, metadados, logos e exclusividade 1:1.');

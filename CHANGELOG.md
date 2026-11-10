@@ -1,3 +1,14 @@
+## V0.22.3 · Escalações FotMob-style, notas e disputa de pênaltis
+
+- Campo e escalações centralizados, retratos circulares, nomes e números mais próximos e melhor distribuição dos atletas. Quando a grade da fonte contradiz claramente a função do jogador, a profundidade é reconstruída pela posição e pela formação, sem trocar os jogadores.
+- Marcadores de gols, gols contra, assistências, cartões e substituições padronizados em círculos com fundo `#132638`, incluindo os eventos dos reservas.
+- Notas sobre as fotos dos titulares, no centro inferior, sem invadir o nome; cores variam conforme a faixa da nota. A estimativa considera as estatísticas individuais recebidas, os eventos, a função e os minutos, com pesos e limites para evitar que uma métrica isolada domine a nota. Percentuais ausentes não geram penalidade artificial.
+- xGOT reconhece também o rótulo completo “Gols esperados em chutes no alvo”.
+- Disputa de pênaltis separada dos eventos de jogo, com divisória e placar próprio. Cobranças não são contadas como gols normais nem alimentam as notas dos atletas. O placar da decisão aparece abaixo do resultado na agenda e na central da partida quando a fonte fornece os dados.
+- Removidos os limites locais artificiais de 200 chamadas/dia e 12/min para 365Scores. Cache, fila e espaçamento entre chamadas continuam ativos. HTTP 429 gera pausa progressiva e respeita `Retry-After`; HTTP 403 pausa consultas e orienta a não contornar a recusa.
+- Mantidos os intervalos de atualização moderados, os vínculos existentes da agenda e todas as fontes de agenda. 365Scores continua enriquecendo partidas já existentes, sem inserir jogos.
+
+
 ## V0.22.2 · Redução do consumo de consultas 365Scores
 
 - Polling da partida aberta reduzido para 90 segundos e passa a respeitar o cache do servidor.

@@ -1,13 +1,13 @@
-# NicoValBolaLibre V0.22.2
+# NicoValBolaLibre V0.22.3
 
-## V0.22.2 · Economia de chamadas da 365Scores
+## V0.22.3 · Escalações, notas, pênaltis e chamadas 365Scores
 
-- Atualização da partida selecionada a cada 90 segundos, usando cache quando disponível.
-- Agenda atualiza apenas uma partida ao vivo por ciclo de 120 segundos e pausa essa rotina enquanto uma partida está aberta.
-- Detalhes da partida ficam em cache por 90 segundos; classificação por 10 minutos.
-- Tentativas sem correspondência ficam em cooldown por partida durante 6 horas, com retry manual disponível.
-- Admin mostra chamadas usadas/restantes no teto interno. O contador reinicia à meia-noite UTC.
-- Os tetos de 12 chamadas/min e 200/dia são controles locais de proteção, não quotas oficiais documentadas da 365Scores.
+- Campo e escalações inspirados no FotMob: fotos circulares, eventos padronizados em círculos `#132638`, nomes e camisas compactos e notas coloridas na parte inferior central das fotos.
+- Ajuste de profundidade com base na posição e na formação quando a grade recebida contradiz claramente a função do atleta; isso evita, por exemplo, um ponta na linha defensiva ou um meio-campista na última linha.
+- Notas estimadas com todas as estatísticas individuais que a 365Scores efetivamente retornar, como minutos, gols, assistências, xG, xGOT, xA, chutes, passes, ações com a bola, posse, duelos e ações defensivas. Pesos consideram posição e minutos; dado ausente não é tratado como erro.
+- Disputa de pênaltis separada da cronologia do jogo e das notas. Placar da disputa abaixo do placar normal na agenda e na central, quando informado pela fonte.
+- Removidos os limites artificiais de 200 chamadas/dia e 12 chamadas/min para 365Scores. Cache, fila e espaçamento entre chamadas permanecem; HTTP 429 ativa pausa progressiva respeitando `Retry-After`, e HTTP 403 pausa o adaptador.
+- Atualização da partida a cada 90 segundos e agenda limitada a uma partida por ciclo de 120 segundos permanecem. Esses intervalos não representam uma quota oficial da 365Scores.
 
 ## V0.22.1 · Correções de escalação, eventos, estatísticas e carregamento
 
@@ -101,16 +101,16 @@
 
 ## Como atualizar
 
-1. Extraia o ZIP e copie o conteúdo da pasta `NicoValBolaLibre_V0_22_2` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.2` e `Push origin`.
-3. Crie e envie a tag `v0.22.2`.
+1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
+2. Faça commit `NicoValBolaLibre V0.22.3` e `Push origin`.
+3. Crie e envie a tag `v0.22.3`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
 
 ## Testes
 
-- Nesta versão: 28 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
+- Nesta versão: 29 scripts de regressão aprovados; JavaScript embutido de `index.html`, `365scores-service.js` e `server.js` passaram na verificação de sintaxe.
 
 - `npm run test:365scores`: adaptador 365Scores com respostas simuladas e cache, sem chamadas externas.
 - `npm run test:365scores-over-500`: garante comparação integral acima de 500 jogos e diagnóstico dos três melhores registros.
@@ -118,7 +118,7 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração u
 - `npm run test:365scores-big-update-ui`: resumo do Livescore, minutos, placares seguros, horário 365Scores e escudos por ID.
 - `npm run test:365scores-one-to-one`: garante que cada gameId só seja associado automaticamente a uma partida da agenda.
 - `npm run test:nvbl-021`: verifica polling sem recriar o player, eventos por atleta, metadados, estatísticas, logos e UI.
-- `npm run test:all`: executa os 28 testes da versão.
+- `npm run test:all`: executa os 29 testes da versão.
 - `npm run test:nvbl-022`: regressão específica dos 14 itens do mega update.
 - `npm run test:player-diagnostic`: criação de emissoras pelo diagnóstico de Players e categoria Diversos.
 - `npm run test:agenda-market`: filtro de emissoras brasileiras, argentinas, pan-regionais e desconhecidas.

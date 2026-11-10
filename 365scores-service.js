@@ -297,13 +297,14 @@ function eventTypeLabel(typeId, typeName = '', ownGoal = false) {
   // do evento deve prevalecer sobre o código genérico.
   if (ownGoal || isOwnGoalText(typeName)) return 'Gol contra';
   if (/second yellow|double yellow|2nd yellow|duplo amarelo|segundo amarelo/.test(text)) return 'Duplo amarelo';
+  if (/penalty missed|missed penalty|penalti perdido/.test(text)) return 'Pênalti perdido';
+  if (/penalty saved|saved penalty|penalti defendido|defended penalty/.test(text)) return 'Pênalti defendido';
   if (hasNumericType && labels[numeric]) return labels[numeric];
   if (text) {
     if (/goal|gol|penalty scored/.test(text)) return 'Gol';
     if (/yellow|amarelo/.test(text)) return 'Cartão amarelo';
     if (/red card|cartao vermelho|expulsion|expulsao/.test(text)) return 'Cartão vermelho';
     if (/substitution|substituicao|substituição/.test(text)) return 'Substituição';
-    if (/penalty missed|missed penalty|penalti perdido/.test(text)) return 'Pênalti perdido';
     if (/post|woodwork|trave/.test(text)) return 'Bola na trave';
     if (/var/.test(text)) return 'VAR';
     if (/half.?time|intervalo/.test(text)) return 'Intervalo';
@@ -317,6 +318,10 @@ function normalizeGameEvent(event, memberMap, home, away) {
   const nestedType = asObject(item.type || item.eventType || item.event?.type || item.EventType);
   const rawTypeId = item.typeId ?? item.TypeId ?? item.eventTypeId ?? item.EventTypeId ?? nestedType.id ?? nestedType.ID ?? nestedType.typeId ?? item.event?.typeId ?? item.eventType ?? (typeof item.type === 'number' ? item.type : null) ?? item.Type ?? null;
   const rawTypeName = firstText(item.eventTypeName,item.EventTypeName,item.typeName,item.TypeName,item.eventSubTypeName,item.subTypeName,item.goalTypeName,nestedType.name,nestedType.displayName,nestedType.description,typeof item.type==='string'?item.type:'',typeof item.eventType==='string'?item.eventType:'',typeof item.Type==='string'?item.Type:'');
+  const periodText = firstText(item.period?.name,item.period?.displayName,item.period?.shortName,item.periodName,item.periodDisplayName,item.phase?.name,item.phase?.displayName,item.phase,item.stage?.name,item.stageName,item.eventPhase,item.periodType);
+  const shootoutFlag = [item.isPenaltyShootout,item.penaltyShootout,item.isShootout,item.shootout,item.isPenaltyShootoutEvent,item.isShootoutEvent].some(isTruthyEventFlag);
+  const shootoutText = [periodText,item.subType,item.subtype,item.eventSubType,item.eventSubTypeName,item.description,item.detail,item.comment,rawTypeName,item.gameTimeDisplay,item.gameTime,item.minute,item.timeLabel].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const isPenaltyShootout = shootoutFlag || /penalty\s*shoot.?out|shoot.?out|disputa\s+de\s+penaltis|disputa\s+por\s+penaltis|serie\s+de\s+penaltis|cobrancas?\s+de\s+penaltis|\b(?:pens?|penalties)\s*#?\d*\b/i.test(shootoutText);
   const ownGoalFlag=[item.isOwnGoal,item.ownGoal,item.own_goal,item.IsOwnGoal,item.OwnGoal,item.isOwnGoalEvent,item.event?.isOwnGoal,item.event?.ownGoal,item.goal?.isOwnGoal,item.goal?.ownGoal,nestedType.isOwnGoal,nestedType.ownGoal].some(isTruthyEventFlag);
   const ownGoalText=[rawTypeName,item.eventSubType,item.subType,item.subtype,item.goalType,item.eventDescription,item.description,item.Description,item.comment,item.Comment,item.shortText,item.eventName,item.EventName,item.detail,item.Details,item.note,item.message,item.goal?.type,item.goal?.typeName].some(isOwnGoalText);
   const isOwnGoal=ownGoalFlag||ownGoalText;
@@ -359,7 +364,10 @@ function normalizeGameEvent(event, memberMap, home, away) {
     team,teamId:resolvedTeamId,
     competitorNum:Number.isFinite(competitorNum)&&[1,2].includes(competitorNum)?competitorNum:(team===home.name?1:team===away.name?2:null),
     detail:detail&&detail!==type?detail:'',
-    score:firstText(item.score,item.scoreText,item.S,item.result?.score)
+    score:firstText(item.score,item.scoreText,item.S,item.result?.score),
+    period:periodText,
+    isPenaltyShootout,
+    eventGroup:isPenaltyShootout?'penalty-shootout':'match'
   };
 }
 
@@ -452,6 +460,9 @@ function normalizeGameDetails(payload) {
   const shotEvents = asArray(game.chartEvents?.events).map(event => normalizeShotEvent(event, teams.home, teams.away));
   const competitorRows = addShotTotalsToCompetitors(rawCompetitorStats.length ? rawCompetitorStats : aggregatedCompetitors, shotEvents, teams);
   const hasAggregatedCompetitorStats = aggregatedCompetitors.some(row => row.stats.length);
+  const rawPenaltyScore = asObject(game.penaltyScore || game.penalty_score || game.penalties || game.score?.penalties || game.score?.penalty || game.shootout?.score || game.shootoutScore);
+  const homePenaltyScore = validScore(rawPenaltyScore.home ?? rawPenaltyScore.homeScore ?? home.penaltyScore ?? home.penalties ?? home.shootoutScore);
+  const awayPenaltyScore = validScore(rawPenaltyScore.away ?? rawPenaltyScore.awayScore ?? away.penaltyScore ?? away.penalties ?? away.shootoutScore);
   return {
     gameId: positiveId(game.id || game.gameId),
     startTime: firstText(game.startTime),
@@ -459,7 +470,7 @@ function normalizeGameDetails(payload) {
     statusGroup: game.statusGroup ?? game.status?.group ?? null,
     clock: extractLiveClock(game),
     category: categoryType(game.categoryName, game.gender, game.competitorType, competition.name, game.competitionDisplayName, game.competitionName),
-    score: { home: validScore(teams.home.score), away: validScore(teams.away.score) },
+    score: { home: validScore(teams.home.score), away: validScore(teams.away.score), penalties: { home: homePenaltyScore, away: awayPenaltyScore } },
     home: teams.home,
     away: teams.away,
     competition,
@@ -827,8 +838,16 @@ class Scores365Service {
     this.now = options.now || (() => Date.now());
     this.timeoutMs = Math.max(3000, Number(options.timeoutMs) || 12000);
     this.requestGapMs = Math.max(100, Number(options.requestGapMs) || 250);
-    this.perMinuteLimit = Math.max(1, Number(options.perMinuteLimit) || 12);
-    this.dailySoftLimit = Math.max(1, Number(options.dailySoftLimit) || 200);
+    // Não impor uma quota diária/minutal inventada pelo aplicativo. A proteção
+    // reage somente a respostas reais do serviço (HTTP 429/403), além do cache
+    // e da fila que evita rajadas de chamadas simultâneas.
+    this.perMinuteLimit = 0;
+    this.dailySoftLimit = 0;
+    this.pauseUntil = 0;
+    this.pauseStatus = 0;
+    this.pauseReason = '';
+    this.rateLimitStrikes = 0;
+    this.forbiddenStrikes = 0;
     this.lastRequestAt = 0;
     this.requestQueue = Promise.resolve();
     this.inflight = new Map();
@@ -850,6 +869,44 @@ class Scores365Service {
     await turn;
   }
 
+  parseRetryAfterMs(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return 0;
+    const seconds = Number(raw);
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
+    const date = Date.parse(raw);
+    return Number.isFinite(date) ? Math.max(0, date - this.now()) : 0;
+  }
+
+  registerUpstreamPause(status, retryAfterHeader = '') {
+    let delay;
+    if (Number(status) === 429) {
+      this.rateLimitStrikes = Math.min(8, this.rateLimitStrikes + 1);
+      const exponential = Math.min(15 * 60_000, 60_000 * (2 ** (this.rateLimitStrikes - 1)));
+      const requested = this.parseRetryAfterMs(retryAfterHeader);
+      delay = Math.max(exponential, requested);
+      this.pauseReason = 'A 365Scores sinalizou excesso de consultas (HTTP 429).';
+    } else {
+      this.forbiddenStrikes = Math.min(4, this.forbiddenStrikes + 1);
+      delay = Math.min(60 * 60_000, 15 * 60_000 * (2 ** (this.forbiddenStrikes - 1)));
+      this.pauseReason = 'A 365Scores recusou o acesso (HTTP 403).';
+    }
+    this.pauseStatus = Number(status) || 0;
+    this.pauseUntil = Math.max(this.pauseUntil, this.now() + delay);
+    return this.getPauseInfo();
+  }
+
+  getPauseInfo() {
+    const remainingMs = Math.max(0, this.pauseUntil - this.now());
+    return {
+      paused: remainingMs > 0,
+      status: remainingMs > 0 ? this.pauseStatus : 0,
+      reason: remainingMs > 0 ? this.pauseReason : '',
+      remainingMs,
+      retryAt: remainingMs > 0 ? new Date(this.pauseUntil).toISOString() : null
+    };
+  }
+
   async request(endpoint, params = {}, options = {}) {
     const route = String(endpoint || '');
     if (!Object.values(ENDPOINTS).includes(route)) throw Object.assign(new Error('Endpoint 365Scores não permitido pelo adaptador.'), { status: 400, code: '365SCORES_ENDPOINT_INVALID' });
@@ -864,10 +921,17 @@ class Scores365Service {
     }
     if (!options.force && this.inflight.has(cacheKey)) return this.inflight.get(cacheKey);
 
+    const pause = this.getPauseInfo();
+    if (pause.paused) {
+      const minutes = Math.max(1, Math.ceil(pause.remainingMs / 60_000));
+      throw Object.assign(new Error(`${pause.reason} Novas consultas pausadas por aproximadamente ${minutes} min.`), {
+        status: pause.status || 429,
+        code: pause.status === 403 ? '365SCORES_ACCESS_PAUSED' : '365SCORES_RATE_PAUSED',
+        retryAfterMs: pause.remainingMs
+      });
+    }
+
     const task = (async () => {
-      if (this.engine) {
-        this.engine.reserveRequest('365scores', { perMinuteLimit: this.perMinuteLimit, dailySoftLimit: this.dailySoftLimit, reserve: 0 });
-      }
       await this.waitForRequestSlot();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -878,6 +942,18 @@ class Scores365Service {
           signal: controller.signal,
           cache: 'no-store'
         });
+        if (response.status === 403 || response.status === 429) {
+          const pauseInfo = this.registerUpstreamPause(response.status, response.headers?.get?.('retry-after') || '');
+          const minutes = Math.max(1, Math.ceil(pauseInfo.remainingMs / 60_000));
+          const message = response.status === 403
+            ? `A 365Scores recusou o acesso (HTTP 403). Consultas pausadas por aproximadamente ${minutes} min. Não tente contornar o bloqueio.`
+            : `A 365Scores limitou temporariamente as consultas (HTTP 429). Nova tentativa após aproximadamente ${minutes} min.`;
+          throw Object.assign(new Error(message), {
+            status: response.status,
+            code: `365SCORES_HTTP_${response.status}`,
+            retryAfterMs: pauseInfo.remainingMs
+          });
+        }
         const text = await response.text();
         let payload;
         try { payload = JSON.parse(text || '{}'); }
@@ -885,11 +961,14 @@ class Scores365Service {
         if (!response.ok) {
           const messages = {
             401: 'A 365Scores não autorizou a consulta.',
-            403: 'A 365Scores recusou a consulta. Não tente contornar o bloqueio.',
-            404: 'A 365Scores não encontrou esse recurso.',
-            429: 'A 365Scores limitou temporariamente as consultas. Aguarde antes de tentar novamente.'
+            404: 'A 365Scores não encontrou esse recurso.'
           };
           throw Object.assign(new Error(messages[response.status] || `A 365Scores respondeu HTTP ${response.status}.`), { status: response.status, code: `365SCORES_HTTP_${response.status}` });
+        }
+        this.rateLimitStrikes = 0;
+        if (this.pauseUntil <= this.now()) {
+          this.pauseStatus = 0;
+          this.pauseReason = '';
         }
         if (payload && payload.error) throw Object.assign(new Error(String(payload.error.message || payload.error)), { status: 502, code: '365SCORES_UPSTREAM_ERROR' });
         const ttlMs = Math.max(1000, Math.min(Number(options.ttlMs) || 60_000, 30 * 24 * 60 * 60_000));

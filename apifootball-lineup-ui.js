@@ -42,12 +42,15 @@
 
   function roleForPlayer(player) {
     const record=player?.player&&typeof player.player==='object'?player.player:player;
-    const raw=String(record?.role||record?.position||record?.positionName||'').toLowerCase();
-    const pos=String(record?.pos||record?.positionCode||'').toUpperCase();
-    if(/^G/.test(pos)||/goalkeeper|goleir/.test(raw))return 'G';
-    if(/^D/.test(pos)||/defen|zague|lateral|centre back|center back|full back/.test(raw))return 'D';
-    if(/^F/.test(pos)||/forward|striker|winger|atacante|ponta/.test(raw))return 'F';
-    if(/^M/.test(pos)||/midfield|meio|volante|meia/.test(raw))return 'M';
+    const positionObject=record?.position&&typeof record.position==='object'?record.position:{};
+    const rawPosition=typeof record?.position==='string'?record.position:'';
+    const raw=String(record?.role||record?.positionName||rawPosition||positionObject.name||positionObject.displayName||positionObject.shortName||'').toLowerCase();
+    const pos=String(record?.pos||record?.positionCode||positionObject.code||positionObject.shortName||positionObject.name||'').trim().toUpperCase();
+    // Feeds podem usar siglas táticas (RW, LB, CDM, AM...) em vez de G/D/M/F.
+    if(/^(?:G|GK|KEEPER|GOALKEEPER)$/.test(pos)||/goalkeeper|goleir/.test(raw))return 'G';
+    if(/^(?:D|DEF|CB|LCB|RCB|LB|RB|LWB|RWB|SW)$/.test(pos)||/defen|zague|lateral|centre back|center back|full back|wing back/.test(raw))return 'D';
+    if(/^(?:F|FW|ST|CF|LW|RW|LF|RF|W|ATT)$/.test(pos)||/forward|striker|winger|atacante|ponta|extremo/.test(raw))return 'F';
+    if(/^(?:M|MF|CM|LCM|RCM|CDM|DM|CAM|AM|LAM|RAM|LM|RM)$/.test(pos)||/midfield|meio|volante|meia/.test(raw))return 'M';
     return 'U';
   }
 
@@ -89,13 +92,21 @@
       if(counts.length===2){
         assigned[1].push(...take(midfielders,counts[1]-assigned[1].length),...take(unknown,counts[1]-assigned[1].length));
       }
-      // Fill vacancies by original order, never dropping a starter when position metadata is incomplete.
+      // Fill remaining places by role, not simply in API order. This prevents
+      // a surplus winger from being dropped into the defensive line (and vice versa).
       const used=new Set(assigned.flat());
       const leftovers=outfield.filter(player=>!used.has(player));
+      const available=index=>index>=0&&index<counts.length&&assigned[index].length<counts[index];
       for(const player of leftovers){
-        let target=assigned.findIndex((group,index)=>group.length<counts[index]);
-        if(target<0)target= Math.max(0,Math.floor((counts.length-1)/2));
-        assigned[target].push(player);
+        const role=roleForPlayer(player);
+        const middle=counts.map((_,index)=>index).filter(index=>index>0&&index<counts.length-1);
+        let preference=[];
+        if(role==='F')preference=[...middle.slice().reverse(),counts.length-1,...middle];
+        else if(role==='D')preference=[0,...middle];
+        else preference=middle.slice().sort((a,b)=>(assigned[a].length/counts[a])-(assigned[b].length/counts[b]));
+        if(!preference.length)preference=counts.map((_,index)=>index);
+        const target=preference.find(available) ?? counts.findIndex((_,index)=>available(index));
+        if(target>=0)assigned[target].push(player);
       }
       rows.push(...assigned);
     } else {
@@ -136,13 +147,25 @@
     depth=2;
     fallback.rows.forEach(group=>{group.forEach(player=>assigned.set(player,depth));depth++;});
     const inferredKeeperSet=new Set(fallback.goalkeepers||[]);
+    const nonKeeperGridDepths=explicit.filter(item=>roleForPlayer(item.record)!=='G'&&item.grid&&item.grid.line>=1&&item.grid.line<=6).map(item=>item.grid.line+1).sort((a,b)=>a-b);
+    const uniqueDepths=[...new Set(nonKeeperGridDepths)];
+    const firstGridDepth=uniqueDepths[0],lastGridDepth=uniqueDepths[uniqueDepths.length-1];
+    const hasForward=explicit.some(item=>roleForPlayer(item.record)==='F');
+    // Algumas respostas da fonte trazem a coordenada visual invertida ou stale.
+    // Quando um atacante aparece na linha mais recuada, ou um defensor na última,
+    // reconstruímos a profundidade pelas funções e pela formação, sem trocar atletas.
+    const roleGridConflict=uniqueDepths.length>=3&&explicit.some(item=>{
+      if(!item.grid||roleForPlayer(item.record)==='G')return false;
+      const depthValue=item.grid.line+1,role=roleForPlayer(item.record);
+      return (role==='F'&&depthValue===firstGridDepth)||(role==='D'&&depthValue===lastGridDepth)||(role==='M'&&hasForward&&depthValue===lastGridDepth);
+    })&&fallback.rows.length>=2;
     return explicit.map(item=>{
       const keeper=roleForPlayer(item.record)==='G'||inferredKeeperSet.has(item.player);
       // O feed pode numerar goleiro e zaga na mesma linha (1:1). Separe
       // explicitamente o goleiro e desloque todas as linhas de jogadores de linha.
       const explicitDepth=item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:null;
-      const depthValue=keeper?1:(explicitDepth!==null?explicitDepth+1:(assigned.get(item.player)||2));
-      return {...item.player,__player:item.record,__index:item.index,__depth:depthValue,__row:item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null,__isKeeper:keeper};
+      const depthValue=keeper?1:(roleGridConflict?(assigned.get(item.player)||2):(explicitDepth!==null?explicitDepth+1:(assigned.get(item.player)||2)));
+      return {...item.player,__player:item.record,__index:item.index,__depth:depthValue,__row:roleGridConflict?null:(item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null),__isKeeper:keeper};
     }).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
   }
 
@@ -156,7 +179,7 @@
     // Campo horizontal com a mesma lógica da referência: goleiro recuado,
     // zaga separada e as linhas seguintes distribuídas até a zona de ataque.
     const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?28:28+(index/(nonKeeperDepths.length-1))*60]));
-    const lanePresets={1:[50],2:[36,64],3:[20,50,80],4:[15,40,60,85],5:[15,32.5,50,67.5,85]};
+    const lanePresets={1:[50],2:[35,65],3:[20,50,80],4:[12,37,63,88],5:[8,29,50,71,92]};
     const positions=[];
     for(const depth of depthKeys){
       const group=byDepth.get(depth),count=group.length;
@@ -228,76 +251,85 @@
 
   function playerRatingInfo(player) {
     const record=player?.player&&typeof player.player==='object'?player.player:player||{};
-    const official=Number(record.rating);
-    if(record.rating!==null&&record.rating!==undefined&&record.rating!==''&&Number.isFinite(official))return {value:Math.max(0,Math.min(10,official)),source:'Nota oficial 365Scores'};
     const stats=Array.isArray(record.stats)?record.stats:[];
-    const events=Array.isArray(record.events)?record.events:[];
-    if(!stats.length&&!events.length)return {value:null,source:'sem dados individuais'};
-    const role=roleForPlayer(record);
+    const events=Array.isArray(record.events)?record.events.filter(item=>!item?.isPenaltyShootout&&item?.eventGroup!=='penalty-shootout') : [];
     const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
     const normalized=stats.map(stat=>({name:fold(stat?.name||stat?.typeName||stat?.label),...statValueParts(stat)}));
+    const officialRaw=record.rating??normalized.find(item=>/^(?:rating|nota|performance score|player rating|fotmob rating)$/.test(item.name))?.value;
+    const official=Number(officialRaw);
+    const hasPerformanceStats=normalized.some(item=>!/(?:minutes played|minutos|minutos jogados|rating|nota|performance score|player rating|fotmob rating)/.test(item.name)&&Number.isFinite(item.value));
+    if(!hasPerformanceStats&&!events.length){
+      if(officialRaw!==null&&officialRaw!==undefined&&officialRaw!==''&&Number.isFinite(official))return {value:Math.max(0,Math.min(10,official)),source:'Nota oficial da fonte'};
+      return {value:null,source:'sem estatísticas individuais'};
+    }
+    const role=roleForPlayer(record);
     const sum=(pattern,field='value')=>normalized.reduce((total,item)=>pattern.test(item.name)&&Number.isFinite(item[field])?total+Math.max(0,item[field]):total,0);
     const first=(pattern,field='value')=>normalized.find(item=>pattern.test(item.name)&&Number.isFinite(item[field]))?.[field]??0;
     const capped=(value,cap)=>Math.max(0,Math.min(cap,value));
-    const ratioBonus=(pattern,base=70,scale=.009,cap=.28)=>{const percent=first(pattern,'percent');return Number.isFinite(percent)?Math.max(-.18,Math.min(cap,(percent-base)*scale)):0;};
+    const ratioBonus=(pattern,base,scale,cap)=>{const matched=normalized.find(item=>pattern.test(item.name)&&Number.isFinite(item.percent));if(!matched)return 0;return Math.max(-.2,Math.min(cap,(matched.percent-base)*scale));};
     const kinds=events.map(item=>fold(item.kind||item.type||item.label));
-    const hasPerformanceStats=normalized.some(item=>!/^minutes played|minutos|minutos jogados$/.test(item.name)&&Number.isFinite(item.value));
-    if(!hasPerformanceStats&&!events.length)return {value:null,source:'sem estatísticas de desempenho'};
-    const attackingWeight=role==='F'?1:role==='M'?.78:role==='D'?.48:.18;
+    const attackWeight=role==='F'?1:role==='M'?.82:role==='D'?.5:.16;
+    const defenseWeight=role==='D'?1:role==='M'?.82:role==='F'?.42:.65;
     let score=6;
-    // Eventos pontuais têm precedência apenas quando a estatística equivalente
-    // não veio no payload, evitando contar o mesmo gol/assistência duas vezes.
+
+    // Gols/assistências recebidos nas estatísticas têm prioridade sobre eventos,
+    // para que o mesmo lance nunca seja contado duas vezes.
     const goalStat=normalized.find(item=>/^(?:goals?|gols?)$/.test(item.name)&&Number.isFinite(item.value));
     const assistStat=normalized.find(item=>/^(?:assists?|assistencias?)$/.test(item.name)&&Number.isFinite(item.value));
     const goals=goalStat?Math.max(0,goalStat.value):kinds.filter(kind=>/^(?:goal|gol)$/.test(kind)).length;
     const assists=assistStat?Math.max(0,assistStat.value):kinds.filter(kind=>/^(?:assist|assistencia)$/.test(kind)).length;
-    score+=capped(goals*1.0,2.0);
-    score+=capped(assists*.72,1.44);
-    score-=capped(kinds.filter(kind=>/own goal|gol contra/.test(kind)).length*1.15,2.3);
+    score+=attackWeight*(capped(goals*.95,1.9)+capped(assists*.68,1.36));
+    score-=capped(kinds.filter(kind=>/own goal|gol contra/.test(kind)).length*1.1,2.2);
     score-=capped(kinds.filter(kind=>/double yellow|duplo amarelo|segundo amarelo/.test(kind)).length*.8,1.6);
-    score-=capped(kinds.filter(kind=>/yellow|amarelo/.test(kind)).length*.22,.66);
-    score-=capped(kinds.filter(kind=>/red|vermelho/.test(kind)).length*1.2,1.8);
-    score-=capped(kinds.filter(kind=>/missed penalty|penalti perdido/.test(kind)).length*.7,1.4);
-    score+=attackingWeight*capped(sum(/expected assists|assistencia esperada| x a$/)*.42,.7);
-    score+=attackingWeight*capped(sum(/expected goals|gols esperados| x g$/)*.22,.65);
-    score+=attackingWeight*capped(sum(/expected goals on target|gols esperados no alvo|xgot/)*.18,.5);
-    score+=attackingWeight*capped(sum(/chances created|chances perigosas criadas|oportunidades criadas/)*.09,.45);
+    score-=capped(kinds.filter(kind=>/yellow|amarelo/.test(kind)).length*.2,.6);
+    score-=capped(kinds.filter(kind=>/red|vermelho/.test(kind)).length*1.45,2.2);
+    score-=capped(kinds.filter(kind=>/missed penalty|penalti perdido/.test(kind)).length*.45,.9);
 
-    const shots=sum(/^(?:total shots|shots|chutes|total de chutes|finalizacoes)$/);
-    const shotsOn=sum(/shots on target|chutes no gol|finalizacoes no gol|remates a puerta/);
-    score+=attackingWeight*(capped(shots*.035,.28)+capped(shotsOn*.13,.65));
-    score-=attackingWeight*capped(sum(/shots off target|shots wide|chutes para fora|finalizacoes para fora|remates desviados/)*.025,.22);
-    score+=attackingWeight*capped(sum(/blocked shots|shots blocked|chutes bloqueados/)*.035,.18);
-    score+=attackingWeight*capped(sum(/key passes|passes decisivos|pases clave/)*.105,.63);
-    score+=attackingWeight*capped(sum(/passes in final third|passes no ultimo terco|passes no terco final/)*.012,.42);
-    score+=attackingWeight*capped(sum(/passes completed|passes completos|pases completados/)*.003,.24);
-    score+=attackingWeight*capped(sum(/backward passes|passes para tras|passes atras/)*.006,.18);
-    score+=attackingWeight*capped(sum(/long passes completed|passes longos completos|pases largos completados/)*.035,.2);
-    score+=attackingWeight*capped(sum(/crosses completed|cruzamentos completos|centros completados/)*.035,.18);
-    score+=attackingWeight*ratioBonus(/^(?:passes completed|passes completos|pases completados)$/ ,70,.009,.25);
-    score+=attackingWeight*ratioBonus(/long passes completed|passes longos completos|pases largos completados/,55,.006,.18);
-    score+=attackingWeight*ratioBonus(/crosses completed|cruzamentos completos|centros completados/,30,.004,.16);
-    score+=attackingWeight*capped(sum(/successful dribbles|dribbles completed|dribles completos|dribles certos/)*.09,.45);
-    score+=attackingWeight*capped(sum(/ball actions|touches|acoes com a bola|toques na bola/)*.002,.22);
-    score+=capped(sum(/fouls suffered|faltas sofridas|faltas recebidas/)*.035,.21);
-    score-=capped(sum(/fouls committed|faltas cometidas/)*.075,.45);
-    score-=capped(sum(/possession lost|lost possession|posse de bola perdida|posse perdida|perdas de posse/)*.025,.55);
-    score-=capped(sum(/times dribbled past|dribbled past|driblado|driblado por/)*.085,.43);
-    score-=capped(sum(/offsides|impedimentos|fuera de juego/)*.045,.18);
+    // Ataque e criação: cada métrica recebida é considerada, com retornos
+    // decrescentes para volume alto e peso ajustado à função do atleta.
+    score+=attackWeight*capped(sum(/expected assists|assistencia esperada|\bxa\b/)*.38,.62);
+    score+=attackWeight*capped(sum(/expected goals on target|gols esperados no alvo|gols esperados em chutes no alvo|expected goals in shots on target|\bxgot\b/)*.2,.48);
+    score+=attackWeight*capped(sum(/expected goals|gols esperados|\bxg\b/)*.25,.68);
+    score+=attackWeight*capped(sum(/big chances (?:converted|scored)|grandes chances convertidas|grande chance convertida/)*.24,.48);
+    score+=attackWeight*capped(sum(/key passes|passes decisivos|pases clave/)*.105,.63);
+    score+=attackWeight*capped(sum(/chances created|chances perigosas criadas|oportunidades criadas|chances criadas/)*.075,.38);
+    score+=attackWeight*capped(sum(/shots on target|chutes no gol|chutes a gol|finalizacoes no gol|remates a puerta/)*.12,.6);
+    score+=attackWeight*capped(sum(/^(?:total shots|shots|chutes|total de chutes|finalizacoes)$/)*.025,.25);
+    score-=attackWeight*capped(sum(/shots off target|shots wide|chutes para fora|finalizacoes para fora|remates desviados/)*.025,.2);
+    score+=attackWeight*capped(sum(/successful dribbles|dribbles completed|dribles completos|dribles certos|dribles bem sucedidos/)*.09,.45);
+    score+=attackWeight*capped(sum(/crosses completed|cruzamentos completos|centros completados/)*.035,.18);
+    score+=attackWeight*capped(sum(/passes in final third|passes no ultimo terco|passes no terco final/)*.012,.38);
+    score+=attackWeight*capped(sum(/long passes completed|passes longos completos|pases largos completados/)*.028,.2);
+    score+=attackWeight*capped(sum(/passes completed|passes completos|pases completados/)*.0028,.24);
+    score+=attackWeight*capped(sum(/backward passes|passes para tras|passes atras/)*.002,.06);
+    score+=attackWeight*capped(sum(/ball actions|actions with the ball|acoes com a bola|toques na bola/)*.0018,.2);
+    score+=attackWeight*ratioBonus(/^(?:passes completed|passes completos|pases completados)$/,70,.008,.22);
+    score+=attackWeight*ratioBonus(/long passes completed|passes longos completos|pases largos completados/,55,.006,.16);
+    score+=attackWeight*ratioBonus(/crosses completed|cruzamentos completos|centros completados/,30,.004,.14);
 
-    const ground=normalized.filter(item=>/ground duels|duelos no chao|duelos terrestres/.test(item.name));
-    const aerial=normalized.filter(item=>/aerial duels|duelos aereos|duelos por arriba/.test(item.name));
-    for(const item of [...ground,...aerial]){
-      if(Number.isFinite(item.success))score+=capped(item.success*.018,.3);
-      if(Number.isFinite(item.percent))score+=Math.max(-.12,Math.min(.22,(item.percent-50)*.005));
-    }
-    const defensiveWeight=role==='D'?1:role==='M'?.72:role==='F'?.35:.55;
-    score+=defensiveWeight*capped(sum(/tackles|desarmes|entradas bem sucedidas/)*.075,.6);
-    score+=defensiveWeight*capped(sum(/interceptions|interceptacoes/)*.075,.55);
-    score+=defensiveWeight*capped(sum(/clearances|danger cleared|perigo afastado|cortes|corte/)*.045,.45);
-    score+=defensiveWeight*capped(sum(/recoveries|ball recoveries|recuperacao de posse de bola|recuperacoes/)*.04,.4);
-    score+=defensiveWeight*capped(sum(/blocks|blocked shots|bloqueios|chutes bloqueados/)*.09,.36);
+    // Posse, duelos, recuperação e defesa. Passes para trás contam com peso
+    // quase neutro: são uma decisão tática, não um erro por si só.
+    score+=capped(sum(/fouls suffered|faltas sofridas|faltas recebidas/)*.035,.2);
+    score-=capped(sum(/fouls committed|faltas cometidas/)*.07,.42);
+    score-=capped(sum(/possession lost|lost possession|posse de bola perdida|posse perdida|perdas de posse/)*.03,.55);
+    score-=capped(sum(/times dribbled past|dribbled past|driblado|driblado por/)*.09,.45);
+    score-=attackWeight*capped(sum(/offsides|impedimentos|fuera de juego/)*.045,.2);
+    score+=defenseWeight*capped(sum(/^(?:tackles|desarmes|entradas bem sucedidas)$/)*.085,.65);
+    score+=defenseWeight*capped(sum(/interceptions|interceptacoes/)*.08,.58);
+    score+=defenseWeight*capped(sum(/^(?:clearances|danger cleared|perigo afastado|cortes|corte)$/)*.05,.48);
+    score+=defenseWeight*capped(sum(/^(?:recoveries|ball recoveries|recuperacao de posse de bola|recuperacoes|posse recuperada)$/)*.05,.42);
+    score+=defenseWeight*capped(sum(/recoveries in final third|final third recoveries|posse recuperada no terco final|recuperacoes no terco final/)*.12,.42);
+    score+=defenseWeight*capped(sum(/blocks|blocked shots|bloqueios|chutes bloqueados/)*.08,.36);
+    score+=defenseWeight*capped(sum(/clearance attempts|cortes tentados|aerial clearances/)*.025,.18);
+    score+=defenseWeight*capped(sum(/successful tackles|desarmes certos|tackles won/)*.035,.2);
+    score+=defenseWeight*capped(sum(/possession won|ball won|bolas recuperadas|disputas ganhas/)*.035,.24);
     score-=capped(sum(/errors leading to goal|erro que gerou gol|erros que resultaram em gol/)*.9,1.8);
+    score-=capped(sum(/errors leading to shot|errors leading to chance|erro que originou finalizacao|erro que gerou chute/)*.16,.48);
+
+    for(const item of normalized.filter(entry=>/ground duels|duelos no chao|duelos terrestres|aerial duels|duelos aereos|duelos por cima|duelos por arriba/.test(entry.name))){
+      if(Number.isFinite(item.success))score+=defenseWeight*capped(item.success*.014,.24);
+      if(Number.isFinite(item.percent))score+=defenseWeight*Math.max(-.12,Math.min(.2,(item.percent-50)*.004));
+    }
 
     if(role==='G'){
       score+=capped(sum(/saves|defesas do goleiro|defesas realizadas|goalkeeper saves/)*.13,1.3);
@@ -308,12 +340,11 @@
       score-=capped(sum(/goals conceded|gols sofridos|goles recibidos/)*.18,1.08);
       score+=capped(sum(/penalties saved|penaltis defendidos/)*.7,.7);
     }
+
     const minutes=first(/minutes played|minutos|minutos jogados/);
-    // Poucos minutos reduzem a amplitude da estimativa, sem penalizar o atleta.
-    const participation=Math.max(.35,Math.min(1,(minutes||90)/65));
+    const participation=minutes>0?Math.max(.35,Math.min(1,minutes/65)):1;
     score=6+(score-6)*participation;
-    const value=Number(Math.max(0,Math.min(10,score)).toFixed(1));
-    return {value,source:'estimativa por eventos e estatísticas individuais (ataque, criação, passe, defesa, duelos e disciplina)'};
+    return {value:Number(Math.max(0,Math.min(10,score)).toFixed(1)),source:'nota estimada com estatísticas individuais disponíveis, eventos, função e minutos'};
   }
 
   function renderPlayerRatings(lineups) {
@@ -328,7 +359,7 @@
         return `<tr><td>${escapeHtml(player.name||'Jogador')}</td><td>${escapeHtml(evidence||'Sem estatísticas individuais recebidas')}</td><td><strong title="${escapeHtml(info.source)}">${info.value===null?'—':info.value.toFixed(1)}</strong></td></tr>`;
       }).join('')}</tbody></table></div></section>`;
     });
-    return teams.length?`<section class="apifootball-player-ratings"><div class="apifootball-section-title">Notas dos jogadores</div><p class="apifootball-muted">Escala de 0 a 10. Primeiro usamos uma nota oficial da fonte, quando disponível; caso contrário, estimamos com eventos e estatísticas individuais. Sem dados suficientes, exibimos —.</p><div class="apifootball-rating-grid">${teams.join('')}</div></section>`:'';
+    return teams.length?`<section class="apifootball-player-ratings"><div class="apifootball-section-title">Notas dos jogadores</div><p class="apifootball-muted">Escala de 0 a 10. A estimativa considera as estatísticas individuais disponíveis, eventos, posição e minutos. A nota oficial da fonte é usada apenas quando faltam dados individuais. Sem dados suficientes, exibimos —.</p><div class="apifootball-rating-grid">${teams.join('')}</div></section>`:'';
   }
 
   function renderPitchPlayer(entry, eventIcons = {}) {
@@ -352,12 +383,14 @@
       }
       return output.join('');
     };
-    const ratingInfo=playerRatingInfo(player);const rating=ratingInfo.value!==null?`<span class="apifootball-pitch-number apifootball-pitch-rating" title="${escapeHtml(ratingInfo.source)}">${ratingInfo.value.toFixed(1)}</span>`:'';
+    const ratingInfo=playerRatingInfo(player);
+    const ratingValue=ratingInfo.value;
+    const ratingTier=ratingValue===null?'':(ratingValue>=8?'rating-excellent':ratingValue>=7?'rating-good':ratingValue>=6?'rating-average':ratingValue>=5?'rating-low':'rating-poor');
+    const rating=ratingValue!==null?`<span class="apifootball-pitch-number apifootball-pitch-rating ${ratingTier}" title="${escapeHtml(ratingInfo.source)}">${ratingValue.toFixed(1)}</span>`:'';
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
       <div class="nvb-player-event-rail left">${badges(left,'left')}</div><div class="nvb-player-event-rail right">${badges(right,'right')}</div>
-      ${renderPhoto(player)}
+      ${renderPhoto(player)}${rating}
       <div class="apifootball-pitch-name-row"><span class="apifootball-pitch-shirt-number apifootball-pitch-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-pitch-name">${escapeHtml(name)}</span></div>
-      ${rating}
     </div>`;
   }
 

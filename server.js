@@ -1090,9 +1090,10 @@ const requestHandler = async (req, res) => {
     return json(res, 200, {
       ok: true, provider: '365Scores', experimental: true, enabled: true,
       officialDeveloperApi: false, apiKeyRequiredByObservedClient: false,
-      note: 'Endpoints web não oficiais, documentados por comunidade. Consultas somente sob demanda; autorização de reutilização ainda não confirmada.',
-      localThrottle: { perMinuteSoftLimit: scores365Service.perMinuteLimit, dailySoftLimit: scores365Service.dailySoftLimit, officialLimitKnown: false },
-      cacheEntries: provider?.cacheEntries || 0, usage: provider?.usage || null
+      note: 'Endpoints web não oficiais. Sem cota local fixa; cache e fila controlam a concorrência. Após HTTP 429/403, novas consultas são pausadas temporariamente. Autorização de reutilização ainda não confirmada.',
+      localThrottle: { fixedDailyLimit: false, fixedPerMinuteLimit: false, officialLimitKnown: false },
+      pause: scores365Service.getPauseInfo(),
+      cacheEntries: provider?.cacheEntries || 0
     });
   }
 

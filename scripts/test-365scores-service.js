@@ -123,6 +123,16 @@ try {
   const game = await service.getGame(12345);
   assert.equal(game.details.gameId, 12345);
   const invalidScoreDetails = normalizeGameDetails({ game:{id:1,statusText:'Half Time',homeCompetitor:{id:1,name:'A',score:-1},awayCompetitor:{id:2,name:'B',score:-1}} });
+  const shootoutDetails=normalizeGameDetails({game:{id:2,homeCompetitor:{id:1,name:'A',score:1},awayCompetitor:{id:2,name:'B',score:1},penaltyScore:{home:4,away:3},events:[
+    {typeId:1,eventTypeName:'Penalty scored',isPenaltyShootout:true,playerName:'Cobrador A',competitorNum:1,gameTime:'P1'},
+    {typeId:1,eventTypeName:'Penalty missed',isPenaltyShootout:true,playerName:'Cobrador B',competitorNum:2,gameTime:'P2'},
+    {typeId:1,eventTypeName:'Goal',playerName:'Atacante',competitorNum:1,gameTime:'90+4'}
+  ]}});
+  assert.equal(shootoutDetails.score.penalties.home,4,'Placar da disputa precisa ser normalizado separadamente.');
+  assert.equal(shootoutDetails.score.penalties.away,3);
+  assert.equal(shootoutDetails.events[0].isPenaltyShootout,true,'Cobranças devem ser classificadas em grupo próprio.');
+  assert.equal(shootoutDetails.events[1].type,'Pênalti perdido','Pênalti perdido não pode ser interpretado como gol por causa de typeId genérico.');
+  assert.equal(shootoutDetails.events[2].isPenaltyShootout,false,'Gol no fim da prorrogação continua sendo gol da partida.');
   assert.equal(invalidScoreDetails.score.home, null);
   assert.equal(invalidScoreDetails.clock, 'INT');
   assert.equal(game.details.lineups.home.formation, '4-3-3');
@@ -184,6 +194,25 @@ try {
 
   assert.throws(() => service.gameCacheKey('abc'), error => error.code === '365SCORES_GAME_ID_INVALID');
   await assert.rejects(() => service.getGamesForDate('2026-02-30'), error => error.code === '365SCORES_INVALID_DATE');
+
+  // A 365Scores não deve ter uma quota local fixa: somente respostas do serviço
+  // podem suspender as consultas. Testes usam respostas simuladas, sem rede externa.
+  let calls429=0;
+  const limited429 = new Scores365Service({now:()=>now,requestGapMs:100,fetch:async()=>{calls429++;return {ok:false,status:429,headers:{get:name=>name.toLowerCase()==='retry-after'?'120':''},text:async()=>''};}});
+  assert.equal(limited429.perMinuteLimit,0);
+  assert.equal(limited429.dailySoftLimit,0);
+  await assert.rejects(()=>limited429.request(ENDPOINTS.sports,{}),error=>error.status===429&&error.code==='365SCORES_HTTP_429');
+  assert.equal(limited429.getPauseInfo().paused,true,'Após HTTP 429, o adaptador deve entrar em pausa.');
+  assert.ok(limited429.getPauseInfo().remainingMs>=120000,'Retry-After deve ser respeitado.');
+  const longRetry = new Scores365Service({now:()=>now,requestGapMs:100,fetch:async()=>({ok:false,status:429,headers:{get:name=>name.toLowerCase()==='retry-after'?'7200':''},text:async()=>''})});
+  await assert.rejects(()=>longRetry.request(ENDPOINTS.sports,{}),error=>error.status===429);
+  assert.ok(longRetry.getPauseInfo().remainingMs>=7200000,'Retry-After acima de uma hora também deve ser respeitado sem truncamento artificial.');
+  await assert.rejects(()=>limited429.request(ENDPOINTS.sports,{country:'other'}),error=>error.code==='365SCORES_RATE_PAUSED');
+  assert.equal(calls429,1,'Durante a pausa, não deve sair nova chamada para a 365Scores.');
+  const limited403 = new Scores365Service({now:()=>now,requestGapMs:100,fetch:async()=>({ok:false,status:403,headers:{get:()=>''},text:async()=>''})});
+  await assert.rejects(()=>limited403.request(ENDPOINTS.sports,{}),error=>error.status===403&&error.code==='365SCORES_HTTP_403');
+  await assert.rejects(()=>limited403.request(ENDPOINTS.sports,{country:'another'}),error=>error.code==='365SCORES_ACCESS_PAUSED');
+  assert.ok(limited403.getPauseInfo().remainingMs>=15*60_000,'HTTP 403 deve acionar pausa mais longa e impedir novas tentativas automáticas.');
 
   const catalogStatus = engine.status();
   assert.equal(catalogStatus.providers.find(item => item.id === '365scores').state, 'active');
