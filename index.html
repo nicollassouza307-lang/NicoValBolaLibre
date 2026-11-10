@@ -743,7 +743,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
 @media(max-width:560px){.apifootball-rating-grid{grid-template-columns:minmax(0,1fr)}}
 
 
-/* V0.22.3: escalação inspirada no FotMob, com marcadores consistentes. */
+/* V0.22.4: correções de posição tática e legibilidade do banco. */
 .apifootball-lineups-view{width:100%;max-width:1180px;margin-inline:auto}
 .apifootball-lineups-view .apifootball-pitch-team-heads{max-width:100%;align-items:stretch;justify-content:center}
 .apifootball-lineups-view .apifootball-pitch-team-head{min-width:0;align-items:center;justify-content:flex-start}
@@ -783,7 +783,13 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
 .apifootball-lineups-view .apifootball-bench-event{font-size:9px}
 .apifootball-lineups-view .apifootball-bench-events{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap;vertical-align:middle}
 .apifootball-lineups-view .apifootball-bench-rating{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:15px;padding:0 4px;border-radius:8px;font-size:8px;font-weight:950;background:#64748b;color:#fff}
-.apifootball-lineups-view .apifootball-bench-player{grid-template-columns:30px 14px minmax(0,1fr);gap:2px 4px;align-items:center}
+.apifootball-lineups-view .apifootball-bench-player{grid-template-columns:42px minmax(0,1fr)!important;grid-template-rows:auto!important;gap:5px 9px!important;align-items:center;min-width:0;padding:7px 8px}
+.apifootball-lineups-view .apifootball-bench-player .apifootball-photo-frame{grid-column:1;grid-row:1;width:42px;height:42px;flex:0 0 42px}
+.apifootball-lineups-view .apifootball-bench-copy{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:4px;min-width:0;overflow:hidden}
+.apifootball-lineups-view .apifootball-bench-name-row{display:flex;align-items:center;gap:4px;min-width:0;flex-wrap:wrap}
+.apifootball-lineups-view .apifootball-bench-name{min-width:0;max-width:100%;font-size:10px;line-height:1.25;overflow-wrap:anywhere;word-break:normal}
+.apifootball-lineups-view .apifootball-bench-number{font-size:9px;flex:0 0 auto}
+.apifootball-lineups-view .apifootball-bench-rating{align-self:flex-start;font-size:9px}
 .apifootball-lineups-view .apifootball-bench-name-row{display:flex;align-items:center;gap:3px;min-width:0;flex-wrap:wrap}
 .apifootball-lineups-view .apifootball-bench-number{font-size:8px;color:#d5e8ee;flex:0 0 auto}
 .apifootball-lineups-view .apifootball-bench-name{min-width:0;overflow-wrap:anywhere;font-size:8px}

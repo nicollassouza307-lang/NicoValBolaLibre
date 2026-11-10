@@ -46,11 +46,16 @@
     const rawPosition=typeof record?.position==='string'?record.position:'';
     const raw=String(record?.role||record?.positionName||rawPosition||positionObject.name||positionObject.displayName||positionObject.shortName||'').toLowerCase();
     const pos=String(record?.pos||record?.positionCode||positionObject.code||positionObject.shortName||positionObject.name||'').trim().toUpperCase();
-    // Feeds podem usar siglas táticas (RW, LB, CDM, AM...) em vez de G/D/M/F.
-    if(/^(?:G|GK|KEEPER|GOALKEEPER)$/.test(pos)||/goalkeeper|goleir/.test(raw))return 'G';
-    if(/^(?:D|DEF|CB|LCB|RCB|LB|RB|LWB|RWB|SW)$/.test(pos)||/defen|zague|lateral|centre back|center back|full back|wing back/.test(raw))return 'D';
-    if(/^(?:F|FW|ST|CF|LW|RW|LF|RF|W|ATT)$/.test(pos)||/forward|striker|winger|atacante|ponta|extremo/.test(raw))return 'F';
-    if(/^(?:M|MF|CM|LCM|RCM|CDM|DM|CAM|AM|LAM|RAM|LM|RM)$/.test(pos)||/midfield|meio|volante|meia/.test(raw))return 'M';
+    // Prioriza a sigla tática já normalizada. O texto longo pode ser um rótulo
+    // genérico do perfil e contradizer a posição específica da escalação.
+    if(/^(?:G|GK|GKP|KEEPER|GOALKEEPER)$/.test(pos))return 'G';
+    if(/^(?:D|DF|DEF|CB|LCB|RCB|LB|RB|LWB|RWB|FB|WB|SW)$/.test(pos))return 'D';
+    if(/^(?:F|FW|ST|CF|LW|RW|LF|RF|W|ATT|SS)$/.test(pos))return 'F';
+    if(/^(?:M|MF|CM|LCM|RCM|CDM|DM|CAM|AM|LAM|RAM|LM|RM)$/.test(pos))return 'M';
+    if(/goalkeeper|goleir|keeper/.test(raw))return 'G';
+    if(/defen|zague|lateral|centre back|center back|full back|wing back/.test(raw))return 'D';
+    if(/forward|striker|winger|atacante|ponta|extremo/.test(raw))return 'F';
+    if(/midfield|meio|volante|meia/.test(raw))return 'M';
     return 'U';
   }
 

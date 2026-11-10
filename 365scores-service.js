@@ -243,9 +243,11 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
   const normalizedMembers = members.map(member => {
     const athleteId = positiveId(member?.athleteId || member?.id);
     const detail = (athleteId && memberMap?.get(athleteId)) || {};
-    const position = asObject(detail.position || member?.position);
+    // A posição do integrante da escalação é mais específica que o perfil
+    // global do atleta, que pode vir genérico/desatualizado em algumas partidas.
+    const position = asObject(member?.position || detail.position);
     const photoId = positiveId(detail.athleteId || detail.id || athleteId);
-    const positionName = firstText(position.name, detail.positionName, member?.position?.name, member?.positionName);
+    const positionName = firstText(member?.position?.name, member?.positionName, member?.positionNameShort, member?.positionCode, position.name, position.displayName, position.shortName, position.code, detail.positionName);
     return {
       id: photoId,
       athleteId: photoId,

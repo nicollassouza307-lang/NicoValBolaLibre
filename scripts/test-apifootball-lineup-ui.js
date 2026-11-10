@@ -132,6 +132,28 @@ assert.match(ratedLineupHtml,/apifootball-pitch-rating rating-(?:excellent|good|
 assert.match(ratedLineupHtml,/apifootball-pitch-rating [^>]*>[^<]+<\/span>\s*<div class="apifootball-pitch-name-row"/,'Badge de nota fica sobre a foto e antes do nome, sem invadir a linha do texto.');
 
 
+
+const positionConflictRegression = [
+  {player:{name:'Van Dijk',pos:'CB',role:'Forward',grid:'5:1'}},
+  {player:{name:'Gakpo',pos:'LW',role:'Defender',grid:'2:1'}},
+  {player:{name:'Yamal',pos:'RW',role:'Defender',grid:'2:2'}},
+  {player:{name:'Raphinha',pos:'LW',role:'Defender',grid:'2:3'}},
+  {player:{name:'Bernal',pos:'CM',role:'Forward',grid:'5:2'}},
+  {player:{name:'Keeper',pos:'G',grid:'1:1'}},
+  {player:{name:'CB 2',pos:'CB',role:'Defender',grid:'2:4'}},
+  {player:{name:'CB 3',pos:'CB',role:'Defender',grid:'2:5'}},
+  {player:{name:'CB 4',pos:'CB',role:'Defender',grid:'2:6'}},
+  {player:{name:'CM 2',pos:'CM',role:'Midfielder',grid:'3:1'}},
+  {player:{name:'CM 3',pos:'CM',role:'Midfielder',grid:'3:2'}}
+];
+const repairedPositions = ui.sortLineupPlayers(positionConflictRegression,'4-3-3');
+const depthByName = name => repairedPositions.find(item=>item.player.name===name).__depth;
+assert.ok(depthByName('Van Dijk') < depthByName('Gakpo'), 'A sigla CB deve prevalecer sobre rótulo textual contraditório e manter Van Dijk na defesa.');
+assert.ok(depthByName('Gakpo') > depthByName('CB 2'), 'LW deve prevalecer sobre rótulo Defender e impedir Gakpo de cair na zaga.');
+assert.ok(depthByName('Yamal') > depthByName('CB 2'), 'RW deve permanecer na zona ofensiva mesmo se o rótulo longo vier errado.');
+assert.ok(depthByName('Raphinha') > depthByName('CB 2'), 'LW deve permanecer na zona ofensiva mesmo se o rótulo longo vier errado.');
+assert.ok(depthByName('Bernal') < depthByName('Gakpo'), 'CM deve permanecer no meio, não na última linha de ataque.');
+
 const fallbackFormation = ui.playerPlacements([
   { player: { name: 'GK', pos: 'G' } },
   { player: { name: 'CB', pos: 'D' } },
@@ -222,6 +244,7 @@ assert.match(index, /scores365LineupAsApiSnapshot/, 'Escalações 365Scores deve
 assert.match(index, /Number\.isInteger\(line\)&&line>=1&&line<=6&&Number\.isInteger\(row\)&&row>=1&&row<=5/, 'Coordenadas proporcionais ou fora da grade tática devem acionar o posicionamento por função.');
 assert.match(index, /addShotCount\(h,homeName\);addShotCount\(a,awayName\)/, 'Finalizações do gráfico devem aparecer no comparativo coletivo quando a fonte não trouxer o total por equipe.');
 assert.match(index, /scores365LoadStandings/, 'A classificação 365Scores deve poder ser solicitada na central da partida.');
+assert.match(index, /apifootball-bench-player\{grid-template-columns:42px minmax\(0,1fr\)!important/, 'O banco deve usar duas colunas reais, foto e bloco de texto, sem uma coluna vazia que esprema as informações.');
 // O nome do parâmetro, a indentação e funções auxiliares próximas podem variar.
 // Encontramos a declaração pelo nome e isolamos o trecho até emptyMarkup.
 const cardMarkupPosition = index.search(/\bfunction\s+cardMarkup\s*\(/);

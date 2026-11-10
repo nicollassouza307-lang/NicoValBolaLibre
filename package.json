@@ -1,6 +1,6 @@
 {
   "name": "nicovalbolalibre-desktop",
-  "version": "0.22.3",
+  "version": "0.22.4",
   "description": "Central de partidas NicoValBolaLibre com agenda, Livescore, escalações e integração 365Scores",
   "private": true,
   "main": "electron/main.js",

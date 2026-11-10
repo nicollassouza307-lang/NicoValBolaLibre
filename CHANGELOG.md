@@ -1,3 +1,8 @@
+## V0.22.4 · Correção de posições e banco de reservas
+- Posições táticas específicas da escalação passam a ter prioridade sobre metadados globais contraditórios do atleta.
+- Pontas e zagueiros são reposicionados conforme suas siglas táticas quando o grid da fonte vier invertido.
+- Banco de reservas reorganizado em duas colunas (foto e informações), com melhor leitura em telas estreitas.
+
 ## V0.22.3 · Escalações FotMob-style, notas e disputa de pênaltis
 
 - Campo e escalações centralizados, retratos circulares, nomes e números mais próximos e melhor distribuição dos atletas. Quando a grade da fonte contradiz claramente a função do jogador, a profundidade é reconstruída pela posição e pela formação, sem trocar os jogadores.
@@ -66,3 +71,9 @@
 ## V0.20.1
 
 - Remoção do limite de 500 jogos na comparação 365Scores e diagnóstico dos três melhores registros.
+
+
+## V0.22.4
+- Corrige prioridade das posições específicas da escalação sobre metadados globais contraditórios da ficha do atleta.
+- Reforça a reconstrução das linhas para impedir pontas no setor defensivo e zagueiros no ataque quando a fonte fornece códigos táticos válidos.
+- Reorganiza o banco em duas colunas reais (foto + informações), com uma coluna por equipe em telas estreitas para evitar texto espremido.
