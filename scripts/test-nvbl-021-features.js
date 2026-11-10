@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const lineup=fs.readFileSync(path.join(root,'apifootball-lineup-ui.js'),'utf8');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.21.1');
+assert.equal(pkg.version,'0.22.0');
 assert.match(html,/setInterval\(async\(\)=>[\s\S]*?30000/,'Livescore precisa consultar a cada 30 segundos.');
 assert.match(html,/refreshScores365PanelInModal/,'Atualização deve mexer só no painel esportivo.');
 assert.doesNotMatch(html,/if\(state\.selected&&String\(state\.selected\.id\)===String\(event\.id\)\)renderModal\(\);/,'Consulta 365Scores não pode reconstruir o modal/player.');
@@ -16,7 +16,7 @@ assert.match(html,/scores365CompetitionLogoFor/,'Logo de competição 365Scores 
 assert.match(html,/details\?\.venueAddress/,'Local deve receber endereço/dados do estádio.');
 assert.match(html,/details\.referee/,'Match Center deve receber árbitro.');
 assert.match(html,/playerEventIconsPanel/,'Admin precisa permitir PNGs personalizados para eventos.');
-assert.match(html,/V0.21.1 hotfix/,'O hotfix visual deve usar o fundo correto nas competições.');
+assert.match(html,/img\.competition-divider-logo[\s\S]*?background-color:#101d30!important/,'O hotfix visual deve usar o fundo correto nas competições.');
 assert.match(lineup,/apifootball-bench-events/,'Reservas devem mostrar eventos de substituição e cartões.');
 assert.match(lineup,/apifootball-pitch-rating/,'Nota deve aparecer separada do número da camisa.');
 assert.match(html,/commonNames=\[\.\.\.new Set/,'Estatísticas não podem ter limite artificial de 24 itens.');
@@ -26,4 +26,4 @@ assert.match(lineup,/nvb-player-event-rail right/,'Participações em gol ficam 
 assert.match(html,/aspect-ratio:16\/9/,'Campo deve respeitar proporção 16:9.');
 assert.match(html,/TheSportsDB aposentada do fluxo ativo/,'TheSportsDB não deve ser consultada no fluxo ativo.');
 assert.match(service,/vínculo automático bloqueado: este gameId já foi reivindicado/,'Associações devem respeitar exclusividade do gameId.');
-console.log('PASSOU: V0.21.1 UI, polling isolado do player, eventos individuais, estatísticas completas, metadados, logos e exclusividade 1:1.');
+console.log('PASSOU: V0.22.0 mega-update, polling isolado do player, eventos individuais, estatísticas completas, metadados, logos e exclusividade 1:1.');

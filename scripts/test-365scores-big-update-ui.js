@@ -7,7 +7,7 @@ const matchSummary = html.match(/function renderScores365MatchContent\(details,t
 assert.ok(matchSummary, 'Resumo do Livescore 365Scores deve existir.');
 const summary = matchSummary[1];
 assert.ok(summary.includes('details.clock'), 'Resumo deve usar o minuto retornado pela 365Scores.');
-assert.ok(summary.includes("?'INT'"), 'Resumo deve reconhecer intervalo.');
+assert.match(summary,/half time|halftime|intervalo/i, 'Resumo deve reconhecer intervalo.');
 assert.ok(!summary.includes('details.round'), 'Resumo não deve mostrar rodada.');
 assert.ok(!summary.includes('details.venue'), 'Resumo não deve mostrar estádio.');
 assert.ok(!summary.includes('chartEventsCount'), 'Resumo não deve mostrar contagem de finalizações.');

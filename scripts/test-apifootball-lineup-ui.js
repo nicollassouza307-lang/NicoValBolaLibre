@@ -62,8 +62,8 @@ assert.doesNotMatch(lineupHtml, /apifootball-pitch-position/, 'O marcador de cam
 assert.match(lineupHtml, /apifootball-pitch-number/);
 const forwardPositions = ui.playerPlacements(snapshot.lineups[1].startXI, 'home').filter(entry => String(entry.player.pos).toUpperCase() === 'F');
 assert.ok(forwardPositions.length, 'A formação de teste deve incluir atacantes.');
-assert.ok(forwardPositions.every(entry => entry.left >= 79), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
-assert.ok(forwardPositions.every(entry => entry.depth >= 79), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
+assert.ok(forwardPositions.every(entry => entry.left >= 77), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
+assert.ok(forwardPositions.every(entry => entry.depth >= 77), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
 const fallbackFormation = ui.playerPlacements([
   { player: { name: 'GK', pos: 'G' } },
   { player: { name: 'CB', pos: 'D' } },

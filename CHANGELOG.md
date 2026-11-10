@@ -1,3 +1,16 @@
+# Changelog NicoValBolaLibre
+
+## V0.22.0 · Mega atualização
+
+- Restaura eventos individuais nas escalações e calcula notas de 0 a 10 usando rating oficial ou estimativa baseada em eventos e estatísticas por posição.
+- Reestrutura o posicionamento tático com prioridade para coordenadas válidas e fallback pela formação/posições; aproxima as linhas e mantém o goleiro e os demais jogadores bem distribuídos no campo.
+- Simplifica o campo e as escalações, oculta treinador sem nome e compara as estatísticas com cor clara para o valor maior, escura para o menor e neutra para empate/ausência.
+- Corrige o Livescore: minuto, escudo do time, PNG personalizado, assistência em gols, jogador que entra/sai e remoção de texto repetido em cartões.
+- Automatiza a associação 365Scores após carregar a agenda, preservando vínculos manuais, alta confiança, exclusividade 1:1 e revisão de casos ambíguos.
+- Atualiza os relógios dos jogos ao vivo também na agenda em lotes de até quatro jogos por ciclo de 30 segundos; 30s é o intervalo de cache/consulta interno, não um mínimo oficial declarado pela 365Scores. O player/iframe não é reconstruído.
+- Atualiza a classificação junto aos dados da partida, com cache de 3 minutos, UI compacta e destaque das posições dos clubes.
+- Retira o bloco separado “Onde Assistir” do detalhe da partida, mantendo as emissoras nos cartões da agenda.
+
 # Changelog
 
 ## V0.21.1 · Correções do campo e Match Center

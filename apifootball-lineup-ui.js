@@ -33,77 +33,140 @@
     return (words.length === 1 ? words[0].slice(0, 2) : `${words[0][0]}${words[words.length - 1][0]}`).toUpperCase();
   }
 
+  function formationCounts(formation) {
+    const match=String(formation||'').match(/(?:^|\s)(\d+(?:-\d+){1,4})(?:\s|$)/);
+    if(!match)return [];
+    const counts=match[1].split('-').map(Number);
+    return counts.length>=2&&counts.length<=5&&counts.every(n=>Number.isInteger(n)&&n>0&&n<=6)?counts:[];
+  }
+
+  function roleForPlayer(player) {
+    const record=player?.player&&typeof player.player==='object'?player.player:player;
+    const raw=String(record?.role||record?.position||record?.positionName||'').toLowerCase();
+    const pos=String(record?.pos||record?.positionCode||'').toUpperCase();
+    if(/^G/.test(pos)||/goalkeeper|goleir/.test(raw))return 'G';
+    if(/^D/.test(pos)||/defen|zague|lateral|centre back|center back|full back/.test(raw))return 'D';
+    if(/^F/.test(pos)||/forward|striker|winger|atacante|ponta/.test(raw))return 'F';
+    if(/^M/.test(pos)||/midfield|meio|volante|meia/.test(raw))return 'M';
+    return 'U';
+  }
+
+  function distributeFormationRows(players, formation) {
+    const counts=formationCounts(formation);
+    let goalkeepers=players.filter(player=>roleForPlayer(player)==='G');
+    let outfield=players.filter(player=>roleForPlayer(player)!=='G');
+    // Some feeds omit every position code but still provide a valid 11-player
+    // starting XI and formation. In that case, infer only the keeper from the
+    // first row/grid line and distribute the remaining ten by formation counts.
+    if(counts.length&&goalkeepers.length===0&&players.length===counts.reduce((sum,n)=>sum+n,0)+1){
+      const keeperIndex=players.findIndex(player=>{
+        const record=player?.player&&typeof player.player==='object'?player.player:player;
+        const grid=String(record?.grid||player?.grid||'').match(/^(\d+)\s*:/);
+        return Boolean(grid&&Number(grid[1])===1);
+      });
+      const inferredKeeper=players[keeperIndex>=0?keeperIndex:0];
+      goalkeepers=[inferredKeeper];
+      outfield=players.filter(player=>player!==inferredKeeper);
+    }
+    const rows=[];
+    if(counts.length&&counts.reduce((sum,n)=>sum+n,0)===outfield.length){
+      const defenders=outfield.filter(player=>roleForPlayer(player)==='D');
+      const attackers=outfield.filter(player=>roleForPlayer(player)==='F');
+      const midfielders=outfield.filter(player=>roleForPlayer(player)==='M');
+      const unknown=outfield.filter(player=>roleForPlayer(player)==='U');
+      const assigned=counts.map(()=>[]);
+      const take=(source,count)=>source.splice(0,Math.max(0,count));
+      assigned[0].push(...take(defenders,counts[0]));
+      if(counts.length>1)assigned[counts.length-1].push(...take(attackers,counts[counts.length-1]));
+      const middleIndexes=counts.map((_,i)=>i).filter(i=>i>0&&i<counts.length-1);
+      middleIndexes.forEach(index=>assigned[index].push(...take(midfielders,counts[index])));
+      // If a source uses broad position codes only (e.g. all five midfielders as M),
+      // keep the API order while splitting the midfield across its formation lines.
+      for(const index of middleIndexes){
+        const free=counts[index]-assigned[index].length;
+        if(free>0)assigned[index].push(...take(unknown,free),...take(midfielders,free));
+      }
+      if(counts.length===2){
+        assigned[1].push(...take(midfielders,counts[1]-assigned[1].length),...take(unknown,counts[1]-assigned[1].length));
+      }
+      // Fill vacancies by original order, never dropping a starter when position metadata is incomplete.
+      const used=new Set(assigned.flat());
+      const leftovers=outfield.filter(player=>!used.has(player));
+      for(const player of leftovers){
+        let target=assigned.findIndex((group,index)=>group.length<counts[index]);
+        if(target<0)target= Math.max(0,Math.floor((counts.length-1)/2));
+        assigned[target].push(player);
+      }
+      rows.push(...assigned);
+    } else {
+      const defenders=outfield.filter(player=>roleForPlayer(player)==='D');
+      const midfielders=outfield.filter(player=>roleForPlayer(player)==='M');
+      const attackers=outfield.filter(player=>roleForPlayer(player)==='F');
+      const unknown=outfield.filter(player=>roleForPlayer(player)==='U');
+      const middleCount=Math.max(0,outfield.length-defenders.length-attackers.length);
+      const desiredMiddleRows=Math.max(1,counts.length-2);
+      const middleRows=Array.from({length:desiredMiddleRows},()=>[]);
+      const middle=midfielders.concat(unknown);
+      middle.forEach((player,index)=>middleRows[Math.min(middleRows.length-1,Math.floor(index*middleRows.length/Math.max(1,middle.length)))].push(player));
+      // When the supplied formation is incomplete, prefer actual player roles over
+      // forcing the declared but incomplete row counts (e.g. 4-1-1 with 10 outfielders).
+      rows.push(defenders.length?defenders:[]);
+      rows.push(...middleRows.filter(group=>group.length));
+      rows.push(attackers.length?attackers:[]);
+      if(!rows.some(group=>group.length))rows.push(outfield);
+      const used=new Set(rows.flat());
+      for(const player of outfield.filter(item=>!used.has(item)))rows[Math.max(0,Math.floor(rows.length/2))].push(player);
+      if(middleCount===0&&rows.length>2)rows.splice(1,rows.length-2);
+    }
+    return {goalkeepers,rows:rows.filter(group=>group.length)};
+  }
+
   function sortLineupPlayers(players, formation = '') {
     const rows=Array.isArray(players)?players:[];
-    const formationLines=String(formation||'').match(/^\s*(\d+(?:-\d+){2,4})\s*$/)?.[1].split('-').map(Number)||[];
-    const depthForIndex=index=>{if(index===0)return 1;let cursor=1;for(let line=0;line<formationLines.length;line++){cursor+=formationLines[line];if(index<cursor)return line+2;}return formationLines.length+1;};
-    return rows.map((player, index) => {
-      const record = player?.player && typeof player.player === 'object' ? player.player : player;
-      const gridMatch = String(record?.grid || player?.grid || '').match(/^(\d+)\s*:\s*(\d+)$/);
-      const position = String(record?.pos || player?.pos || '').toUpperCase();
-        const fallbackDepth = position.startsWith('G') ? 1 : position.startsWith('D') ? 2 : position.startsWith('M') ? 3 : position.startsWith('F') ? 4 : (formationLines.length ? depthForIndex(index) : 2);
-      return {
-        ...player,
-        __player: record,
-        __index: index,
-        __depth: gridMatch ? Number(gridMatch[1]) : fallbackDepth,
-        __row: gridMatch ? Number(gridMatch[2]) : null
-      };
-    }).sort((a, b) => a.__depth - b.__depth ||
-      (a.__row ?? Number.MAX_SAFE_INTEGER) - (b.__row ?? Number.MAX_SAFE_INTEGER) || a.__index - b.__index);
+    if(!rows.length)return [];
+    const explicit=rows.map((player,index)=>{
+      const record=player?.player&&typeof player.player==='object'?player.player:player;
+      const gridMatch=String(record?.grid||player?.grid||'').match(/^(\d+)\s*:\s*(\d+)$/);
+      return {player,record,index,grid:gridMatch?{line:Number(gridMatch[1]),row:Number(gridMatch[2])}:null};
+    });
+    const fallback=distributeFormationRows(rows,formation);
+    const assigned=new Map();
+    let depth=1;
+    fallback.goalkeepers.forEach(player=>assigned.set(player,depth));
+    depth=2;
+    fallback.rows.forEach(group=>{group.forEach(player=>assigned.set(player,depth));depth++;});
+    return explicit.map(item=>({
+      ...item.player,
+      __player:item.record,
+      __index:item.index,
+      __depth:item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:(assigned.get(item.player)||2),
+      __row:item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null
+    })).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
   }
 
   function playerPlacements(players, side = 'home', formation = '') {
-    const ordered = sortLineupPlayers(players, formation);
-    if (!ordered.length) return [];
-    const depths = ordered.map(player => player.__depth);
-    const minDepth = Math.min(...depths);
-    const maxDepth = Math.max(...depths);
-    const depthRange = Math.max(1, maxDepth - minDepth);
-    const byDepth = new Map();
-    for (const player of ordered) {
-      if (!byDepth.has(player.__depth)) byDepth.set(player.__depth, []);
-      byDepth.get(player.__depth).push(player);
-    }
-
-    // Faixas com espaçamento de campo real, em vez de distribuir tudo igualmente.
-    // A coluna do grid da API-Football preserva a ordem quando vem preenchida.
-    const lanePresets = {
-      1: [50],
-      2: [36, 64],
-      3: [24, 50, 76],
-      4: [19, 40, 60, 81],
-      5: [15, 32.5, 50, 67.5, 85]
-    };
-    const positions = [];
-    for (const depth of [...byDepth.keys()].sort((a, b) => a - b)) {
-      const group = byDepth.get(depth);
-      const count = group.length;
-      const preset = lanePresets[count] || group.map((_, index) => count === 1 ? 50 : 7 + (index / (count - 1)) * 86);
-      const gridRows = group.map(player => player.__row).filter(Number.isFinite);
-      const maxGridRow = gridRows.length ? Math.max(...gridRows) : 0;
-      group.forEach((player, index) => {
-        const lane = Number.isFinite(player.__row) && maxGridRow > 1
-          ? 18 + ((player.__row - 1) / (maxGridRow - 1)) * 64
-          : preset[index];
-        let xForward = 23 + ((depth - minDepth) / depthRange) * 54;
-        const wideLane = lane <= 28 || lane >= 72;
-        const position = String(player.__player?.pos || player.pos || '').toUpperCase();
-        // Laterais dão amplitude e avançam um pouco. Pontas ficam mais abertos
-        // e alguns passos à frente, criando o desenho assimétrico de um FC/FIFA.
-        if (count >= 3 && wideLane && depth === minDepth + 1 && position.startsWith('D')) xForward += 2;
-        if (position.startsWith('F')) xForward += 3.5;
-        if (position.startsWith('F') && wideLane) xForward += 2;
-        if (position.startsWith('F') && count === 2) xForward += index === 0 ? 1 : 2.5;
-        // Goleiros ficam dentro da pequena área, próximos à linha de fundo.
-        if (position.startsWith('G')) xForward = 7.5;
-        xForward = Math.min(82, xForward);
-        positions.push({
-          player,
-          left: Number((side === 'away' ? 100 - xForward : xForward).toFixed(2)),
-          top: Number(lane.toFixed(2)),
-          depth: Number(xForward.toFixed(2))
-        });
+    const ordered=sortLineupPlayers(players,formation);
+    if(!ordered.length)return [];
+    const byDepth=new Map();
+    for(const player of ordered){if(!byDepth.has(player.__depth))byDepth.set(player.__depth,[]);byDepth.get(player.__depth).push(player);}
+    const depthKeys=[...byDepth.keys()].sort((a,b)=>a-b);
+    const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>roleForPlayer(player)==='G'));
+    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?48:16+(index/(nonKeeperDepths.length-1))*62]));
+    const lanePresets={1:[50],2:[36,64],3:[24,50,76],4:[19,40,60,81],5:[15,32.5,50,67.5,85]};
+    const positions=[];
+    for(const depth of depthKeys){
+      const group=byDepth.get(depth),count=group.length;
+      const preset=lanePresets[count]||group.map((_,index)=>count===1?50:8+(index/(count-1))*84);
+      const rows=group.map(player=>player.__row).filter(Number.isFinite);
+      const maxRow=rows.length?Math.max(...rows):0;
+      group.forEach((player,index)=>{
+        const lane=Number.isFinite(player.__row)&&maxRow>1?15+((player.__row-1)/(maxRow-1))*70:preset[index];
+        const isKeeper=roleForPlayer(player)==='G';
+        let xForward=isKeeper?8.5:(rowX.get(depth)||16);
+        const raw=String(player.__player?.role||player.__player?.position||'').toLowerCase();
+        if(!isKeeper&&/wing|ponta|wide|lateral/.test(raw))xForward+=1.5;
+        xForward=Math.max(8.5,Math.min(80,xForward));
+        positions.push({player,left:Number((side==='away'?100-xForward:xForward).toFixed(2)),top:Number(lane.toFixed(2)),depth:Number(xForward.toFixed(2))});
       });
     }
     return positions;
@@ -138,14 +201,70 @@
   function safePngUrl(value) {
     try {
       const url = new URL(String(value || ''));
-      return url.protocol === 'https:' && /\.png(?:$|\?)/i.test(url.href) ? url.toString() : '';
+      return url.protocol === 'https:' && /\.(?:png|webp|jpe?g)(?:$|\?)/i.test(url.href) ? url.toString() : '';
     } catch { return ''; }
   }
 
   function renderPlayerEventSymbol(item, eventIcons = {}) {
-    const custom = safePngUrl(eventIcons?.[item.kind]);
+    const custom = safePngUrl(eventIcons?.[item.kind] || (item.kind === 'own-goal' ? eventIcons?.goal : ''));
     if (custom) return `<img class="nvb-player-event-image" src="${escapeHtml(custom)}" alt="" loading="lazy" decoding="async">`;
     return `<span class="nvb-player-event-emoji" aria-hidden="true">${escapeHtml(item.icon || '•')}</span>`;
+  }
+
+  function playerRatingInfo(player) {
+    const record=player?.player&&typeof player.player==='object'?player.player:player||{};
+    const official=Number(record.rating);
+    if(record.rating!==null&&record.rating!==undefined&&record.rating!==''&&Number.isFinite(official))return {value:Math.max(0,Math.min(10,official)),source:'365Scores'};
+    const stats=Array.isArray(record.stats)?record.stats:[];
+    const events=Array.isArray(record.events)?record.events:[];
+    if(!stats.length&&!events.length)return {value:null,source:'sem dados individuais'};
+    const role=roleForPlayer(record);
+    let score=6;
+    const count=(pattern)=>stats.reduce((sum,item)=>{const name=String(item.name||'');if(!pattern.test(name))return sum;const value=Number(item.numericValue??item.value);return Number.isFinite(value)?sum+Math.max(0,value):sum;},0);
+    const bounded=(value,min,max)=>Math.max(min,Math.min(max,value));
+    const kinds=events.map(item=>String(item.kind||''));
+    score+=Math.min(2,kinds.filter(kind=>kind==='goal').length)*1.0;
+    score+=Math.min(1.4,kinds.filter(kind=>kind==='assist').length)*0.7;
+    score-=Math.min(2.4,kinds.filter(kind=>kind==='own-goal').length)*1.2;
+    score-=Math.min(0.75,kinds.filter(kind=>kind==='yellow').length)*0.25;
+    score-=Math.min(1.6,kinds.filter(kind=>kind==='double-yellow').length)*0.8;
+    score-=Math.min(1.3,kinds.filter(kind=>kind==='red').length)*1.3;
+    if(role==='G'){
+      score+=bounded(count(/save|defesa|goalkeeper save/i)*0.12,0,0.72);
+      score+=bounded(count(/penalt.*save|save.*penalt/i)*0.7,0,0.7);
+      score-=bounded(count(/goals? conceded|gols? sofridos/i)*0.28,0,1.12);
+    } else if(role==='D'){
+      score+=bounded(count(/tackle|desarme/i)*0.09,0,0.72);
+      score+=bounded(count(/interception|interceptação/i)*0.08,0,0.56);
+      score+=bounded(count(/clearance|corte|bloqueio|block/i)*0.05,0,0.5);
+      score-=bounded(count(/error.*goal|erro.*gol/i)*0.7,0,1.4);
+    } else if(role==='M'){
+      score+=bounded(count(/key pass|passe decisivo|chance created/i)*0.13,0,0.78);
+      score+=bounded(count(/recover|recupera/i)*0.05,0,0.4);
+      score+=bounded(count(/dribble|drible/i)*0.08,0,0.4);
+      score-=bounded(count(/possession lost|perda de posse/i)*0.035,0,0.42);
+    } else {
+      score+=bounded(count(/shots? on target|finalizações? no gol/i)*0.16,0,0.8);
+      score+=bounded(count(/dribble|drible/i)*0.07,0,0.35);
+      score-=bounded(count(/big chances? missed|grandes chances? perdidas/i)*0.2,0,0.6);
+    }
+    const value=Number(bounded(score,3,10).toFixed(1));
+    return {value,source:'estimativa por eventos e estatísticas individuais'};
+  }
+
+  function renderPlayerRatings(lineups) {
+    const teams=(Array.isArray(lineups)?lineups:[]).filter(Boolean).map(lineup=>{
+      const rows=(Array.isArray(lineup.startXI)?lineup.startXI:[]).concat(Array.isArray(lineup.substitutes)?lineup.substitutes:[]).map(item=>{
+        const player=item?.player&&typeof item.player==='object'?item.player:item;
+        return {player,info:playerRatingInfo(player)};
+      });
+      return `<section class="apifootball-rating-team"><h5>${escapeHtml(lineup.team?.name||'Equipe')}</h5><div class="apifootball-rating-table-wrap"><table class="apifootball-rating-table"><thead><tr><th>Jogador</th><th>Eventos/dados</th><th>Nota</th></tr></thead><tbody>${rows.map(({player,info})=>{
+        const summary=(player.events||[]).map(item=>item.label||item.kind).filter(Boolean);
+        const evidence=summary.length?summary.join(' · '):(player.stats||[]).slice(0,3).map(item=>`${item.name}: ${item.value}`).join(' · ');
+        return `<tr><td>${escapeHtml(player.name||'Jogador')}</td><td>${escapeHtml(evidence||'Sem estatísticas individuais recebidas')}</td><td><strong title="${escapeHtml(info.source)}">${info.value===null?'—':info.value.toFixed(1)}</strong></td></tr>`;
+      }).join('')}</tbody></table></div></section>`;
+    });
+    return teams.length?`<section class="apifootball-player-ratings"><div class="apifootball-section-title">Notas dos jogadores</div><p class="apifootball-muted">Escala de 0 a 10. Primeiro usamos uma nota oficial da fonte, quando disponível; caso contrário, estimamos com eventos e estatísticas individuais. Sem dados suficientes, exibimos —.</p><div class="apifootball-rating-grid">${teams.join('')}</div></section>`:'';
   }
 
   function renderPitchPlayer(entry, eventIcons = {}) {
@@ -169,7 +288,7 @@
       }
       return output.join('');
     };
-    const rating=player.rating!==null&&player.rating!==undefined&&player.rating!==''?`<span class="apifootball-pitch-number apifootball-pitch-rating" title="Nota 365Scores">${escapeHtml(player.rating)}</span>`:'';
+    const ratingInfo=playerRatingInfo(player);const rating=ratingInfo.value!==null?`<span class="apifootball-pitch-number apifootball-pitch-rating" title="${escapeHtml(ratingInfo.source)}">${ratingInfo.value.toFixed(1)}</span>`:'';
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
       <div class="nvb-player-event-rail left">${badges(left,'left')}</div><div class="nvb-player-event-rail right">${badges(right,'right')}</div>
       ${renderPhoto(player)}
@@ -182,7 +301,7 @@
     const record = player?.player && typeof player.player === 'object' ? player.player : player;
     const name = String(record?.name || 'Jogador');
     const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
-    const rating=record?.rating!==null&&record?.rating!==undefined&&record?.rating!==''?`<span class="apifootball-bench-rating">${escapeHtml(record.rating)}</span>`:'';
+    const ratingInfo=playerRatingInfo(record);const rating=ratingInfo.value!==null?`<span class="apifootball-bench-rating" title="${escapeHtml(ratingInfo.source)}">${ratingInfo.value.toFixed(1)}</span>`:'';
     const events=Array.isArray(record?.events)?record.events:[];
     const eventHtml=events.length?`<span class="apifootball-bench-events">${events.map(item=>`<span class="apifootball-bench-event ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${renderPlayerEventSymbol(item,eventIcons)}</span>`).join('')}</span>`:'';
     return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<div class="apifootball-bench-copy"><div class="apifootball-bench-name-row"><span class="apifootball-bench-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${eventHtml}</div>${rating}</div></div>`;
@@ -198,12 +317,12 @@
   function renderSupportCard(lineup, fixtureTeam, label) {
     const name = String(lineup?.team?.name || fixtureTeam?.name || label);
     const coachData = lineup?.coach && typeof lineup.coach === 'object' ? lineup.coach : { name: lineup?.coach };
-    const coach = String(coachData?.name || 'Técnico não informado');
+    const coach = String(coachData?.name || '').trim();
     const coachPhoto = safePhotoUrl(coachData?.photoUrl);
     const substitutes = Array.isArray(lineup?.substitutes) ? lineup.substitutes : [];
     return `<article class="apifootball-support-card">
       <div class="apifootball-support-head"><div><span class="apifootball-support-kicker">COMISSÃO TÉCNICA</span><h5>${escapeHtml(name)}</h5></div><span class="apifootball-support-count">${substitutes.length} reservas</span></div>
-      <div class="apifootball-coach-row"><span class="apifootball-coach-photo${coachPhoto?'':' is-fallback'}">${coachPhoto?`<img src="${escapeHtml(coachPhoto)}" data-apifootball-player-photo alt="" loading="lazy" decoding="async">`:escapeHtml(initials(coach))}</span><div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>
+      ${coach?`<div class="apifootball-coach-row"><span class="apifootball-coach-photo${coachPhoto?'':' is-fallback'}">${coachPhoto?`<img src="${escapeHtml(coachPhoto)}" data-apifootball-player-photo alt="" loading="lazy" decoding="async">`:escapeHtml(initials(coach))}</span><div><small>Técnico</small><strong>${escapeHtml(coach)}</strong></div></div>`:''}
       <div class="apifootball-section-title">Banco de reservas</div>
       ${substitutes.length ? `<div class="apifootball-bench-list">${substitutes.map(player=>renderBenchPlayer(player,lineup?.eventIcons||{})).join('')}</div>` : '<div class="apifootball-lineup-empty">Reservas não informados.</div>'}
     </article>`;
@@ -234,6 +353,7 @@
         ${renderHalf(home, 'home')}${renderHalf(away, 'away')}
       </div></div>
       <div class="apifootball-support-grid">${renderSupportCard({...home,eventIcons:options.eventIcons||{}}, fixtureHome, 'Mandante')}${renderSupportCard({...away,eventIcons:options.eventIcons||{}}, fixtureAway, 'Visitante')}</div>
+      ${renderPlayerRatings([home,away])}
       <div class="apifootball-muted apifootball-lineup-footnote">Fotos obtidas pela fonte de dados do jogador quando disponível. Quando uma foto não existe, mostramos as iniciais em vez de associar uma imagem incerta.</div>
     </div>`;
   }
@@ -367,5 +487,5 @@
     return `<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div><div class="apifootball-stat-grid">${list}</div><div class="apifootball-muted">Comparativo das estatísticas fornecidas pela fonte esportiva selecionada. Um traço indica dado não informado.</div></div>`;
   }
 
-  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };
+  return { escapeHtml, playerPhotoUrl, initials, sortLineupPlayers, playerPlacements, resolveLineups, playerRatingInfo, renderPlayerRatings, renderLineups, statsRows, numericValue, normalizeTeamColorName, teamPrimaryColor, renderStatistics, eventMinute, renderMatchEvents };
 });

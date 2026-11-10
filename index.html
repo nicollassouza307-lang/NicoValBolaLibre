@@ -531,7 +531,7 @@
 }
 
 
-/* V0.21.1: campo 16:9, visual mais limpo e eventos individuais */
+/* V0.22.0: campo 16:9, visual mais limpo e eventos individuais */
 .apifootball-pitch{width:100%;min-width:0;min-height:0;aspect-ratio:16/9;background:#17613f;border:1px solid #8dc9a45c;border-radius:12px}
 .apifootball-pitch-outline{inset:8px;border-color:#d7f1df55}
 .apifootball-pitch-center-line,.apifootball-pitch-center-circle,.apifootball-pitch-box{border-color:#d7f1df55}
@@ -606,7 +606,7 @@ img.crest.crest-github {
 @media(max-width:560px){.game-card{padding:9px 10px}.game-card .teams{grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);gap:5px}.game-card .team{gap:5px}.game-card .crest{width:25px;height:25px;flex-basis:25px}.game-card .team-name{font-size:10px}.game-card .agenda-score-wrap .score{font-size:16px}.game-card .card-bottom>span:last-child{max-width:66%}}
 
 
-/* V0.21.1 hotfix: competições em placa navy e escalações legíveis. */
+/* V0.22.0 hotfix: competições em placa navy e escalações legíveis. */
 img.competition-divider-logo,.public-competition-badge,img[data-competition-logo],.match-league-name img {
   background-color:#101d30!important;border-color:#101d30!important;
 }
@@ -665,7 +665,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
  .apifootball-bench-player .apifootball-photo-frame{width:38px;height:38px;flex-basis:38px}
  .event-icon-admin-grid{grid-template-columns:1fr}
 }
-/* V0.21.1: reforço final de legibilidade do campo e banco. */
+/* V0.22.0: reforço final de legibilidade do campo e banco. */
 .apifootball-pitch-player{width:104px;gap:4px}
 .apifootball-pitch-player .apifootball-photo-frame{width:60px;height:60px;flex-basis:60px}
 .apifootball-pitch-name-row{gap:5px}
@@ -693,6 +693,55 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
  .apifootball-bench-player .apifootball-photo-frame{width:46px;height:46px;flex-basis:46px}
 }
 
+
+/* V0.22.0: campo e dados minimalistas, ícones e classificação compactos. */
+.apifootball-pitch-scroll{scrollbar-width:thin;scrollbar-color:#355e50 transparent}
+.apifootball-pitch{background:#1a6042!important;border:0!important;border-radius:8px!important;box-shadow:none!important;outline:0!important}
+.apifootball-pitch-outline,.apifootball-pitch-center-circle,.apifootball-pitch-center-line,.apifootball-pitch-box{border-color:#b8e0c8!important;box-shadow:none!important}
+.apifootball-pitch-half.home{border-right:1px solid #b8e0c855!important}
+.apifootball-photo-frame,.apifootball-pitch-player .apifootball-photo-frame{border:0!important;box-shadow:none!important;background:#174d3a!important}
+.apifootball-pitch-name,.apifootball-pitch-name-row,.apifootball-pitch-number{ text-shadow:none!important;box-shadow:none!important }
+.apifootball-pitch-shirt-number.apifootball-pitch-number{border:0!important;border-radius:3px!important;background:#143e31!important}
+.apifootball-pitch-rating{border:0!important;border-radius:3px!important;box-shadow:none!important;background:#194735!important;color:#e2f7e8!important}
+.apifootball-pitch-team-head,.apifootball-support-card{background:#132638!important;border:1px solid #2b4553!important;border-radius:8px!important;box-shadow:none!important}
+.apifootball-support-card{padding:10px!important}
+.apifootball-coach-row{background:transparent!important;border:0!important;box-shadow:none!important}
+.nvb-player-event,.nvb-player-event-goal,.apifootball-bench-event{box-shadow:none!important;outline:0!important;border:1px solid #ffffff40!important;border-radius:4px!important}
+.nvb-player-event-goal{background:#132638!important}
+.scores365-event-row{grid-template-columns:38px 24px 26px minmax(0,1fr)!important;gap:7px!important}
+.scores365-event-badge-cell{display:grid;place-items:center;width:24px;height:24px}
+.scores365-event-team-badge{width:22px!important;height:22px!important;flex:0 0 22px!important}
+.scores365-event-icon{display:grid;place-items:center;min-width:24px;min-height:24px}
+.scores365-event-custom-image{width:20px;height:20px;object-fit:contain;display:block}
+.scores365-event-fallback{display:inline-block;line-height:1;white-space:nowrap}
+.scores365-event-icon.has-custom .scores365-event-fallback{display:none}
+.scores365-event-icon.has-fallback .scores365-event-fallback{display:inline-block}
+.apifootball-rating-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.apifootball-rating-team{min-width:0;padding:10px;border:1px solid #263f50;border-radius:8px;background:#102234}
+.apifootball-rating-team h5{margin:0 0 7px;font-size:12px}
+.apifootball-rating-table-wrap{overflow:auto}
+.apifootball-rating-table{width:100%;border-collapse:collapse;font-size:10px}
+.apifootball-rating-table th,.apifootball-rating-table td{padding:6px 5px;border-bottom:1px solid #ffffff12;text-align:left;vertical-align:top}
+.apifootball-rating-table th:last-child,.apifootball-rating-table td:last-child{text-align:right;white-space:nowrap}
+.apifootball-rating-table td:nth-child(2){color:#9bb0c6}
+.apifootball-rating-table td strong{color:#9fe5d9;font-size:12px}
+.apifootball-player-ratings{margin-top:14px}
+.apifootball-player-ratings>p{font-size:10px;line-height:1.5;margin:5px 0 9px}
+.scores365-match-table-positions{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0;padding:9px 10px;border-radius:7px;background:#142b3c;color:#b7c8d7;font-size:10px}
+.scores365-match-table-positions span{display:flex;align-items:center;gap:8px}
+.scores365-match-table-positions strong{color:#8fe0d4;font-size:15px}
+.scores365-standings-wrap tr.is-match-home{background:#163c3a}
+.scores365-standings-wrap tr.is-match-away{background:#1b3147}
+.scores365-standing-side{font-size:8px;font-weight:900;color:#a9d8d3;padding:2px 4px;border-radius:3px;background:#ffffff12}
+@media(max-width:700px){.apifootball-rating-grid{grid-template-columns:minmax(0,1fr)}.scores365-event-row{grid-template-columns:34px 22px 24px minmax(0,1fr)!important;gap:5px!important}.apifootball-event-copy small{font-size:9px}}
+
+
+/* V0.22.0: acabamento minimalista consistente em todo o módulo de escalações. */
+.apifootball-lineups-view .apifootball-pitch-team-head,.apifootball-lineups-view .apifootball-support-card,.apifootball-lineups-view .apifootball-rating-team,.apifootball-lineups-view .apifootball-bench-player{background-image:none!important;box-shadow:none!important;outline:0!important}
+.apifootball-lineups-view .apifootball-photo-frame{box-shadow:none!important;outline:0!important;border:0!important}
+.apifootball-lineups-view .apifootball-pitch-player,.apifootball-lineups-view .apifootball-coach-row,.apifootball-lineups-view .apifootball-pitch-team-head,.apifootball-lineups-view .apifootball-support-card,.apifootball-lineups-view .apifootball-rating-team{outline:0!important}
+@media(max-width:700px){.scores365-event-row{grid-template-columns:34px 22px 24px minmax(0,1fr)!important;gap:5px!important}.scores365-event-team-badge{width:20px!important;height:20px!important}}
+@media(max-width:560px){.apifootball-rating-grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -822,14 +871,18 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       </div>
       <div class="admin-panel" id="playerEventIconsPanel">
         <h4>🎯 Ícones dos eventos dos jogadores</h4>
-        <p>Personalize os símbolos exibidos ao redor dos titulares e ao lado dos reservas. Informe uma URL HTTPS terminada em .png. Deixe vazia para manter o emoji padrão.</p>
+        <p>Personalize os símbolos exibidos ao redor dos titulares e ao lado dos reservas. Informe uma URL HTTPS de imagem PNG, WebP ou JPG. Deixe vazia para manter o emoji padrão.</p>
         <div class="event-icon-admin-grid">
           <label>Gol <input id="playerEventIconGoal" type="url" placeholder="https://.../gol.png"></label>
+          <label>Gol contra <input id="playerEventIconOwnGoal" type="url" placeholder="https://.../gol-contra.png"></label>
           <label>Assistência <input id="playerEventIconAssist" type="url" placeholder="https://.../assistencia.png"></label>
           <label>Amarelo <input id="playerEventIconYellow" type="url" placeholder="https://.../amarelo.png"></label>
           <label>Vermelho <input id="playerEventIconRed" type="url" placeholder="https://.../vermelho.png"></label>
           <label>Duplo amarelo <input id="playerEventIconDoubleYellow" type="url" placeholder="https://.../duplo-amarelo.png"></label>
           <label>Substituição <input id="playerEventIconSubstitution" type="url" placeholder="https://.../substituicao.png"></label>
+          <label>Bola na trave <input id="playerEventIconWoodwork" type="url" placeholder="https://.../trave.png"></label>
+          <label>Pênalti perdido <input id="playerEventIconMissedPenalty" type="url" placeholder="https://.../penalti.png"></label>
+          <label>VAR <input id="playerEventIconVar" type="url" placeholder="https://.../var.png"></label>
         </div>
         <div class="admin-actions"><button class="btn small" type="button" id="savePlayerEventIcons">Salvar símbolos</button><button class="btn secondary small" type="button" id="resetPlayerEventIcons">Restaurar emojis</button></div>
         <div class="admin-small" id="playerEventIconsStatus">As imagens são opcionais e sincronizadas junto da configuração compartilhada.</div>
@@ -867,9 +920,9 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-panel" id="scores365Panel">
         <div class="section-head" style="margin:0 0 8px;align-items:center">
           <div><h4>⚽ 365Scores · Dados das partidas</h4><p>Fonte esportiva principal: busca partidas para enriquecer a agenda existente com placares, eventos, escalações e estatísticas. Nunca cria jogos na agenda.</p></div>
-          <span class="api-football-status-pill warn" id="scores365Badge">Experimental</span>
+          <span class="api-football-status-pill ok" id="scores365Badge">Automática · alta confiança</span>
         </div>
-        <div class="admin-small" id="scores365Status" role="status" aria-live="polite">Aguardando teste. Nenhuma consulta automática é executada.</div>
+        <div class="admin-small" id="scores365Status" role="status" aria-live="polite">A associação automática compara a agenda atual a cada 6 horas por conjunto de partidas. Apenas correspondências inequívocas são vinculadas; sugestões ambíguas continuam para revisão manual.</div>
         <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn secondary small" type="button" id="test365Scores">Testar resposta básica</button>
         </div>
@@ -883,13 +936,13 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
         <div id="scores365GamesResult" style="display:grid;gap:8px;margin-top:10px"></div>
         <div class="admin-panel" style="margin-top:12px">
           <h4>🔗 Encontrar correspondências na agenda carregada</h4>
-          <p>Compara somente as partidas que já estão na agenda selecionada com a lista da 365Scores. Correspondências inequívocas podem ser vinculadas automaticamente; casos ambíguos continuam exigindo confirmação manual. Nenhuma partida é criada ou alterada.</p>
+          <p>A associação automática já compara a agenda atual sem precisar entrar neste painel. Use o botão abaixo para repetir a comparação e abrir diagnósticos. Correspondências ambíguas continuam exigindo confirmação manual; a agenda nunca recebe jogos novos nem tem os horários originais alterados.</p>
           <button class="btn small" type="button" id="match365ScoresAgenda">Comparar com a agenda carregada</button>
           <div class="admin-small" id="scores365AgendaMatchStatus" role="status" aria-live="polite" style="margin-top:8px">Carregue uma data na agenda principal antes de comparar.</div>
           <div id="scores365AgendaMatchResult" style="display:grid;gap:8px;margin-top:10px"></div>
         </div>
         <div id="scores365GameDetails" style="margin-top:10px"></div>
-        <p class="admin-small" style="margin-top:12px">Os endpoints testados são interfaces web observadas por projetos comunitários, não uma API oficial documentada. Teto local do protótipo: 12 chamadas/minuto e 200/dia, não são limites oficiais da 365Scores. Uso manual, cache local e compartilhado via Cloudflare quando configurado. Antes de usar em produção ou redistribuir dados/imagens, confirme autorização com <a href="mailto:partners@365scores.com">partners@365scores.com</a>.</p>
+        <p class="admin-small" style="margin-top:12px">Os endpoints testados são interfaces web observadas por projetos comunitários, não uma API oficial documentada. Teto local do protótipo: 12 chamadas/minuto e 200/dia, não são limites oficiais da 365Scores. Associação automática com cooldown local de 6 horas por agenda; dados da partida usam cache de 30 segundos e a classificação cache de 3 minutos. Esses intervalos são configurações locais conservadoras, não mínimos oficiais publicados pela 365Scores. Cache compartilhado via Cloudflare quando configurado. Antes de usar em produção ou redistribuir dados/imagens, confirme autorização com <a href="mailto:partners@365scores.com">partners@365scores.com</a>.</p>
         <div class="admin-small">Referência técnica comunitária: <a href="https://github.com/Pochonski/ScoreHub/blob/master/docs/api-365scores.md" target="_blank" rel="noopener">documentação de endpoints observados</a> · <a href="https://www.365scores.com/pt-br/pages/terms" target="_blank" rel="noopener">termos da 365Scores</a>.</div>
       </div>
       <div class="admin-panel" id="footballDataPanel">
@@ -969,7 +1022,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.21.1 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.0 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -1841,7 +1894,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       }
       console.warn('NicoValBolaLibre agendas combinadas:',error);
     } finally {
-      if (requestId===loadSequence) { state.loading=false; render(); }
+      if (requestId===loadSequence) { state.loading=false; render(); void runScores365AutoAgendaMatching(requestedDate); }
     }
   }
   function teamKey(name) {
@@ -2067,7 +2120,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     attachLogoFallback(img.parentElement||document);
   }
   async function hydrateTheSportsDbBadge(node,teamName,country='',league='') {
-    return ''; /* V0.21.1: TheSportsDB aposentada do fluxo ativo; 365Scores + GitHub. */
+    return ''; /* V0.22.0: TheSportsDB aposentada do fluxo ativo; 365Scores + GitHub. */
     if(!node?.isConnected||!teamName||node.dataset?.theSportsDbAttempted==='1')return '';
     node.dataset.theSportsDbAttempted='1';
     const preferTheSportsDb=prefersTheSportsDbClubBadge(teamName);
@@ -2100,7 +2153,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function theSportsDbLeagueLocalKey(leagueName,country='') { return `${foldLabel(leagueName)}|${foldLabel(country)}`; }
   async function hydrateTheSportsDbLeagueBadge(node,leagueName,country='') {
-    return; /* V0.21.1: TheSportsDB aposentada do fluxo ativo. */
+    return; /* V0.22.0: TheSportsDB aposentada do fluxo ativo. */
     if(!node?.isConnected||!leagueName||node.dataset?.theSportsDbLeagueAttempted==='1')return;
     node.dataset.theSportsDbLeagueAttempted='1';
     const key=theSportsDbLeagueLocalKey(leagueName,country);const now=Date.now();const cached=theSportsDbLeagueBadgeCache[key];
@@ -2226,8 +2279,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     const demo=e.demo?'<span style="color:#ffc76b;font-size:8px;margin-left:5px">DEMO</span>':'';
     const tv=e.tvNetworks?.length ? `<span class="watch-label">📺 ${escapeHtml(e.tvNetworks.map(n=>n.displayName||n.name).join(', '))}</span>` : '<span>Emissora a confirmar</span>';
     const liveBadge=cardStatus==='live'?'<span class="agenda-live-dot" aria-label="Ao vivo"></span>':'';
+    const cardStatusText=cardStatus==='live'?scores365PhasePresentation(e,scores365Details).label:statusLabel(cardStatus);
     return `<article class="game-card" data-id="${escapeHtml(e.id)}" tabindex="0" role="button" aria-label="Abrir ${escapeHtml(e.home)} contra ${escapeHtml(e.away)}">
-      <div class="card-top"><div class="league">${escapeHtml(e.league)}${demo}</div><span class="status ${cardStatus}">${liveBadge}${statusLabel(cardStatus)}</span></div>
+      <div class="card-top"><div class="league">${escapeHtml(e.league)}${demo}</div><span class="status ${cardStatus}">${liveBadge}${escapeHtml(cardStatusText)}</span></div>
       <div class="teams">
         <div class="team">${logoMarkup(e.home,scores365TeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),'',e.league)}<div class="team-copy"><div class="team-name">${escapeHtml(e.home)}</div><div class="team-meta">CASA</div></div></div>
         ${middle}
@@ -2605,6 +2659,7 @@ const BROADCASTER_ALIAS_GROUPS = [
             return [];
           }
           if(isPrimary){
+            if(/gol contra|own goal|autogol|autogolo/.test(type))return [make('own-goal','⚽','Gol contra')];
             if(/gol|goal/.test(type))return [make('goal','⚽',ev.type||'Gol')];
             if(/duplo|segundo amarelo|second yellow/.test(type))return [make('double-yellow','🟨🟥','Duplo amarelo')];
             if(/amarelo|yellow/.test(type))return [make('yellow','🟨','Cartão amarelo')];
@@ -2620,7 +2675,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         const line=Number(formation.line||0);const rawRow=formation.fieldLine;const sideRow=formation.fieldSide;const row=rawRow!==undefined&&rawRow!==null&&rawRow!==''?Number(rawRow):((typeof sideRow==='number'||/^\d+$/.test(String(sideRow||'')))?Number(sideRow):0);
         const grid=Number.isInteger(line)&&line>=1&&line<=6&&Number.isInteger(row)&&row>=1&&row<=5?`${line}:${row}`:'';
         const stats=Array.isArray(member.stats)?member.stats:[];const ratingStat=stats.find(stat=>/rating|nota|performance score/i.test(String(stat.name||'')));
-        return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),photoUrl:String(member.photoUrl||''),rating:member.rating??ratingStat?.value??null,events:Array.isArray(member.events)?member.events:[]},grid};
+        return {player:{id:Number(member.athleteId||member.id)||0,name:String(member.name||'Jogador'),number:member.number??null,pos:String(member.positionCode||''),role:String(member.position||''),photoUrl:String(member.photoUrl||''),rating:member.rating??ratingStat?.value??null,stats,events:Array.isArray(member.events)?member.events:[]},grid};
       };
       const coach=lineup?.coach&&typeof lineup.coach==='object'?lineup.coach:{name:String(lineup?.coach||'')};
       return {
@@ -2645,8 +2700,22 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderScores365Events(details) {
     const events=(Array.isArray(details?.events)?details.events:[]).filter(event=>!/(?:fim de jogo|full time|match ended)/i.test(String(event?.type||'')));
     if(!events.length)return '<div class="apifootball-lineup-empty">A 365Scores não retornou eventos para esta partida.</div>';
-    const iconFor=event=>({Gol:'⚽','Gol contra':'⚽','Cartão amarelo':'🟨','Duplo amarelo':'🟨🟥','Cartão vermelho':'🟥','Substituição':'⇄','Bola na trave':'🟠','Pênalti perdido':'❌','VAR':'📺','Intervalo':'⏸'}[event.type]||'•');
+    const icons=cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{}));
     const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const eventMeta=event=>{
+      const type=fold(event.type);
+      if(/gol contra|own goal|autogol|autogolo/.test(type))return {kind:'own-goal',emoji:'⚽'};
+      if(/duplo amarelo|segundo amarelo|second yellow/.test(type))return {kind:'double-yellow',emoji:'🟨🟥'};
+      if(/cartao amarelo|yellow card/.test(type))return {kind:'yellow',emoji:'🟨'};
+      if(/cartao vermelho|red card/.test(type))return {kind:'red',emoji:'🟥'};
+      if(/substitu/.test(type))return {kind:'substitution',emoji:'⇄'};
+      if(/bola na trave|woodwork/.test(type))return {kind:'woodwork',emoji:'🟠'};
+      if(/penalti perdido|missed penalty/.test(type))return {kind:'missed-penalty',emoji:'❌'};
+      if(/var/.test(type))return {kind:'var',emoji:'📺'};
+      if(/intervalo|half time/.test(type))return {kind:'interval',emoji:'⏸'};
+      if(/gol|goal/.test(type))return {kind:'goal',emoji:'⚽'};
+      return {kind:'other',emoji:'•'};
+    };
     const resolveEventTeam=event=>{
       const teamId=Number(event.teamId||0),num=Number(event.competitorNum||0),name=fold(event.team);
       if(teamId&&teamId===Number(details.home?.id))return details.home;
@@ -2666,12 +2735,20 @@ const BROADCASTER_ALIAS_GROUPS = [
     return `<div class="apifootball-events-panel"><div class="apifootball-events-heading"><div><div class="apifootball-section-title">Eventos da partida</div><small>Dados retornados pela 365Scores</small></div><span>${events.length} lance(s)</span></div><div class="apifootball-event-list">${sorted.map(event=>{
       const team=resolveEventTeam(event);const teamName=String(team?.name||event.team||'Time não identificado');const teamId=Number(team?.id||event.teamId||0);
       const logo=teamId>0?`https://imagecache.365scores.com/image/upload/f_png,w_32,h_32,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${teamId}`:'';
-      const outgoing=String(event.player||'');const incoming=String(event.secondaryPlayer||'');
-      const main=event.type==='Substituição'&&outgoing?`Saiu: ${outgoing}`:outgoing||event.type||'Evento';
-      const detail=event.type==='Substituição'?(incoming?`Entrou: ${incoming}`:'Substituição'):`${event.type||''}${incoming?` · ${incoming}`:''}${event.detail&&event.detail!==event.type?` · ${event.detail}`:''}`;
-      return `<article class="apifootball-event-row scores365-event-row" data-event-team-side="${team===details.home?'home':team===details.away?'away':'unknown'}"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="apifootball-event-icon">${iconFor(event)}</span><div class="apifootball-event-copy"><strong>${escapeHtml(main)}</strong><small>${escapeHtml(detail)}</small></div><span class="scores365-event-team-cell" title="${escapeHtml(teamName)}">${logo?`<img class="scores365-event-team-badge" src="${logo}" alt="" loading="lazy">`:''}<strong>${escapeHtml(teamName)}</strong></span></article>`;
+      const meta=eventMeta(event);const custom=icons[meta.kind]||icons[meta.kind==='own-goal'?'goal':meta.kind];
+      const icon=custom?`<img class="scores365-event-custom-image" data-event-icon-image src="${escapeHtml(custom)}" alt="" loading="lazy" decoding="async"><span class="scores365-event-fallback" aria-hidden="true">${meta.emoji}</span>`:`<span class="scores365-event-fallback" aria-hidden="true">${meta.emoji}</span>`;
+      const outgoing=String(event.player||'').trim();const incoming=String(event.secondaryPlayer||'').trim();
+      let main=meta.kind==='substitution'?(outgoing?`Saiu: ${outgoing}`:'Substituição'):outgoing||String(event.type||'Evento');
+      let detail='';
+      if(meta.kind==='substitution')detail=incoming?`Entrou: ${incoming}`:'Jogador que entrou não informado';
+      else if(meta.kind==='goal'&&incoming)detail=`Assistência: ${incoming}`;
+      else if(event.detail&&fold(event.detail)!==fold(event.type)&&!fold(event.detail).includes(fold(event.type)))detail=String(event.detail);
+      if(meta.kind==='yellow'||meta.kind==='double-yellow'||meta.kind==='red')detail=event.detail&&fold(event.detail)!==fold(event.type)?String(event.detail):'';
+      if(!outgoing&&meta.kind==='substitution'&&incoming)main='Substituição';
+      return `<article class="apifootball-event-row scores365-event-row" data-event-team-side="${team===details.home?'home':team===details.away?'away':'unknown'}"><time>${escapeHtml(scores365EventMinute(event.minute))}</time><span class="scores365-event-badge-cell" title="${escapeHtml(teamName)}">${logo?`<img class="scores365-event-team-badge" src="${logo}" alt="${escapeHtml(teamName)}" loading="lazy">`:'<span class="scores365-event-team-placeholder">•</span>'}</span><span class="apifootball-event-icon scores365-event-icon${custom?' has-custom':''}" data-event-kind="${meta.kind}">${icon}</span><div class="apifootball-event-copy"><strong>${escapeHtml(main)}</strong>${detail?`<small>${escapeHtml(detail)}</small>`:''}</div></article>`;
     }).join('')}</div></div>`;
   }
+
   function scores365TeamStatRows(row) {
     const source=Array.isArray(row?.stats)?row.stats:(Array.isArray(row?.rows)?row.rows:[]);
     const typeNames=new Map((Array.isArray(row?.statsTypes)?row.statsTypes:[]).map(item=>[Number(item.typeId),String(item.name||'')]));
@@ -2691,8 +2768,9 @@ const BROADCASTER_ALIAS_GROUPS = [
     const statistics=details?.statistics||{};
     const teams=Array.isArray(statistics.competitorRows)?statistics.competitorRows:[];
     const homeName=String(details.home?.name||'Mandante'),awayName=String(details.away?.name||'Visitante');
-    const homeColor=window.NVBLineupUI?.teamPrimaryColor?.(homeName,'#2563eb')||'#2563eb';
-    const awayColor=window.NVBLineupUI?.teamPrimaryColor?.(awayName,'#dc2626')||'#dc2626';
+    const lightStatColor='#71ded3';
+    const darkStatColor='#35556f';
+    const tiedStatColor='#8198a8';
     const homeStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===homeName)||teams[0];
     const awayStats=teams.find(row=>String(row.team||row.competitor?.name||row.name||'')===awayName)||teams.find(row=>row!==homeStats)||teams[1];
     const h=scores365TeamStatRows(homeStats),a=scores365TeamStatRows(awayStats);
@@ -2711,7 +2789,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     const numeric=value=>{const match=String(value??'').replace(',','.').match(/-?\d+(?:\.\d+)?/);return match?Math.max(0,Number(match[0])):null;};
     const category=name=>/shot|finaliz|gol|goal|xg|penalt|chute|escanteio|corner/i.test(name)?'Ataque':/pass|posse|dribl|cross|cruz|criacao|chance/i.test(name)?'Construção':/tackle|desarme|intercept|clearance|corte|recovery|recupera|save|defesa/i.test(name)?'Defesa':/card|cart|foul|falta|offside|imped/i.test(name)?'Disciplina':'Outros';
     let content='';
-    if(commonNames.length){const groups=['Ataque','Construção','Defesa','Disciplina','Outros'].map(group=>({group,names:commonNames.filter(name=>category(name)===group)})).filter(group=>group.names.length);content=`<div class="apifootball-statistics-view" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div>${groups.map(group=>`<section class="scores365-stat-group"><div class="scores365-stat-category">${group.group}</div><div class="apifootball-stat-grid">${group.names.map(name=>{const hv=get(h,name),av=get(a,name),hn=numeric(hv),an=numeric(av),total=(hn??0)+(an??0),share=hn!==null&&an!==null&&total>0?hn/total*100:50;return `<article class="apifootball-stat-card" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-values"><strong>${escapeHtml(hv)}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(av)}</strong></div>${hn!==null&&an!==null?`<div class="apifootball-stat-bar" aria-hidden="true"><span class="home" style="width:${share}%"></span><span class="away" style="width:${100-share}%"></span></div>`:''}</article>`;}).join('')}</div></section>`).join('')}<div class="apifootball-muted">Todas as estatísticas de equipe recebidas nesta partida. Campos ausentes permanecem ocultos, sem inventar valores.</div></div>`;}
+    if(commonNames.length){const groups=['Ataque','Construção','Defesa','Disciplina','Outros'].map(group=>({group,names:commonNames.filter(name=>category(name)===group)})).filter(group=>group.names.length);content=`<div class="apifootball-statistics-view"><div class="apifootball-stat-team-labels"><strong>${escapeHtml(homeName)}</strong><strong>${escapeHtml(awayName)}</strong></div>${groups.map(group=>`<section class="scores365-stat-group"><div class="scores365-stat-category">${group.group}</div><div class="apifootball-stat-grid">${group.names.map(name=>{const hv=get(h,name),av=get(a,name),hn=numeric(hv),an=numeric(av),total=(hn??0)+(an??0),share=hn!==null&&an!==null&&total>0?hn/total*100:50,homeColor=hn===null||an===null?tiedStatColor:(hn>an?lightStatColor:hn<an?darkStatColor:tiedStatColor),awayColor=hn===null||an===null?tiedStatColor:(an>hn?lightStatColor:an<hn?darkStatColor:tiedStatColor);return `<article class="apifootball-stat-card" style="--stat-home-color:${homeColor};--stat-away-color:${awayColor}"><div class="apifootball-stat-values"><strong>${escapeHtml(hv)}</strong><span>${escapeHtml(name)}</span><strong>${escapeHtml(av)}</strong></div>${hn!==null&&an!==null?`<div class="apifootball-stat-bar" aria-hidden="true"><span class="home" style="width:${share}%"></span><span class="away" style="width:${100-share}%"></span></div>`:''}</article>`;}).join('')}</div></section>`).join('')}<div class="apifootball-muted">Em cada indicador, o maior valor recebe a cor clara e o menor a cor escura; empates e valores indisponíveis ficam neutros. Campos ausentes permanecem ocultos.</div></div>`;}
     else content='<div class="apifootball-message">A 365Scores não disponibilizou estatísticas de equipe para esta partida. A cobertura varia por competição e momento do jogo.</div>';
     const xgMarkup=shots.length?`<div class="multi-api-provider" style="margin-top:10px"><strong>Gols esperados (xG) · soma das finalizações</strong><span>${escapeHtml(homeName)}: ${xgHome.toFixed(2)} · ${escapeHtml(awayName)}: ${xgAway.toFixed(2)} · ${shots.length} finalização(ões) no gráfico.</span></div>`:'';
     const playerMarkup=playerRows.length?`<details class="scores365-stats-extra"><summary class="admin-small">Estatísticas individuais · ${playerRows.length} jogador(es)</summary><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>Jogador</th><th>Equipe</th><th>Dados disponíveis</th></tr></thead><tbody>${playerRows.map(row=>`<tr><td>${escapeHtml(row.name||'')}</td><td>${escapeHtml(row.team||'')}</td><td>${escapeHtml((row.stats||[]).map(stat=>`${stat.name}: ${stat.value}`).join(' · '))}</td></tr>`).join('')}</tbody></table></div></details>`:'';
@@ -2739,14 +2817,19 @@ const BROADCASTER_ALIAS_GROUPS = [
     const rows=groups.flatMap(group=>Array.isArray(group.rows)?group.rows:[]).slice(0,60);
     if(!rows.length)return '<div class="apifootball-message">A 365Scores respondeu, mas não encontramos linhas de classificação no formato esperado. A resposta foi mantida em cache para diagnóstico.</div>';
     const seasonLabel=String(groups[0]?.displayName||groups[0]?.seasonName||(seasonNum?`Temporada ${seasonNum}`:'')).trim();
-    return `${seasonLabel?`<div class="admin-small" style="margin-bottom:7px">${escapeHtml(seasonLabel)}${stageNum?` · Fase ${stageNum}`:''}</div>`:''}<div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${Number(row.position)||'—'}</td><td><span style="display:flex;align-items:center;gap:7px">${Number(row.competitor?.id)>0?`<img class="scores365-event-team-badge" src="https://imagecache.365scores.com/image/upload/f_png,w_32,h_32,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${Number(row.competitor.id)}" alt="">`:''}${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}</span></td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`).join('')}</tbody></table></div>`;
+    const positionFor=team=>{const id=Number(team?.id||0);const name=foldLabel(team?.name||'');const row=rows.find(item=>id&&Number(item.competitor?.id)===id)||rows.find(item=>name&&foldLabel(item.competitor?.name||item.competitor?.shortName||'')===name);return row?.position?Number(row.position):null;};
+    const homePosition=positionFor(details.home),awayPosition=positionFor(details.away);
+    const positionsMarkup=`<div class="scores365-match-table-positions"><span>${escapeHtml(details.home?.name||'Mandante')} <strong>${homePosition?`#${homePosition}`:'—'}</strong></span><span>${escapeHtml(details.away?.name||'Visitante')} <strong>${awayPosition?`#${awayPosition}`:'—'}</strong></span></div>`;
+    return `${seasonLabel?`<div class="admin-small" style="margin-bottom:7px">${escapeHtml(seasonLabel)}${stageNum?` · Fase ${stageNum}`:''}</div>`:''}${positionsMarkup}<div class="apifootball-standings-wrap scores365-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${rows.map(row=>{const teamId=Number(row.competitor?.id||0),isHome=teamId&&teamId===Number(details.home?.id),isAway=teamId&&teamId===Number(details.away?.id);return `<tr class="${isHome?'is-match-home':isAway?'is-match-away':''}"><td>${Number(row.position)||'—'}</td><td><span style="display:flex;align-items:center;gap:7px">${teamId>0?`<img class="scores365-event-team-badge" src="https://imagecache.365scores.com/image/upload/f_png,w_32,h_32,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${teamId}" alt="">`:''}${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}${isHome?'<small class="scores365-standing-side">CASA</small>':isAway?'<small class="scores365-standing-side">FORA</small>':''}</span></td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`;}).join('')}</tbody></table></div>`;
   }
   function renderScores365MatchContent(details,tab) {
     if(tab==='lineups')return window.NVBLineupUI.renderLineups(scores365LineupAsApiSnapshot(details),{eventIcons:readStore('nvb_player_event_icons_v1',{})});
     if(tab==='statistics')return renderScores365Statistics(details);
     if(tab==='standings')return `${renderScores365Standings(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadStandings">Buscar/atualizar classificação</button></div>':''}`;
     const rawStatus=String(details.status||'').trim();
-    const statusLabel=details.clock || (/^(?:ht|half time|halftime|intervalo)$/i.test(rawStatus)?'INT':(/live|ao vivo|1st half|2nd half|1st|2nd/i.test(rawStatus)?'Ao Vivo':(/finished|full time|fim|fim de jogo/i.test(rawStatus)?'Encerrado':rawStatus||'Status não informado')));
+    const halftime=/^(?:int|ht|half time|halftime|intervalo)$/i.test(details.clock||rawStatus);
+    const finished=/finished|full time|fim|fim de jogo|encerrado/i.test(rawStatus);
+    const statusLabel=finished?'Encerrado':halftime?'Intervalo':(details.clock||(/live|ao vivo|1st half|2nd half|1st|2nd/i.test(rawStatus)?'Ao Vivo':rawStatus||'Status não informado'));
     return `<div class="match-livescore-summary"><div class="match-livescore-status">${escapeHtml(statusLabel)}</div></div>${renderScores365Events(details)}`;
   }
   function renderScores365MatchPanel(event) {
@@ -2769,7 +2852,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       panel.outerHTML=renderScores365MatchPanel(event);
       bindScores365MatchPanelEvents(event);
     }));
-    panel.querySelector('#scores365LoadStandings')?.addEventListener('click',()=>loadScores365Standings(event));
+    panel.querySelector('#scores365LoadStandings')?.addEventListener('click',()=>loadScores365Standings(event,{force:true}));
     attachApiFootballPhotoFallback(panel);
   }
   let scores365LiveTimer=null;
@@ -2789,12 +2872,13 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function scores365PhasePresentation(event,details=null) {
     const normalized=scores365NormalizedStatus(event);
-    if(normalized==='live') {
-      const clock=String(details?.clock||'').trim();
-      const rawStatus=String(details?.status||'').trim();
-      const halftime=/^(?:int|ht|half time|halftime|intervalo)$/i.test(clock||rawStatus);
-      return {label:halftime?'Intervalo':'Ao Vivo',clock:clock&&!halftime?clock:'' ,kind:'live'};
-    }
+    const clock=String(details?.clock||'').trim();
+    const rawStatus=String(details?.status||'').trim();
+    const halftime=/^(?:int|ht|half time|halftime|intervalo)$/i.test(clock||rawStatus);
+    const finished=/finished|full time|ended|fim|finalizado|encerrado|\bft\b/i.test(rawStatus);
+    if(finished)return {label:'Encerrado',clock:'',kind:'finished'};
+    if(halftime)return {label:'Intervalo',clock:'',kind:'live'};
+    if(normalized==='live')return {label:clock||'Ao Vivo',clock:'',kind:'live'};
     if(normalized==='finished')return {label:'Encerrado',clock:'',kind:'finished'};
     return {label:'Programado',clock:'',kind:'upcoming'};
   }
@@ -2817,7 +2901,6 @@ const BROADCASTER_ALIAS_GROUPS = [
       fact('📍','Local',venue||'Não informado',[address,capacityText].filter(Boolean).join(' · ')),
       fact('🏆','Rodada',round),
       fact('🧑‍⚖️','Árbitro',referee),
-      fact('📺','Emissoras',broadcasters.join(', ')),
       officials.length?fact('👥','Equipe de arbitragem',officials.map(item=>`${item.role?`${item.role}: `:''}${item.name}`).join(' · ')):'',
       attendance?fact('👥','Público',attendance):''
     ].filter(Boolean);
@@ -2830,14 +2913,42 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(facts)facts.innerHTML=renderMatchFacts(event,details,kickoff);
     const phase=$('#modalContent')?.querySelector('.match-phase-indicator');
     if(phase){const state=scores365PhasePresentation(event,details);phase.className=`match-phase-indicator ${state.kind}`;phase.innerHTML=`<strong>${escapeHtml(state.label)}</strong>${state.clock?`<span>${escapeHtml(state.clock)}</span>`:''}`;}
-    const chips=$('#modalContent')?.querySelector('.match-broadcast-panel .broadcast-list');if(chips&&Array.isArray(details.tvNetworks)&&details.tvNetworks.length){const prior=event.tvNetworks;event.tvNetworks=details.tvNetworks;chips.innerHTML=broadcastChipsMarkup(event);event.tvNetworks=prior;}
     const score=$('#modalContent')?.querySelector('.match-score');if(score&&details.score?.home!==null&&details.score?.home!==undefined&&details.score?.away!==null&&details.score?.away!==undefined)score.innerHTML=`${escapeHtml(details.score.home)} <span>:</span> ${escapeHtml(details.score.away)}`;
-    const card=[...document.querySelectorAll('.game-card')].find(node=>String(node.dataset.id)===String(event.id));if(card){const middle=card.querySelector('.teams > .agenda-score-wrap, .teams > .versus');if(middle&&details.score?.home!==null&&details.score?.home!==undefined&&details.score?.away!==null&&details.score?.away!==undefined){middle.outerHTML=`<div class="agenda-score-wrap"><div class="score">${escapeHtml(details.score.home)} <small>:</small> ${escapeHtml(details.score.away)}</div></div>`;}const cardStatus=card.querySelector('.card-top .status');if(cardStatus){const normalized=scores365NormalizedStatus(event);cardStatus.className=`status ${normalized}`;cardStatus.textContent=statusLabel(normalized);}}
+    const card=[...document.querySelectorAll('.game-card')].find(node=>String(node.dataset.id)===String(event.id));if(card){const middle=card.querySelector('.teams > .agenda-score-wrap, .teams > .versus');if(middle&&details.score?.home!==null&&details.score?.home!==undefined&&details.score?.away!==null&&details.score?.away!==undefined){middle.outerHTML=`<div class="agenda-score-wrap"><div class="score">${escapeHtml(details.score.home)} <small>:</small> ${escapeHtml(details.score.away)}</div></div>`;}const cardStatus=card.querySelector('.card-top .status');if(cardStatus){const normalized=scores365NormalizedStatus(event);cardStatus.className=`status ${normalized}`;cardStatus.textContent=normalized==='live'?scores365PhasePresentation(event,details).label:statusLabel(normalized);}}
   }
   function stopScores365LivePolling(){if(scores365LiveTimer){clearInterval(scores365LiveTimer);scores365LiveTimer=null;}scores365LiveBusy=false;}
   function startScores365LivePolling(event){stopScores365LivePolling();const status=scores365NormalizedStatus(event);if(status!=='live'||!scores365MatchCache[String(event.id)]?.details)return;
     scores365LiveTimer=setInterval(async()=>{if(document.visibilityState!=='visible'||!state.selected||String(state.selected.id)!==String(event.id)||scores365LiveBusy)return;if(scores365NormalizedStatus(event)!=='live'){stopScores365LivePolling();return;}scores365LiveBusy=true;try{await loadScores365MatchData(event,true,true);}finally{scores365LiveBusy=false;}},30000);
   }
+  let scores365AgendaClockTimer=null;
+  let scores365AgendaClockBusy=false;
+  let scores365AgendaClockCursor=0;
+  async function refreshScores365AgendaClockBatch(){
+    if(scores365AgendaClockBusy||document.visibilityState!=='visible'||state.loading||!Array.isArray(state.events)||!state.events.length)return;
+    const modalOpen=$('#matchModal')?.classList.contains('open')||$('#modalContent')?.classList.contains('open');
+    const selectedId=modalOpen?String(state.selected?.id||''):'';
+    const live=state.events.filter(event=>scores365NormalizedStatus(event)==='live'&&Number(scores365LinkedGameForEvent(event)?.gameId)>0&&String(event.id)!==selectedId);
+    if(!live.length){scores365AgendaClockCursor=0;return;}
+    const batchSize=modalOpen?3:4; // Keep headroom under the local 12-requests/minute soft limit.
+    const start=scores365AgendaClockCursor%live.length;
+    const batch=Array.from({length:Math.min(batchSize,live.length)},(_,index)=>live[(start+index)%live.length]);
+    scores365AgendaClockCursor=(start+batch.length)%live.length;
+    scores365AgendaClockBusy=true;
+    try{
+      for(const event of batch){
+        if(document.visibilityState!=='visible')break;
+        const cachedAt=Date.parse(scores365MatchCache[String(event.id)]?.fetchedAt||'')||0;
+        if(Date.now()-cachedAt<28000)continue;
+        await loadScores365MatchData(event,true,true);
+      }
+    }finally{scores365AgendaClockBusy=false;}
+  }
+  function startScores365AgendaClockPolling(){
+    if(scores365AgendaClockTimer)clearInterval(scores365AgendaClockTimer);
+    void refreshScores365AgendaClockBatch();
+    scores365AgendaClockTimer=setInterval(()=>void refreshScores365AgendaClockBatch(),30000);
+  }
+
   async function loadScores365MatchData(event,refresh=false,silent=false) {
     const link=scores365LinkedGameForEvent(event);
     if(!link?.gameId){toast('Esta partida ainda não possui gameId confirmado no Admin → 365Scores.');return;}
@@ -2852,6 +2963,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       scores365MatchCache[String(event.id)]={gameId:Number(link.gameId),details:result.details,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
       if(state.selected&&String(state.selected.id)===String(event.id)){refreshScores365PanelInModal(event);refreshScores365MatchFacts(event);}
+      void loadScores365Standings(event,{silent:true});
       if(!silent)startScores365LivePolling(event);
       if(!silent)toast(`Dados da 365Scores carregados para ${event.home} x ${event.away}.`);
     } catch(error) {
@@ -2859,25 +2971,34 @@ const BROADCASTER_ALIAS_GROUPS = [
       if(!silent)toast(error.message||'Falha ao carregar os dados da 365Scores.');
     } finally { if(button)button.disabled=false; }
   }
-  async function loadScores365Standings(event) {
+  async function loadScores365Standings(event,options={}) {
+    const silent=Boolean(options.silent),force=Boolean(options.force);
     const link=scores365LinkedGameForEvent(event);
-    const cached=scores365MatchCache[String(event.id)]?.details;
-    const competitionId=Number(cached?.competition?.id||link?.competitionId||0);
-    const seasonNum=Number(cached?.competition?.seasonNum||0);
-    const stageNum=Number(cached?.competition?.stageNum||0);
-    if(!competitionId){toast('A partida não informou o competitionId necessário.');return;}
+    const cachedDetails=scores365MatchCache[String(event.id)]?.details;
+    const competitionId=Number(cachedDetails?.competition?.id||link?.competitionId||0);
+    const seasonNum=Number(cachedDetails?.competition?.seasonNum||0);
+    const stageNum=Number(cachedDetails?.competition?.stageNum||0);
+    if(!competitionId){if(!silent)toast('A partida não informou o competitionId necessário.');return;}
+    const cacheKey=scores365StandingsCacheKey(competitionId,seasonNum,stageNum);
+    const existing=scores365StandingsCache[cacheKey]||(!seasonNum&&!stageNum?scores365StandingsCache[String(competitionId)]:null);
+    const fetchedAt=Date.parse(existing?.fetchedAt||'')||0;
+    // The source's standings endpoint is cached server-side too. A three-minute
+    // client cooldown avoids hitting it on every 30-second match refresh.
+    if(scores365StandingsBusy.has(cacheKey))return;
+    if(!force&&existing?.data&&Date.now()-fetchedAt<180000)return;
+    scores365StandingsBusy.add(cacheKey);
     const button=$('#scores365LoadStandings');if(button)button.disabled=true;
     try {
       const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,seasonNum:seasonNum||undefined,stageNum:stageNum||undefined,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação da 365Scores.');
-      const cacheKey=scores365StandingsCacheKey(competitionId,seasonNum,stageNum);
       scores365StandingsCache[cacheKey]={data:result.data,seasonNum,stageNum,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       writeStore(SCORES365_STANDINGS_CACHE_KEY,scores365StandingsCache);
       if(state.selected&&String(state.selected.id)===String(event.id))refreshScores365PanelInModal(event);
-      toast(`Classificação recebida da 365Scores${seasonNum?` · temporada ${seasonNum}`:''}.`);
-    } catch(error){toast(error.message||'Falha ao carregar a classificação da 365Scores.');}
-    finally{if(button)button.disabled=false;}
+      if(!silent)toast(`Classificação recebida da 365Scores${seasonNum?` · temporada ${seasonNum}`:''}.`);
+    } catch(error){if(!silent)toast(error.message||'Falha ao carregar a classificação da 365Scores.');else console.warn('NicoValBolaLibre · classificação 365Scores:',error.message||error);}
+    finally{scores365StandingsBusy.delete(cacheKey);if(button)button.disabled=false;}
   }
+
   function renderMatchCenterStandings(event, snapshot) {
     const leagues=footballDataCompetitions.filter(item=>String(item.type||'').toUpperCase()==='LEAGUE');
     const inferred=footballDataCompetitionForEvent(event);
@@ -2958,6 +3079,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   function attachApiFootballPhotoFallback(root) {
     root?.querySelectorAll('[data-apifootball-player-photo]').forEach(image => {
       image.addEventListener('error', () => image.closest('.apifootball-photo-frame')?.classList.add('is-fallback'), { once: true });
+    });
+    root?.querySelectorAll('[data-event-icon-image]').forEach(image=>{
+      image.addEventListener('error',()=>{image.closest('.scores365-event-icon')?.classList.add('has-fallback');image.remove();},{once:true});
     });
   }
   function bindApiFootballPanelEvents(event) {
@@ -3268,7 +3392,10 @@ const BROADCASTER_ALIAS_GROUPS = [
   let scores365StandingsCache=readStore(SCORES365_STANDINGS_CACHE_KEY,{});
   if(!scores365StandingsCache||typeof scores365StandingsCache!=='object'||Array.isArray(scores365StandingsCache))scores365StandingsCache={};
   const scores365PanelActiveTab=new Map();
+  const scores365StandingsBusy=new Set();
   let scores365AgendaMatchSnapshot=[];
+  let scores365AutoMatchBusy=false;
+  const SCORES365_AUTO_MATCH_STORE_KEY='nvb_scores365_auto_match_runs_v1';
   function scores365AgendaLinkKey(event) {
     const date=String(event?.dateEvent||event?.date||'').slice(0,10);
     const home=matchTeamKey(event?.home||'');
@@ -3351,6 +3478,54 @@ const BROADCASTER_ALIAS_GROUPS = [
       if(key&&links[key]){delete links[key];writeStore(SCORES365_AGENDA_LINKS_KEY,links);toast('Vínculo removido.');renderScores365AgendaMatches(scores365AgendaMatchSnapshot);}
     }));
   }
+  function buildScores365AgendaPayload() {
+    return state.events.map(event=>{const linked=scores365LinkedGameForEvent(event);return {id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||''),category:String(event.category||event.gender||''),scores365HomeId:event.scores365HomeId||event.home365Id||linked?.agendaHome365Id||null,scores365AwayId:event.scores365AwayId||event.away365Id||linked?.agendaAway365Id||null};});
+  }
+  function scores365AgendaSignature(date,agendaEvents) {
+    const raw=`${date}|${agendaEvents.map(row=>scores365AgendaLinkKey(row)).sort().join(';;')}`;
+    let hash=2166136261;for(let i=0;i<raw.length;i++){hash^=raw.charCodeAt(i);hash=Math.imul(hash,16777619);}
+    return `${date}:${(hash>>>0).toString(36)}`;
+  }
+  async function runScores365AutoAgendaMatching(date=state.date) {
+    if(scores365AutoMatchBusy||!Array.isArray(state.events)||!state.events.length||!date)return;
+    const agendaEvents=buildScores365AgendaPayload();
+    if(!agendaEvents.length)return;
+    const signature=scores365AgendaSignature(date,agendaEvents);
+    const storedRuns=readStore(SCORES365_AUTO_MATCH_STORE_KEY,{});
+    const runs=storedRuns&&typeof storedRuns==='object'&&!Array.isArray(storedRuns)?storedRuns:{};
+    const last=Number(runs[signature]||0);
+    if(Date.now()-last<6*60*60*1000)return;
+    scores365AutoMatchBusy=true;
+    runs[signature]=Date.now();
+    const keys=Object.keys(runs).sort((a,b)=>Number(runs[b])-Number(runs[a])).slice(0,30);
+    writeStore(SCORES365_AUTO_MATCH_STORE_KEY,Object.fromEntries(keys.map(key=>[key,runs[key]])));
+    try {
+      const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||'Falha na associação automática da agenda com a 365Scores.');
+      const automatic=persistAutoScores365Links(result.matches);
+      if(automatic.added&&state.selected){
+        const selected=state.events.find(item=>String(item.id)===String(state.selected.id));
+        if(selected&&scores365LinkedGameForEvent(selected)){
+          state.selected=selected;
+          const modal=$('#modalContent');
+          if(modal?.classList.contains('open')||$('#matchModal')?.classList.contains('open')){
+            const old=modal?.querySelector('#scores365MatchDataPanel');
+            const holder=document.createElement('div');holder.innerHTML=renderScores365MatchPanel(selected);
+            const fresh=holder.firstElementChild;
+            if(old&&fresh){old.replaceWith(fresh);bindScores365MatchPanelEvents(selected);}
+            else if(fresh&&modal){const player=modal.querySelector('.player-shell');if(player){player.insertAdjacentElement('afterend',fresh);bindScores365MatchPanelEvents(selected);}}
+          }
+        }
+      }
+      console.info(`365Scores automático: ${automatic.added} associação(ões) segura(s); ${automatic.skipped} preservada(s)/bloqueada(s).`);
+    } catch(error){
+      runs[signature]=Date.now()-5.75*60*60*1000;
+      writeStore(SCORES365_AUTO_MATCH_STORE_KEY,runs);
+      console.warn('NicoValBolaLibre · associação automática 365Scores:',error.message||error);
+    } finally {scores365AutoMatchBusy=false;}
+  }
+
   async function matchScores365WithLoadedAgenda() {
     const button=$('#match365ScoresAgenda');
     const status=$('#scores365AgendaMatchStatus');
@@ -3358,11 +3533,13 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(!Array.isArray(state.events)||!state.events.length){if(status)status.textContent='A agenda está vazia. Selecione uma data na tela principal e carregue os jogos antes de comparar.';return;}
     const date=String(state.date||'').trim();
     if(!date){if(status)status.textContent='Não foi possível identificar a data da agenda carregada.';return;}
+    if(scores365AutoMatchBusy){if(status)status.textContent='Já existe uma comparação 365Scores em andamento. Aguarde a conclusão.';return;}
+    scores365AutoMatchBusy=true;
     if(button)button.disabled=true;
     if(status)status.textContent=`Comparando ${state.events.length} partida(s) da agenda de ${date} com a 365Scores…`;
     if(root)root.innerHTML='';
     try {
-      const agendaEvents=state.events.map(event=>{const linked=scores365LinkedGameForEvent(event);return {id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||''),category:String(event.category||event.gender||''),scores365HomeId:event.scores365HomeId||event.home365Id||linked?.agendaHome365Id||null,scores365AwayId:event.scores365AwayId||event.away365Id||linked?.agendaAway365Id||null};});
+      const agendaEvents=buildScores365AgendaPayload();
       const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível comparar a agenda com a 365Scores.');
@@ -3373,7 +3550,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const review=Math.max(0,matched-automatic.added);
       if(status)status.textContent=`Comparação concluída: ${Number(result.agendaCount)||0} partida(s) da agenda · ${Number(result.sourceGamesCount)||0} jogos normalizados (${Number(result.sourceRawCount??result.sourceGamesCount)||0} registros recebidos) da 365Scores${result.normalization?.missingBothTeamNames?` · ${Number(result.normalization.missingBothTeamNames)} sem nomes dos times`:''}${Array.isArray(result.queryDates)?` · janela consultada: ${result.queryDates.join(', ')}`:''}${result.cached?' (cache local/compartilhado)':''} · ${matched} possíveis correspondências · ${automatic.added} vínculo(s) automático(s) seguro(s) · ${review} para revisão manual${automatic.skipped?` · ${automatic.skipped} preservado(s)/bloqueado(s)`:''}. A agenda não foi alterada.`;
     } catch(error){if(status)status.textContent=error.message||'Falha ao comparar a agenda com a 365Scores.';toast(error.message||'Falha na comparação da agenda.');}
-    finally{if(button)button.disabled=false;}
+    finally{scores365AutoMatchBusy=false;if(button)button.disabled=false;}
   }
 
   function renderScores365Games(games) {
@@ -3445,8 +3622,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     try {
       const response=await fetch('/api/365scores/status',{cache:'no-store'});
       const info=await response.json();
-      if(badge){badge.textContent='Experimental · consulta manual';badge.classList.remove('ok');badge.classList.add('warn');}
-      if(status)status.textContent=`Adaptador pronto · teto local ${Number(info.localThrottle?.perMinuteSoftLimit)||12} chamadas/min e ${Number(info.localThrottle?.dailySoftLimit)||200}/dia. Nenhuma chamada automática.`;
+      if(badge){badge.textContent='Automática · alta confiança';badge.classList.remove('warn');badge.classList.add('ok');}
+      if(status)status.textContent=`Adaptador pronto · associação automática a cada 6h por conjunto de agenda · teto local ${Number(info.localThrottle?.perMinuteSoftLimit)||12} chamadas/min e ${Number(info.localThrottle?.dailySoftLimit)||200}/dia. Cache esportivo da partida: 30s; classificação: 3min. Esses valores são controles locais, não limites oficiais publicados pela 365Scores.`;
     } catch(error) { if(status)status.textContent=`Adaptador local indisponível: ${error.message}`; }
     test?.addEventListener('click',async()=>{
       test.disabled=true;if(status)status.textContent='Testando a resposta básica da 365Scores…';
@@ -3478,7 +3655,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   async function initTheSportsDBPanel() {
-    return; /* V0.21.1: integração visual desativada. */
+    return; /* V0.22.0: integração visual desativada. */
     const button=$('#testTheSportsDB');const status=$('#theSportsDBStatus');const badge=$('#theSportsDBConfiguredBadge');
     try{const info=await fetch('/api/thesportsdb/status',{cache:'no-store'}).then(response=>response.json());if(badge){badge.textContent=info?.configured?'API gratuita integrada':'Indisponível';badge.classList.toggle('ok',Boolean(info?.configured));badge.classList.toggle('warn',!info?.configured);}}
     catch(error){if(status)status.textContent=`Não foi possível consultar TheSportsDB: ${error.message}`;}
@@ -3596,7 +3773,6 @@ const BROADCASTER_ALIAS_GROUPS = [
         <div class="match-facts">${matchFactsMarkup}</div>
         <div class="match-origin">Agenda: <strong>${escapeHtml(origins)}</strong> <span>·</span> ${sourceCount?`${sourceCount} player(s) salvo(s) para esta partida`:'Nenhum player individual salvo'}</div>
       </section>
-      <section class="broadcast-panel match-broadcast-panel"><div class="broadcast-heading"><span class="broadcast-label">📺 ONDE ASSISTIR</span><small>${(e.tvNetworks||[]).length} emissora(s) identificada(s)</small></div><div class="broadcast-list">${broadcastChipsMarkup(e)}</div></section>
       <section class="player-shell match-player-card">
         <div class="player-section-head"><div><div class="eyebrow">TRANSMISSÃO</div><h3>Assistir à partida</h3><p>${active?`Player selecionado: ${escapeHtml(active.name)}`:'Confira as fontes disponíveis para esta partida.'}</p></div><div class="player-section-action">${playerOpen || '<span class="player-count-empty">Player ainda não vinculado</span>'}</div></div>
         ${sourceSelector}
@@ -4293,19 +4469,19 @@ const BROADCASTER_ALIAS_GROUPS = [
     });
   }
   const PLAYER_EVENT_ICONS_STORE_KEY='nvb_player_event_icons_v1';
-  const PLAYER_EVENT_ICON_KINDS=['goal','assist','yellow','red','double-yellow','substitution'];
+  const PLAYER_EVENT_ICON_KINDS=['goal','own-goal','assist','yellow','red','double-yellow','substitution','woodwork','missed-penalty','var'];
   function cleanPlayerEventIcons(input) {
     const out={}; if(!input||typeof input!=='object'||Array.isArray(input))return out;
-    for(const kind of PLAYER_EVENT_ICON_KINDS){const raw=String(input[kind]||'').trim();if(!raw)continue;try{const url=new URL(raw);if(url.protocol==='https:'&&/\.png$/i.test(url.pathname))out[kind]=url.toString();}catch{}}
+    for(const kind of PLAYER_EVENT_ICON_KINDS){const raw=String(input[kind]||'').trim();if(!raw)continue;try{const url=new URL(raw);if(url.protocol==='https:'&&/\.(?:png|webp|jpe?g)$/i.test(url.pathname))out[kind]=url.toString();}catch{}}
     return out;
   }
   function renderPlayerEventIconsAdmin() {
     const panel=$('#playerEventIconsPanel');if(!panel)return;
     const icons=cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{}));
-    const ids={goal:'playerEventIconGoal',assist:'playerEventIconAssist',yellow:'playerEventIconYellow',red:'playerEventIconRed','double-yellow':'playerEventIconDoubleYellow',substitution:'playerEventIconSubstitution'};
+    const ids={goal:'playerEventIconGoal','own-goal':'playerEventIconOwnGoal',assist:'playerEventIconAssist',yellow:'playerEventIconYellow',red:'playerEventIconRed','double-yellow':'playerEventIconDoubleYellow',substitution:'playerEventIconSubstitution',woodwork:'playerEventIconWoodwork','missed-penalty':'playerEventIconMissedPenalty',var:'playerEventIconVar'};
     for(const [kind,id] of Object.entries(ids)){const input=$(`#${id}`);if(input)input.value=icons[kind]||'';}
     const status=$('#playerEventIconsStatus');if(status)status.textContent=Object.keys(icons).length?`${Object.keys(icons).length} símbolo(s) personalizado(s). Campos vazios usam emojis.`:'Nenhuma imagem personalizada. Os emojis padrão estão ativos.';
-    const save=$('#savePlayerEventIcons');if(save&&!save.dataset.bound){save.dataset.bound='1';save.addEventListener('click',()=>{const next={};for(const [kind,id] of Object.entries(ids)){const raw=$(`#${id}`)?.value.trim()||'';if(!raw)continue;let url;try{url=new URL(raw);}catch{toast(`URL inválida para ${kind}.`);return;}if(url.protocol!=='https:'||!/\.png$/i.test(url.pathname)){toast(`Use uma imagem PNG HTTPS para ${kind}.`);return;}next[kind]=url.toString();}writeStore(PLAYER_EVENT_ICONS_STORE_KEY,next);renderPlayerEventIconsAdmin();if(state.selected)refreshScores365PanelInModal(state.selected);toast('Ícones dos eventos salvos.');});}
+    const save=$('#savePlayerEventIcons');if(save&&!save.dataset.bound){save.dataset.bound='1';save.addEventListener('click',()=>{const next={};for(const [kind,id] of Object.entries(ids)){const raw=$(`#${id}`)?.value.trim()||'';if(!raw)continue;let url;try{url=new URL(raw);}catch{toast(`URL inválida para ${kind}.`);return;}if(url.protocol!=='https:'||!/\.(?:png|webp|jpe?g)$/i.test(url.pathname)){toast(`Use uma imagem HTTPS PNG, WebP ou JPG para ${kind}.`);return;}next[kind]=url.toString();}writeStore(PLAYER_EVENT_ICONS_STORE_KEY,next);renderPlayerEventIconsAdmin();if(state.selected)refreshScores365PanelInModal(state.selected);toast('Ícones dos eventos salvos.');});}
     const reset=$('#resetPlayerEventIcons');if(reset&&!reset.dataset.bound){reset.dataset.bound='1';reset.addEventListener('click',()=>{writeStore(PLAYER_EVENT_ICONS_STORE_KEY,{});renderPlayerEventIconsAdmin();if(state.selected)refreshScores365PanelInModal(state.selected);toast('Emojis padrão restaurados.');});}
   }
   function renderAdmin() {
@@ -4694,7 +4870,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.21.1',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.0',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -4800,6 +4976,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   applyTranslations(document.body);
   render();
   loadEvents();
+  startScores365AgendaClockPolling();
   // Atualiza as agendas enquanto o NicoValBolaLibre estiver aberto e visível.
   // Ao virar o dia, acompanha automaticamente a nova data se o usuário estava em "hoje".
   let lastObservedToday = localDateString(new Date());
