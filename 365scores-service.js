@@ -986,7 +986,7 @@ class Scores365Service {
     if (!id) throw Object.assign(new Error('Informe um gameId numérico válido.'), { status: 400, code: '365SCORES_GAME_ID_INVALID' });
     const params = { gameId: String(id), showOdds: 'false' };
     if (options.matchupId && /^\d+-\d+-\d+$/.test(String(options.matchupId))) params.matchupId = String(options.matchupId);
-    const result = await this.request(ENDPOINTS.game, params, { cacheKey: this.gameCacheKey(id, params.matchupId || ''), ttlMs: 30_000, force: Boolean(options.force) });
+    const result = await this.request(ENDPOINTS.game, params, { cacheKey: this.gameCacheKey(id, params.matchupId || ''), ttlMs: 90_000, force: Boolean(options.force) });
     const details = normalizeGameDetails(result.data);
     if (!details.gameId) details.gameId = id;
     return { details, cached: result.cached, record: result.record };
@@ -998,7 +998,7 @@ class Scores365Service {
     const params = { competitions: String(id), live: 'false', withSeasonsFilter: 'true' };
     if (options.seasonNum) params.seasonNum = String(options.seasonNum);
     if (options.stageNum) params.stageNum = String(options.stageNum);
-    return this.request(ENDPOINTS.standings, params, { cacheKey: this.standingsCacheKey(id, options), ttlMs: 180_000, force: Boolean(options.force) });
+    return this.request(ENDPOINTS.standings, params, { cacheKey: this.standingsCacheKey(id, options), ttlMs: 10 * 60_000, force: Boolean(options.force) });
   }
 
   async getBrackets(competitionId, options = {}) {

@@ -941,7 +941,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
           <div id="scores365AgendaMatchResult" style="display:grid;gap:8px;margin-top:10px"></div>
         </div>
         <div id="scores365GameDetails" style="margin-top:10px"></div>
-        <p class="admin-small" style="margin-top:12px">Os endpoints testados são interfaces web observadas por projetos comunitários, não uma API oficial documentada. Teto local do protótipo: 12 chamadas/minuto e 200/dia, não são limites oficiais da 365Scores. Associação automática com cooldown local de 6 horas por agenda; dados da partida usam cache de 30 segundos e a classificação cache de 3 minutos. Esses intervalos são configurações locais conservadoras, não mínimos oficiais publicados pela 365Scores. Cache compartilhado via Cloudflare quando configurado. Antes de usar em produção ou redistribuir dados/imagens, confirme autorização com <a href="mailto:partners@365scores.com">partners@365scores.com</a>.</p>
+        <p class="admin-small" style="margin-top:12px">Os endpoints testados são interfaces web observadas por projetos comunitários, não uma API oficial documentada. Teto local do protótipo: 12 chamadas/minuto e 200/dia, não são limites oficiais da 365Scores. Associação automática com cooldown local de 6 horas por agenda; dados da partida usam cache de 90 segundos e a classificação cache de 10 minutos. A partida aberta atualiza a cada 90 segundos; a agenda consulta no máximo um jogo ao vivo por ciclo de 120 segundos e pausa enquanto o modal está aberto. Esses intervalos são configurações locais, não mínimos oficiais publicados pela 365Scores. Cache compartilhado via Cloudflare quando configurado. Antes de usar em produção ou redistribuir dados/imagens, confirme autorização com <a href="mailto:partners@365scores.com">partners@365scores.com</a>.</p>
         <div class="admin-small">Referência técnica comunitária: <a href="https://github.com/Pochonski/ScoreHub/blob/master/docs/api-365scores.md" target="_blank" rel="noopener">documentação de endpoints observados</a> · <a href="https://www.365scores.com/pt-br/pages/terms" target="_blank" rel="noopener">termos da 365Scores</a>.</div>
       </div>
       <div class="admin-panel" id="footballDataPanel">
@@ -1021,7 +1021,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.1 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.2 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -2930,7 +2930,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function stopScores365LivePolling(){if(scores365LiveTimer){clearInterval(scores365LiveTimer);scores365LiveTimer=null;}scores365LiveBusy=false;}
   function startScores365LivePolling(event){stopScores365LivePolling();const status=scores365NormalizedStatus(event);if(status!=='live'||!scores365MatchCache[String(event.id)]?.details)return;
-    scores365LiveTimer=setInterval(async()=>{if(document.visibilityState!=='visible'||!state.selected||String(state.selected.id)!==String(event.id)||scores365LiveBusy)return;if(scores365NormalizedStatus(event)!=='live'){stopScores365LivePolling();return;}scores365LiveBusy=true;try{await loadScores365MatchData(event,true,true);}finally{scores365LiveBusy=false;}},30000);
+    scores365LiveTimer=setInterval(async()=>{if(document.visibilityState!=='visible'||!state.selected||String(state.selected.id)!==String(event.id)||scores365LiveBusy)return;if(scores365NormalizedStatus(event)!=='live'){stopScores365LivePolling();return;}scores365LiveBusy=true;try{await loadScores365MatchData(event,false,true);}finally{scores365LiveBusy=false;}},90000);
   }
   let scores365AgendaClockTimer=null;
   let scores365AgendaClockBusy=false;
@@ -2938,10 +2938,11 @@ const BROADCASTER_ALIAS_GROUPS = [
   async function refreshScores365AgendaClockBatch(){
     if(scores365AgendaClockBusy||document.visibilityState!=='visible'||state.loading||!Array.isArray(state.events)||!state.events.length)return;
     const modalOpen=$('#matchModal')?.classList.contains('open')||$('#modalContent')?.classList.contains('open');
-    const selectedId=modalOpen?String(state.selected?.id||''):'';
-    const live=state.events.filter(event=>scores365NormalizedStatus(event)==='live'&&Number(scores365LinkedGameForEvent(event)?.gameId)>0&&String(event.id)!==selectedId);
+    // A partida aberta já tem seu próprio atualizador. Não consultar outras partidas em paralelo.
+    if(modalOpen)return;
+    const live=state.events.filter(event=>scores365NormalizedStatus(event)==='live'&&Number(scores365LinkedGameForEvent(event)?.gameId)>0);
     if(!live.length){scores365AgendaClockCursor=0;return;}
-    const batchSize=modalOpen?3:4; // Keep headroom under the local 12-requests/minute soft limit.
+    const batchSize=1; // Apenas uma partida de fundo por ciclo para proteger o orçamento diário.
     const start=scores365AgendaClockCursor%live.length;
     const batch=Array.from({length:Math.min(batchSize,live.length)},(_,index)=>live[(start+index)%live.length]);
     scores365AgendaClockCursor=(start+batch.length)%live.length;
@@ -2950,15 +2951,15 @@ const BROADCASTER_ALIAS_GROUPS = [
       for(const event of batch){
         if(document.visibilityState!=='visible')break;
         const cachedAt=Date.parse(scores365MatchCache[String(event.id)]?.fetchedAt||'')||0;
-        if(Date.now()-cachedAt<28000)continue;
-        await loadScores365MatchData(event,true,true);
+        if(Date.now()-cachedAt<85000)continue;
+        await loadScores365MatchData(event,false,true);
       }
     }finally{scores365AgendaClockBusy=false;}
   }
   function startScores365AgendaClockPolling(){
     if(scores365AgendaClockTimer)clearInterval(scores365AgendaClockTimer);
     void refreshScores365AgendaClockBatch();
-    scores365AgendaClockTimer=setInterval(()=>void refreshScores365AgendaClockBatch(),30000);
+    scores365AgendaClockTimer=setInterval(()=>void refreshScores365AgendaClockBatch(),120000);
   }
 
   async function loadScores365MatchData(event,refresh=false,silent=false) {
@@ -2999,7 +3000,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     // The source's standings endpoint is cached server-side too. A three-minute
     // client cooldown avoids hitting it on every 30-second match refresh.
     if(scores365StandingsBusy.has(cacheKey))return;
-    if(!force&&existing?.data&&Date.now()-fetchedAt<180000)return;
+    if(!force&&existing?.data&&Date.now()-fetchedAt<600000)return;
     scores365StandingsBusy.add(cacheKey);
     const button=$('#scores365LoadStandings');if(button)button.disabled=true;
     try {
@@ -3412,6 +3413,14 @@ const BROADCASTER_ALIAS_GROUPS = [
   let scores365AgendaMatchSnapshot=[];
   let scores365AutoMatchBusy=false;
   const SCORES365_AUTO_MATCH_STORE_KEY='nvb_scores365_auto_match_runs_v1';
+  const SCORES365_MATCH_SEARCH_ATTEMPTS_KEY='nvb_scores365_match_search_attempts_v1';
+  function rememberScores365MatchSearches(events){
+    const attempts=readStore(SCORES365_MATCH_SEARCH_ATTEMPTS_KEY,{});
+    const next=attempts&&typeof attempts==='object'&&!Array.isArray(attempts)?attempts:{};
+    for(const event of (Array.isArray(events)?events:[])){const id=String(event?.id||'');if(id)next[id]=Date.now();}
+    const recent=Object.entries(next).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,500);
+    writeStore(SCORES365_MATCH_SEARCH_ATTEMPTS_KEY,Object.fromEntries(recent));
+  }
   function scores365AgendaLinkKey(event) {
     const date=String(event?.dateEvent||event?.date||'').slice(0,10);
     const home=matchTeamKey(event?.home||'');
@@ -3456,11 +3465,20 @@ const BROADCASTER_ALIAS_GROUPS = [
     const age=Date.now()-(Date.parse(existing?.fetchedAt||'')||0);
     const link=scores365LinkedGameForEvent(current);
     if(link?.gameId&&existing?.details&&!force&&age<180000)return;
+    if(!link?.gameId&&scores365AutoMatchBusy&&!force)return;
+    const priorSearches=readStore(SCORES365_MATCH_SEARCH_ATTEMPTS_KEY,{});
+    const lastSearch=Number(priorSearches?.[eventId]||0);
+    if(!link?.gameId&&!force&&lastSearch&&Date.now()-lastSearch<6*60*60*1000){
+      const panel=$('#scores365MatchDataPanel');
+      if(panel&&String(state.selected?.id||'')===eventId){const note=panel.querySelector('#scores365MatchStatus');if(note)note.textContent='A busca automática desta partida já foi feita nas últimas 6 horas. Use “Tentar novamente” para fazer uma nova consulta manual.';}
+      return;
+    }
     scores365MatchOpenBusy.add(eventId);
     if(String(state.selected?.id||'')===eventId)refreshScores365PanelInModal(current);
     try {
       let activeLink=scores365LinkedGameForEvent(current);
       if(!activeLink?.gameId||force&&options.forceMatch){
+        rememberScores365MatchSearches([current]);
         const date=String(current.dateEvent||state.date||'').slice(0,10);
         const agendaEvent=buildScores365AgendaPayload().find(item=>String(item.id)===eventId)||{id:eventId,home:current.home,away:current.away,dateEvent:date,timeText:current.timeText,league:current.league,category:current.category};
         const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents:[agendaEvent],cloudSync:readCloudSyncSettings()})});
@@ -3470,7 +3488,7 @@ const BROADCASTER_ALIAS_GROUPS = [
         activeLink=scores365LinkedGameForEvent(current);
       }
       if(activeLink?.gameId){
-        await loadScores365MatchData(current,Boolean(existing?.details),true);
+        await loadScores365MatchData(current,false,true);
       } else {
         const panel=$('#scores365MatchDataPanel');
         if(panel&&String(state.selected?.id||'')===eventId)refreshScores365PanelInModal(current);
@@ -3558,6 +3576,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Falha na associação automática da agenda com a 365Scores.');
+      rememberScores365MatchSearches(agendaEvents);
       const automatic=persistAutoScores365Links(result.matches);
       if(automatic.added&&state.selected){
         const selected=state.events.find(item=>String(item.id)===String(state.selected.id));
@@ -3598,6 +3617,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível comparar a agenda com a 365Scores.');
+      rememberScores365MatchSearches(agendaEvents);
       const automatic=persistAutoScores365Links(result.matches);
       renderScores365AgendaMatches(result.matches);
       const matched=Number(result.matches?.filter(item=>item.candidates?.length).length)||0;
@@ -3678,7 +3698,8 @@ const BROADCASTER_ALIAS_GROUPS = [
       const response=await fetch('/api/365scores/status',{cache:'no-store'});
       const info=await response.json();
       if(badge){badge.textContent='Automática · alta confiança';badge.classList.remove('warn');badge.classList.add('ok');}
-      if(status)status.textContent=`Adaptador pronto · associação automática a cada 6h por conjunto de agenda · teto local ${Number(info.localThrottle?.perMinuteSoftLimit)||12} chamadas/min e ${Number(info.localThrottle?.dailySoftLimit)||200}/dia. Cache esportivo da partida: 30s; classificação: 3min. Esses valores são controles locais, não limites oficiais publicados pela 365Scores.`;
+      const dailyLimit=Number(info.localThrottle?.dailySoftLimit)||200;const used=Math.max(0,Number(info.usage?.requestsUsed)||0);const remaining=Math.max(0,dailyLimit-used);
+      if(status)status.textContent=`Adaptador pronto · associação automática a cada 6h por conjunto de agenda · teto local ${Number(info.localThrottle?.perMinuteSoftLimit)||12} chamadas/min e ${dailyLimit}/dia · ${used}/${dailyLimit} usadas (${remaining} restantes). Cache esportivo: 90s; classificação: 10min. O contador local reinicia à meia-noite UTC; não é um limite oficial publicado pela 365Scores.`;
     } catch(error) { if(status)status.textContent=`Adaptador local indisponível: ${error.message}`; }
     test?.addEventListener('click',async()=>{
       test.disabled=true;if(status)status.textContent='Testando a resposta básica da 365Scores…';
@@ -4925,7 +4946,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.1',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.2',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

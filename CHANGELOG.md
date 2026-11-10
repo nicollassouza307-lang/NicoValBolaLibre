@@ -1,3 +1,12 @@
+## V0.22.2 · Redução do consumo de consultas 365Scores
+
+- Polling da partida aberta reduzido para 90 segundos e passa a respeitar o cache do servidor.
+- Atualização de partidas ao vivo na agenda reduzida para um jogo por ciclo de 120 segundos; suspensa enquanto uma partida está aberta.
+- Cache de detalhes da partida ampliado para 90 segundos e cache da classificação para 10 minutos.
+- Busca sem correspondência é lembrada por partida por até 6 horas, evitando repetir três consultas de datas ao reabrir o mesmo jogo; o botão de nova tentativa manual continua disponível.
+- Painel Admin exibe chamadas locais usadas/restantes e informa que o contador reinicia à meia-noite UTC.
+- O teto de 200 chamadas/dia e o teto de 12/min continuam sendo limites de proteção do aplicativo, não limites oficiais publicados pela 365Scores.
+
 ## V0.22.1 · Correções de escalação, eventos e dados individuais
 
 - Separação de goleiro e zaga na formação, com profundidades progressivas ajustadas à referência.

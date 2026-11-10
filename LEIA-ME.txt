@@ -1,4 +1,13 @@
-# NicoValBolaLibre V0.22.1
+# NicoValBolaLibre V0.22.2
+
+## V0.22.2 · Economia de chamadas da 365Scores
+
+- Atualização da partida selecionada a cada 90 segundos, usando cache quando disponível.
+- Agenda atualiza apenas uma partida ao vivo por ciclo de 120 segundos e pausa essa rotina enquanto uma partida está aberta.
+- Detalhes da partida ficam em cache por 90 segundos; classificação por 10 minutos.
+- Tentativas sem correspondência ficam em cooldown por partida durante 6 horas, com retry manual disponível.
+- Admin mostra chamadas usadas/restantes no teto interno. O contador reinicia à meia-noite UTC.
+- Os tetos de 12 chamadas/min e 200/dia são controles locais de proteção, não quotas oficiais documentadas da 365Scores.
 
 ## V0.22.1 · Correções de escalação, eventos, estatísticas e carregamento
 
@@ -14,7 +23,7 @@
 
 ## V0.22.0 · Mega atualização de Livescore, escalações e automação
 
-- Livescore 365Scores atualiza em segundo plano a cada 30 segundos enquanto a partida estiver ao vivo. O refresh substitui apenas o painel esportivo e atualiza placar/status, sem reconstruir o modal ou o iframe do player.
+- Na V0.22.0, o Livescore 365Scores atualizava em segundo plano a cada 30 segundos enquanto a partida estivesse ao vivo. O refresh substitui apenas o painel esportivo e atualiza placar/status, sem reconstruir o modal ou o iframe do player.
 - Associação 365Scores protegida por exclusividade 1:1: o mesmo gameId não pode ser autoassociado a duas partidas da agenda. Conflitos viram revisão manual.
 - Campo tático 16:9 mais minimalista, jogadores compactados, eventos individuais ao redor dos atletas: participações em gols à direita; cartões e substituições à esquerda. Nota aparece somente quando a resposta trouxer rating.
 - Dados de estádio, localidade, árbitro, demais oficiais, público, emissoras e rodada aparecem na área Local quando a 365Scores fornecer esses campos.
@@ -28,7 +37,7 @@
 - Notas individuais de 0 a 10: usa rating oficial da 365Scores quando disponível; caso contrário, estima por eventos e estatísticas relevantes à posição, com limites para evitar que uma ação domine a avaliação. Sem dados suficientes, exibe traço.
 - Campo verde plano e escalações minimalistas, sem sombras/degradês/outlines decorativos. A distribuição fallback usa as linhas da formação e as posições recebidas; treinadores sem nome não aparecem.
 - Estatísticas com cores comparativas por indicador: maior valor claro, menor escuro, empate ou dado ausente neutro.
-- Relógio: 30 segundos é o intervalo de atualização do aplicativo e o TTL do cache de detalhes. Não é um mínimo oficial publicado pelo 365Scores. A agenda atualiza partidas vinculadas ao vivo em segundo plano, em lotes limitados, sem recarregar o iframe do player. A classificação usa cache local de 3 minutos.
+- Relógio na V0.22.0: 30 segundos era o intervalo de atualização do aplicativo e o TTL do cache de detalhes. Não é um mínimo oficial publicado pelo 365Scores. A agenda atualiza partidas vinculadas ao vivo em segundo plano, em lotes limitados, sem recarregar o iframe do player. A classificação usa cache local de 3 minutos.
 - O bloco independente “Onde Assistir” foi retirado do detalhe da partida; emissoras continuam disponíveis nos cartões da agenda.
 - Associação 365Scores inicia automaticamente após carregar a agenda, com vínculo 1:1 e apenas para correspondências de alta confiança. Casos ambíguos continuam no Admin para revisão; 365Scores não cria jogos nem altera a agenda original.
 - Classificação atualizada junto com os dados da partida, com tabela mais compacta e destaque da posição dos dois clubes do confronto.
@@ -92,9 +101,9 @@
 
 ## Como atualizar
 
-1. Extraia o ZIP e copie o conteúdo da pasta `NicoValBolaLibre_V0_22_1` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.1` e `Push origin`.
-3. Crie e envie a tag `v0.22.1`.
+1. Extraia o ZIP e copie o conteúdo da pasta `NicoValBolaLibre_V0_22_2` para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
+2. Faça commit `NicoValBolaLibre V0.22.2` e `Push origin`.
+3. Crie e envie a tag `v0.22.2`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.

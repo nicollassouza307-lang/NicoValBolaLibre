@@ -9,7 +9,7 @@ const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const pkg=require('../package.json');
 const ui=require('../apifootball-lineup-ui');
 
-assert.equal(pkg.version,'0.22.1');
+assert.equal(pkg.version,'0.22.2');
 assert.match(html,/Rei dos Canais/);
 assert.match(html,/LA18HD/);
 assert.match(html,/PelotaLibre/);
@@ -22,13 +22,13 @@ assert.match(html,/autoEligible/);
 assert.match(html,/6\*60\*60\*1000/);
 assert.match(html,/A agenda não foi alterada/);
 
-// Match clock and request cadence. 30s is app-side cache/polling, not an external guarantee.
-assert.match(html,/scores365AgendaClockTimer=setInterval\(\(\)=>void refreshScores365AgendaClockBatch\(\),30000\)/);
-assert.match(html,/loadScores365MatchData\(event,true,true\)/);
+// Match clock and request cadence are app-side controls, not external guarantees.
+assert.match(html,/scores365AgendaClockTimer=setInterval\(\(\)=>void refreshScores365AgendaClockBatch\(\),120000\)/);
+assert.match(html,/loadScores365MatchData\(event,false,true\)/);
 assert.match(html,/scores365PhasePresentation\(e,scores365Details\)\.label/);
 assert.match(html,/return \{label:clock\|\|'Ao Vivo'/);
-assert.match(service,/ttlMs:\s*30_000/);
-assert.match(html,/180000/);
+assert.match(service,/ttlMs:\s*90_000/);
+assert.match(html,/600000/);
 assert.match(html,/scores365StandingsBusy\.delete\(cacheKey\)/);
 assert.doesNotMatch(html,/renderModal\(\);\s*\/\/.*(?:365Scores|placar)/);
 
@@ -97,4 +97,4 @@ assert.match(html,/void loadScores365Standings\(event,\{silent:true\}\)/);
 assert.doesNotMatch(html,/class="broadcast-panel match-broadcast-panel/);
 assert.doesNotMatch(html,/Onde Assistir/);
 
-console.log('PASSOU: V0.22.1, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
+console.log('PASSOU: V0.22.2, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
