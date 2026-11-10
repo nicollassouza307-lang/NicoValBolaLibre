@@ -1,3 +1,9 @@
+## V0.22.5 · Restauração da lógica de formação da V0.22.0
+- Voltada a lógica de distribuição e posicionamento do campo para a versão anterior às mudanças de reconstrução automática das linhas.
+- Grid válido da escalação volta a ser a referência principal; formação e posição são fallback apenas quando o grid não é utilizável.
+- Removidas as heurísticas que reinterpretavam coordenadas válidas como conflito de função e deslocavam atletas entre defesa, meio e ataque.
+- Mantidas as alterações visuais e funcionais posteriores: eventos, notas, estatísticas, pênaltis, chamadas 365Scores e banco de reservas.
+
 ## V0.22.4 · Correção de posições e banco de reservas
 - Posições táticas específicas da escalação passam a ter prioridade sobre metadados globais contraditórios do atleta.
 - Pontas e zagueiros são reposicionados conforme suas siglas táticas quando o grid da fonte vier invertido.

@@ -65,17 +65,24 @@ assert.ok(forwardPositions.length, 'A formação de teste deve incluir atacantes
 assert.ok(forwardPositions.every(entry => entry.left >= 77), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
 assert.ok(forwardPositions.every(entry => entry.depth >= 77), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
 
-const keeperSeparation=ui.playerPlacements([
+const restoredGridFormation=ui.playerPlacements([
   {player:{name:'Goleiro',pos:'G',grid:'1:1'}},
-  {player:{name:'Zagueiro A',pos:'D',grid:'1:2'}},
-  {player:{name:'Zagueiro B',pos:'D',grid:'1:3'}},
-  {player:{name:'Meia',pos:'M',grid:'2:1'}},
-  {player:{name:'Atacante',pos:'F',grid:'3:1'}}
+  {player:{name:'Zagueiro A',pos:'D',grid:'2:1'}},
+  {player:{name:'Zagueiro B',pos:'D',grid:'2:2'}},
+  {player:{name:'Meia',pos:'M',grid:'3:1'}},
+  {player:{name:'Atacante',pos:'F',grid:'4:1'}}
 ],'home','4-2-3-1');
-const keeperDepth=keeperSeparation.find(item=>item.player.player.name==='Goleiro').depth;
-const defenderDepth=keeperSeparation.find(item=>item.player.player.name==='Zagueiro A').depth;
-assert.ok(defenderDepth-keeperDepth>=19,'A primeira linha defensiva deve ficar claramente afastada do goleiro, mesmo quando a grade usa a mesma linha.');
-assert.ok(keeperSeparation.find(item=>item.player.player.name==='Atacante').depth>defenderDepth,'As linhas de meio/ataque devem avançar progressivamente.');
+const restoredDepth=name=>restoredGridFormation.find(item=>item.player.player.name===name).depth;
+assert.ok(restoredDepth('Goleiro')<restoredDepth('Zagueiro A'),'O goleiro deve ficar atrás da primeira linha defensiva quando a fonte informa linhas separadas.');
+assert.ok(restoredDepth('Zagueiro A')<restoredDepth('Meia'),'A defesa deve permanecer atrás do meio-campo.');
+assert.ok(restoredDepth('Meia')<restoredDepth('Atacante'),'O ataque deve permanecer à frente do meio-campo.');
+const awayGridFormation=ui.playerPlacements([
+  {player:{name:'Defensor',pos:'D',grid:'2:1'}},
+  {player:{name:'Meio',pos:'M',grid:'3:1'}},
+  {player:{name:'Ponta',pos:'F',grid:'4:1'}}
+],'away','4-3-3');
+const awayForward=awayGridFormation.find(entry=>entry.player.player.name==='Ponta');
+assert.ok(awayForward.left<50,'A equipe visitante deve atacar na direção oposta, espelhando a profundidade do grid.');
 
 const attackingRating=ui.playerRatingInfo({name:'Atacante',pos:'F',stats:[
   {name:'Gols',value:1},{name:'Assistências',value:1},{name:'Total de chutes',value:4},
@@ -115,17 +122,18 @@ const xgotWith=ui.playerRatingInfo({name:'Meia',pos:'M',stats:[{name:'Minutos',v
 assert.equal(xgotWithout.value,6,'A ausência de percentuais não pode penalizar a nota-base.');
 assert.ok(xgotWith.value>xgotWithout.value,'xGOT no rótulo completo em português deve influenciar a nota.');
 
-const roleConflictPlayers=[
+const gridPriorityPlayers=[
   {player:{name:'Goleiro',pos:'G',grid:'1:1'}},
-  ...['Zagueiro 1','Zagueiro 2','Zagueiro 3','Zagueiro 4'].map((name,index)=>({player:{name,pos:'D',grid:`2:${index+1}`} })),
-  ...['Meia 1','Meia 2','Meia 3','Meia 4'].map((name,index)=>({player:{name,pos:'M',grid:`3:${index+1}`} })),
-  {player:{name:'Marc Bernal',pos:'CM',grid:'5:1'}},
-  {player:{name:'Lamine Yamal',pos:'RW',grid:'2:5'}}
+  {player:{name:'Zagueiro',pos:'D',grid:'2:1'}},
+  {player:{name:'Meio-campista',pos:'M',grid:'3:1'}},
+  {player:{name:'Marc Bernal',pos:'M',grid:'4:1'}},
+  {player:{name:'Lamine Yamal',pos:'F',grid:'5:1'}}
 ];
-const repairedRoles=ui.sortLineupPlayers(roleConflictPlayers,'4-2-3-1');
-const depthOf=name=>repairedRoles.find(player=>player.player.name===name).__depth;
-assert.ok(depthOf('Lamine Yamal')>depthOf('Zagueiro 1'),'Atacante que vier na linha defensiva deve ser reposicionado pela função.');
-assert.ok(depthOf('Marc Bernal')<depthOf('Lamine Yamal'),'Meio-campista que vier na última linha deve voltar para o meio.');
+const gridPriority=ui.sortLineupPlayers(gridPriorityPlayers,'4-2-3-1');
+const gridDepthOf=name=>gridPriority.find(player=>player.player.name===name).__depth;
+assert.ok(gridDepthOf('Zagueiro')<gridDepthOf('Meio-campista'),'A profundidade válida do grid deve preservar a linha defensiva.');
+assert.ok(gridDepthOf('Meio-campista')<gridDepthOf('Lamine Yamal'),'A profundidade válida do grid deve preservar o jogador de ataque na linha avançada.');
+assert.equal(gridDepthOf('Marc Bernal'),4,'A coordenada válida do meio-campista deve ser preservada, sem reconstrução automática baseada em heurística.');
 
 const ratedLineupHtml=ui.renderLineups({...snapshot,lineups:[{...snapshot.lineups[0],startXI:[{player:{name:'Nota Colorida',number:10,pos:'F',stats:[{name:'Minutos',value:90},{name:'Gols',value:1}]}}]}]});
 assert.match(ratedLineupHtml,/apifootball-pitch-rating rating-(?:excellent|good|average|low|poor)/,'Nota do titular deve receber cor conforme a avaliação.');
@@ -133,26 +141,20 @@ assert.match(ratedLineupHtml,/apifootball-pitch-rating [^>]*>[^<]+<\/span>\s*<di
 
 
 
-const positionConflictRegression = [
-  {player:{name:'Van Dijk',pos:'CB',role:'Forward',grid:'5:1'}},
-  {player:{name:'Gakpo',pos:'LW',role:'Defender',grid:'2:1'}},
-  {player:{name:'Yamal',pos:'RW',role:'Defender',grid:'2:2'}},
-  {player:{name:'Raphinha',pos:'LW',role:'Defender',grid:'2:3'}},
-  {player:{name:'Bernal',pos:'CM',role:'Forward',grid:'5:2'}},
-  {player:{name:'Keeper',pos:'G',grid:'1:1'}},
-  {player:{name:'CB 2',pos:'CB',role:'Defender',grid:'2:4'}},
-  {player:{name:'CB 3',pos:'CB',role:'Defender',grid:'2:5'}},
-  {player:{name:'CB 4',pos:'CB',role:'Defender',grid:'2:6'}},
-  {player:{name:'CM 2',pos:'CM',role:'Midfielder',grid:'3:1'}},
-  {player:{name:'CM 3',pos:'CM',role:'Midfielder',grid:'3:2'}}
+const realGridRoles = [
+  {player:{name:'Van Dijk',pos:'D',role:'Defender',grid:'2:1'}},
+  {player:{name:'Gakpo',pos:'F',role:'Forward',grid:'5:1'}},
+  {player:{name:'Yamal',pos:'F',role:'Forward',grid:'5:2'}},
+  {player:{name:'Raphinha',pos:'F',role:'Forward',grid:'5:3'}},
+  {player:{name:'Marc Bernal',pos:'M',role:'Midfielder',grid:'3:1'}},
+  {player:{name:'Keeper',pos:'G',role:'Goalkeeper',grid:'1:1'}}
 ];
-const repairedPositions = ui.sortLineupPlayers(positionConflictRegression,'4-3-3');
-const depthByName = name => repairedPositions.find(item=>item.player.name===name).__depth;
-assert.ok(depthByName('Van Dijk') < depthByName('Gakpo'), 'A sigla CB deve prevalecer sobre rótulo textual contraditório e manter Van Dijk na defesa.');
-assert.ok(depthByName('Gakpo') > depthByName('CB 2'), 'LW deve prevalecer sobre rótulo Defender e impedir Gakpo de cair na zaga.');
-assert.ok(depthByName('Yamal') > depthByName('CB 2'), 'RW deve permanecer na zona ofensiva mesmo se o rótulo longo vier errado.');
-assert.ok(depthByName('Raphinha') > depthByName('CB 2'), 'LW deve permanecer na zona ofensiva mesmo se o rótulo longo vier errado.');
-assert.ok(depthByName('Bernal') < depthByName('Gakpo'), 'CM deve permanecer no meio, não na última linha de ataque.');
+const realGridSorted=ui.sortLineupPlayers(realGridRoles,'4-3-3');
+const realGridDepth=name=>realGridSorted.find(item=>item.player.name===name).__depth;
+assert.ok(realGridDepth('Van Dijk')<realGridDepth('Marc Bernal'),'Van Dijk permanece na linha defensiva conforme o grid recebido.');
+assert.ok(realGridDepth('Marc Bernal')<realGridDepth('Gakpo'),'Gakpo permanece na linha ofensiva conforme o grid recebido.');
+assert.equal(realGridDepth('Yamal'),5,'O grid de Yamal é preservado sem heurística de deslocamento.');
+assert.equal(realGridDepth('Raphinha'),5,'O grid de Raphinha é preservado sem heurística de deslocamento.');
 
 const fallbackFormation = ui.playerPlacements([
   { player: { name: 'GK', pos: 'G' } },

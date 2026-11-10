@@ -1,4 +1,12 @@
-# NicoValBolaLibre V0.22.4
+# NicoValBolaLibre V0.22.5
+
+## V0.22.5 · Restauração do posicionamento tático estável
+
+- Restaurada a lógica de formação da V0.22.0, anterior às alterações que passaram a deslocar linhas com base em conflitos presumidos entre posição e grid.
+- Coordenadas válidas recebidas para cada atleta voltam a definir diretamente a profundidade e a faixa no campo. A posição e a formação declarada são usadas como fallback quando as coordenadas estão ausentes ou inválidas.
+- Removida a reconstrução automática que movia atletas entre setores só porque a função detectada parecia contradizer o grid. Nenhum jogador é movido manualmente por nome.
+- Preservados os recursos atuais da V0.22.5: notas individuais ampliadas, eventos circulares, disputa de pênaltis separada, proteção adaptativa 365Scores, layout do campo e banco de reservas em duas colunas.
+
 
 ## V0.22.4 · Correção de posições e banco de reservas
 
@@ -109,8 +117,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.4` e `Push origin`.
-3. Crie e envie a tag `v0.22.4`.
+2. Faça commit `NicoValBolaLibre V0.22.5` e `Push origin`.
+3. Crie e envie a tag `v0.22.5`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.

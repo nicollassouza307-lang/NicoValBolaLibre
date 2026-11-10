@@ -42,20 +42,12 @@
 
   function roleForPlayer(player) {
     const record=player?.player&&typeof player.player==='object'?player.player:player;
-    const positionObject=record?.position&&typeof record.position==='object'?record.position:{};
-    const rawPosition=typeof record?.position==='string'?record.position:'';
-    const raw=String(record?.role||record?.positionName||rawPosition||positionObject.name||positionObject.displayName||positionObject.shortName||'').toLowerCase();
-    const pos=String(record?.pos||record?.positionCode||positionObject.code||positionObject.shortName||positionObject.name||'').trim().toUpperCase();
-    // Prioriza a sigla tática já normalizada. O texto longo pode ser um rótulo
-    // genérico do perfil e contradizer a posição específica da escalação.
-    if(/^(?:G|GK|GKP|KEEPER|GOALKEEPER)$/.test(pos))return 'G';
-    if(/^(?:D|DF|DEF|CB|LCB|RCB|LB|RB|LWB|RWB|FB|WB|SW)$/.test(pos))return 'D';
-    if(/^(?:F|FW|ST|CF|LW|RW|LF|RF|W|ATT|SS)$/.test(pos))return 'F';
-    if(/^(?:M|MF|CM|LCM|RCM|CDM|DM|CAM|AM|LAM|RAM|LM|RM)$/.test(pos))return 'M';
-    if(/goalkeeper|goleir|keeper/.test(raw))return 'G';
-    if(/defen|zague|lateral|centre back|center back|full back|wing back/.test(raw))return 'D';
-    if(/forward|striker|winger|atacante|ponta|extremo/.test(raw))return 'F';
-    if(/midfield|meio|volante|meia/.test(raw))return 'M';
+    const raw=String(record?.role||record?.position||record?.positionName||'').toLowerCase();
+    const pos=String(record?.pos||record?.positionCode||'').toUpperCase();
+    if(/^G/.test(pos)||/goalkeeper|goleir/.test(raw))return 'G';
+    if(/^D/.test(pos)||/defen|zague|lateral|centre back|center back|full back/.test(raw))return 'D';
+    if(/^F/.test(pos)||/forward|striker|winger|atacante|ponta/.test(raw))return 'F';
+    if(/^M/.test(pos)||/midfield|meio|volante|meia/.test(raw))return 'M';
     return 'U';
   }
 
@@ -97,21 +89,13 @@
       if(counts.length===2){
         assigned[1].push(...take(midfielders,counts[1]-assigned[1].length),...take(unknown,counts[1]-assigned[1].length));
       }
-      // Fill remaining places by role, not simply in API order. This prevents
-      // a surplus winger from being dropped into the defensive line (and vice versa).
+      // Fill vacancies by original order, never dropping a starter when position metadata is incomplete.
       const used=new Set(assigned.flat());
       const leftovers=outfield.filter(player=>!used.has(player));
-      const available=index=>index>=0&&index<counts.length&&assigned[index].length<counts[index];
       for(const player of leftovers){
-        const role=roleForPlayer(player);
-        const middle=counts.map((_,index)=>index).filter(index=>index>0&&index<counts.length-1);
-        let preference=[];
-        if(role==='F')preference=[...middle.slice().reverse(),counts.length-1,...middle];
-        else if(role==='D')preference=[0,...middle];
-        else preference=middle.slice().sort((a,b)=>(assigned[a].length/counts[a])-(assigned[b].length/counts[b]));
-        if(!preference.length)preference=counts.map((_,index)=>index);
-        const target=preference.find(available) ?? counts.findIndex((_,index)=>available(index));
-        if(target>=0)assigned[target].push(player);
+        let target=assigned.findIndex((group,index)=>group.length<counts[index]);
+        if(target<0)target= Math.max(0,Math.floor((counts.length-1)/2));
+        assigned[target].push(player);
       }
       rows.push(...assigned);
     } else {
@@ -151,27 +135,13 @@
     fallback.goalkeepers.forEach(player=>assigned.set(player,depth));
     depth=2;
     fallback.rows.forEach(group=>{group.forEach(player=>assigned.set(player,depth));depth++;});
-    const inferredKeeperSet=new Set(fallback.goalkeepers||[]);
-    const nonKeeperGridDepths=explicit.filter(item=>roleForPlayer(item.record)!=='G'&&item.grid&&item.grid.line>=1&&item.grid.line<=6).map(item=>item.grid.line+1).sort((a,b)=>a-b);
-    const uniqueDepths=[...new Set(nonKeeperGridDepths)];
-    const firstGridDepth=uniqueDepths[0],lastGridDepth=uniqueDepths[uniqueDepths.length-1];
-    const hasForward=explicit.some(item=>roleForPlayer(item.record)==='F');
-    // Algumas respostas da fonte trazem a coordenada visual invertida ou stale.
-    // Quando um atacante aparece na linha mais recuada, ou um defensor na última,
-    // reconstruímos a profundidade pelas funções e pela formação, sem trocar atletas.
-    const roleGridConflict=uniqueDepths.length>=3&&explicit.some(item=>{
-      if(!item.grid||roleForPlayer(item.record)==='G')return false;
-      const depthValue=item.grid.line+1,role=roleForPlayer(item.record);
-      return (role==='F'&&depthValue===firstGridDepth)||(role==='D'&&depthValue===lastGridDepth)||(role==='M'&&hasForward&&depthValue===lastGridDepth);
-    })&&fallback.rows.length>=2;
-    return explicit.map(item=>{
-      const keeper=roleForPlayer(item.record)==='G'||inferredKeeperSet.has(item.player);
-      // O feed pode numerar goleiro e zaga na mesma linha (1:1). Separe
-      // explicitamente o goleiro e desloque todas as linhas de jogadores de linha.
-      const explicitDepth=item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:null;
-      const depthValue=keeper?1:(roleGridConflict?(assigned.get(item.player)||2):(explicitDepth!==null?explicitDepth+1:(assigned.get(item.player)||2)));
-      return {...item.player,__player:item.record,__index:item.index,__depth:depthValue,__row:roleGridConflict?null:(item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null),__isKeeper:keeper};
-    }).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
+    return explicit.map(item=>({
+      ...item.player,
+      __player:item.record,
+      __index:item.index,
+      __depth:item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:(assigned.get(item.player)||2),
+      __row:item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null
+    })).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
   }
 
   function playerPlacements(players, side = 'home', formation = '') {
@@ -180,11 +150,9 @@
     const byDepth=new Map();
     for(const player of ordered){if(!byDepth.has(player.__depth))byDepth.set(player.__depth,[]);byDepth.get(player.__depth).push(player);}
     const depthKeys=[...byDepth.keys()].sort((a,b)=>a-b);
-    const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>player.__isKeeper||roleForPlayer(player)==='G'));
-    // Campo horizontal com a mesma lógica da referência: goleiro recuado,
-    // zaga separada e as linhas seguintes distribuídas até a zona de ataque.
-    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?28:28+(index/(nonKeeperDepths.length-1))*60]));
-    const lanePresets={1:[50],2:[35,65],3:[20,50,80],4:[12,37,63,88],5:[8,29,50,71,92]};
+    const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>roleForPlayer(player)==='G'));
+    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?48:16+(index/(nonKeeperDepths.length-1))*62]));
+    const lanePresets={1:[50],2:[36,64],3:[24,50,76],4:[19,40,60,81],5:[15,32.5,50,67.5,85]};
     const positions=[];
     for(const depth of depthKeys){
       const group=byDepth.get(depth),count=group.length;
@@ -193,8 +161,8 @@
       const maxRow=rows.length?Math.max(...rows):0;
       group.forEach((player,index)=>{
         const lane=Number.isFinite(player.__row)&&maxRow>1?15+((player.__row-1)/(maxRow-1))*70:preset[index];
-        const isKeeper=Boolean(player.__isKeeper)||roleForPlayer(player)==='G';
-        let xForward=isKeeper?8.5:(rowX.get(depth)||28);
+        const isKeeper=roleForPlayer(player)==='G';
+        let xForward=isKeeper?8.5:(rowX.get(depth)||16);
         const raw=String(player.__player?.role||player.__player?.position||'').toLowerCase();
         if(!isKeeper&&/wing|ponta|wide|lateral/.test(raw))xForward+=1.5;
         xForward=Math.max(8.5,Math.min(80,xForward));

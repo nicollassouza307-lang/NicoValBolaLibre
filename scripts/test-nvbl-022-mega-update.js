@@ -9,7 +9,7 @@ const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const pkg=require('../package.json');
 const ui=require('../apifootball-lineup-ui');
 
-assert.equal(pkg.version,'0.22.4');
+assert.equal(pkg.version,'0.22.5');
 assert.match(html,/Rei dos Canais/);
 assert.match(html,/LA18HD/);
 assert.match(html,/PelotaLibre/);
@@ -97,4 +97,4 @@ assert.match(html,/void loadScores365Standings\(event,\{silent:true\}\)/);
 assert.doesNotMatch(html,/class="broadcast-panel match-broadcast-panel/);
 assert.doesNotMatch(html,/Onde Assistir/);
 
-console.log('PASSOU: V0.22.4, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
+console.log('PASSOU: V0.22.5, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
