@@ -33,7 +33,7 @@ try {
   responses.set('/game/', { game: {
     id: 12345, startTime: '2026-11-09T22:00:00Z', statusText: 'Scheduled',
     homeCompetitor: { id: 10, name: 'Flamengo', lineups: { formation: '4-3-3', coach: { id: 500, name: 'Técnico Teste', photoUrl: 'https://imagecache.365scores.com/v1/Managers/500.png' }, members: [
-      { id: 1, athleteId: 1, status: 1, yardFormation: { line: 1, fieldLine: 1 }, stats: [{ type: 19, name: 'Passes completos', value: 30 }] },
+      { id: 1, athleteId: 1, status: 1, rating: 7.8, yardFormation: { line: 1, fieldLine: 1 }, stats: [{ type: 19, name: 'Passes completos', value: 30 }] },
       { id: 2, athleteId: 2, status: 2, stats: [{ type: 54, name: 'Dribles', value: 4 }] }
     ] } },
     awayCompetitor: { id: 20, name: 'Palmeiras', lineups: { formation: '4-2-3-1', members: [
@@ -64,6 +64,17 @@ try {
     members: [{ competitorId: 10, name: 'Não é jogador' }]
   } });
   assert.equal(memberMapGuard.lineups.home.members[0].name, '', 'O competitorId do clube não pode ser confundido com o ID do atleta.');
+
+  const substitutionAliasDetails=normalizeGameDetails({game:{id:9,homeCompetitor:{id:90,name:'Time A',lineups:{members:[{id:901,athleteId:901,name:'Jogador Saiu',status:1,position:{name:'CB'}},{id:902,athleteId:902,name:'Jogador Entrou',status:2,position:{name:'CM'}}]}},awayCompetitor:{id:91,name:'Time B',lineups:{members:[]}},events:[{typeName:'Substitution',playerOutId:901,playerInId:902,playerOutName:'Jogador Saiu',playerInName:'Jogador Entrou',competitorNum:1,gameTime:'71'}]}});
+  assert.equal(substitutionAliasDetails.events[0].player,'Jogador Saiu','Variantes do nome do jogador que saiu devem ser aceitas.');
+  assert.equal(substitutionAliasDetails.events[0].secondaryPlayer,'Jogador Entrou','O jogador que entrou deve ser resolvido pelos membros da própria escalação mesmo sem game.members.');
+  const pFieldSubstitution=normalizeGameDetails({game:{homeCompetitor:{id:93,name:'Time C',lineups:{members:[{id:931,athleteId:931,name:'Saiu P',status:1},{id:932,athleteId:932,name:'Entrou P2',status:2}]}},awayCompetitor:{id:94,name:'Time D'},events:[{Type:'Substitution',PID:931,P:'Saiu P',PID2:932,P2:'Entrou P2',Comp:1,GTD:'77'}]}});
+  assert.equal(pFieldSubstitution.events[0].player,'Saiu P','Payloads com P/PID do jogador que saiu devem ser lidos.');
+  assert.equal(pFieldSubstitution.events[0].secondaryPlayer,'Entrou P2','Payloads com P2/PID2 do jogador que entrou devem ser lidos.');
+  assert.equal(normalizeGame({id:2,homeCompetitor:{id:1,name:'A'},awayCompetitor:{id:2,name:'B'},round:{name:'4'}}).round,'Rodada 4','O campo round numérico aninhado deve ser convertido para Rodada 4.');
+  assert.equal(normalizeGame({id:3,homeCompetitor:{id:1,name:'A'},awayCompetitor:{id:2,name:'B'},stageName:'Group Stage'}).round,'Fase: Group Stage','Fase não deve ser confundida com número da rodada.');
+  assert.equal(normalizeGame({id:4,homeCompetitor:{id:1,name:'A'},awayCompetitor:{id:2,name:'B'},round:16}).round,'Rodada 16','Rodada numérica direta deve ser normalizada.');
+  assert.equal(normalizeGame({id:5,homeCompetitor:{id:1,name:'A'},awayCompetitor:{id:2,name:'B'},roundName:'Round of 16'}).round,'Fase: Round of 16','Mata-mata não deve ser mostrado como rodada regular.');
 
   const engine = new MultiApiEngine({ dataDir: tempDir, now: () => now });
   const service = new Scores365Service({
@@ -121,6 +132,13 @@ try {
   assert.match(game.details.lineups.home.coach.photoUrl, /imagecache\.365scores\.com/);
   assert.equal(game.details.lineups.home.members[0].name, 'Goleiro Teste', 'Detalhes do atleta devem ser cruzados com game.members por ID.');
   assert.equal(game.details.lineups.home.members[0].number, 1);
+  assert.equal(game.details.lineups.home.members[0].rating, 7.8, 'Nota oficial presente no membro deve ser preservada antes da estimativa.');
+  assert.equal(game.details.lineups.home.members[0].stats[0].numericValue,30);
+  assert.equal(game.details.lineups.home.members[0].stats[0].successValue,30);
+  const ratioStats=normalizeGameDetails({game:{homeCompetitor:{id:1,name:'A',lineups:{members:[{id:101,athleteId:101,status:1,stats:[{name:'Passes completos',value:'30/43 (70%)'}]}]}},awayCompetitor:{id:2,name:'B'}}}).lineups.home.members[0].stats[0];
+  assert.equal(ratioStats.percentageValue,70,'Estatísticas no formato acertos/tentativas devem preservar o percentual.');
+  const blankStats=normalizeGameDetails({game:{homeCompetitor:{id:1,name:'A',lineups:{members:[{id:102,athleteId:102,status:1,stats:[{name:'Passes completos',value:''}]}]}},awayCompetitor:{id:2,name:'B'}}}).lineups.home.members[0].stats[0];
+  assert.equal(blankStats.numericValue,null,'Estatística vazia não deve virar zero e gerar falsa atividade.');
   assert.match(game.details.lineups.home.members[0].photoUrl, /imagecache\.365scores\.com.*Athletes\/1$/);
   assert.equal(game.details.lineups.away.members[0].name, 'Zagueiro Teste');
   assert.equal(require('../365scores-service').positionCode('GK'), 'G', 'Abreviação GK deve ser reconhecida como goleiro.');

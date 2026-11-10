@@ -135,13 +135,15 @@
     fallback.goalkeepers.forEach(player=>assigned.set(player,depth));
     depth=2;
     fallback.rows.forEach(group=>{group.forEach(player=>assigned.set(player,depth));depth++;});
-    return explicit.map(item=>({
-      ...item.player,
-      __player:item.record,
-      __index:item.index,
-      __depth:item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:(assigned.get(item.player)||2),
-      __row:item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null
-    })).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
+    const inferredKeeperSet=new Set(fallback.goalkeepers||[]);
+    return explicit.map(item=>{
+      const keeper=roleForPlayer(item.record)==='G'||inferredKeeperSet.has(item.player);
+      // O feed pode numerar goleiro e zaga na mesma linha (1:1). Separe
+      // explicitamente o goleiro e desloque todas as linhas de jogadores de linha.
+      const explicitDepth=item.grid&&item.grid.line>=1&&item.grid.line<=6?item.grid.line:null;
+      const depthValue=keeper?1:(explicitDepth!==null?explicitDepth+1:(assigned.get(item.player)||2));
+      return {...item.player,__player:item.record,__index:item.index,__depth:depthValue,__row:item.grid&&item.grid.row>=1&&item.grid.row<=8?item.grid.row:null,__isKeeper:keeper};
+    }).sort((a,b)=>a.__depth-b.__depth||(a.__row??Number.MAX_SAFE_INTEGER)-(b.__row??Number.MAX_SAFE_INTEGER)||a.__index-b.__index);
   }
 
   function playerPlacements(players, side = 'home', formation = '') {
@@ -150,9 +152,11 @@
     const byDepth=new Map();
     for(const player of ordered){if(!byDepth.has(player.__depth))byDepth.set(player.__depth,[]);byDepth.get(player.__depth).push(player);}
     const depthKeys=[...byDepth.keys()].sort((a,b)=>a-b);
-    const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>roleForPlayer(player)==='G'));
-    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?48:16+(index/(nonKeeperDepths.length-1))*62]));
-    const lanePresets={1:[50],2:[36,64],3:[24,50,76],4:[19,40,60,81],5:[15,32.5,50,67.5,85]};
+    const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>player.__isKeeper||roleForPlayer(player)==='G'));
+    // Campo horizontal com a mesma lógica da referência: goleiro recuado,
+    // zaga separada e as linhas seguintes distribuídas até a zona de ataque.
+    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?28:28+(index/(nonKeeperDepths.length-1))*60]));
+    const lanePresets={1:[50],2:[36,64],3:[20,50,80],4:[15,40,60,85],5:[15,32.5,50,67.5,85]};
     const positions=[];
     for(const depth of depthKeys){
       const group=byDepth.get(depth),count=group.length;
@@ -161,8 +165,8 @@
       const maxRow=rows.length?Math.max(...rows):0;
       group.forEach((player,index)=>{
         const lane=Number.isFinite(player.__row)&&maxRow>1?15+((player.__row-1)/(maxRow-1))*70:preset[index];
-        const isKeeper=roleForPlayer(player)==='G';
-        let xForward=isKeeper?8.5:(rowX.get(depth)||16);
+        const isKeeper=Boolean(player.__isKeeper)||roleForPlayer(player)==='G';
+        let xForward=isKeeper?8.5:(rowX.get(depth)||28);
         const raw=String(player.__player?.role||player.__player?.position||'').toLowerCase();
         if(!isKeeper&&/wing|ponta|wide|lateral/.test(raw))xForward+=1.5;
         xForward=Math.max(8.5,Math.min(80,xForward));
@@ -211,45 +215,105 @@
     return `<span class="nvb-player-event-emoji" aria-hidden="true">${escapeHtml(item.icon || '•')}</span>`;
   }
 
+  function statValueParts(stat) {
+    const raw=stat?.value??stat?.displayValue??stat?.numericValue??stat?.successValue??'';
+    if(typeof raw==='number'&&Number.isFinite(raw))return {value:raw,success:Number.isFinite(Number(stat?.successValue))?Number(stat.successValue):raw,attempts:Number.isFinite(Number(stat?.attemptsValue))?Number(stat.attemptsValue):null,percent:Number.isFinite(Number(stat?.percentageValue))?Number(stat.percentageValue):null};
+    const text=String(raw).trim().replace(/,/g,'.');
+    const ratio=text.match(/(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)(?:\s*\(\s*(-?\d+(?:\.\d+)?)\s*%\s*\))?/);
+    if(ratio){const success=Number(ratio[1]),attempts=Number(ratio[2]);const percent=ratio[3]!==undefined?Number(ratio[3]):(attempts>0?success/attempts*100:null);return {value:success,success,attempts,percent:Number.isFinite(percent)?percent:null};}
+    const numeric=Number(text.replace('%',''));
+    if(Number.isFinite(numeric)&&text!=='')return {value:numeric,success:numeric,attempts:null,percent:/%/.test(text)?numeric:null};
+    return {value:null,success:null,attempts:null,percent:null};
+  }
+
   function playerRatingInfo(player) {
     const record=player?.player&&typeof player.player==='object'?player.player:player||{};
     const official=Number(record.rating);
-    if(record.rating!==null&&record.rating!==undefined&&record.rating!==''&&Number.isFinite(official))return {value:Math.max(0,Math.min(10,official)),source:'365Scores'};
+    if(record.rating!==null&&record.rating!==undefined&&record.rating!==''&&Number.isFinite(official))return {value:Math.max(0,Math.min(10,official)),source:'Nota oficial 365Scores'};
     const stats=Array.isArray(record.stats)?record.stats:[];
     const events=Array.isArray(record.events)?record.events:[];
     if(!stats.length&&!events.length)return {value:null,source:'sem dados individuais'};
     const role=roleForPlayer(record);
+    const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const normalized=stats.map(stat=>({name:fold(stat?.name||stat?.typeName||stat?.label),...statValueParts(stat)}));
+    const sum=(pattern,field='value')=>normalized.reduce((total,item)=>pattern.test(item.name)&&Number.isFinite(item[field])?total+Math.max(0,item[field]):total,0);
+    const first=(pattern,field='value')=>normalized.find(item=>pattern.test(item.name)&&Number.isFinite(item[field]))?.[field]??0;
+    const capped=(value,cap)=>Math.max(0,Math.min(cap,value));
+    const ratioBonus=(pattern,base=70,scale=.009,cap=.28)=>{const percent=first(pattern,'percent');return Number.isFinite(percent)?Math.max(-.18,Math.min(cap,(percent-base)*scale)):0;};
+    const kinds=events.map(item=>fold(item.kind||item.type||item.label));
+    const hasPerformanceStats=normalized.some(item=>!/^minutes played|minutos|minutos jogados$/.test(item.name)&&Number.isFinite(item.value));
+    if(!hasPerformanceStats&&!events.length)return {value:null,source:'sem estatísticas de desempenho'};
+    const attackingWeight=role==='F'?1:role==='M'?.78:role==='D'?.48:.18;
     let score=6;
-    const count=(pattern)=>stats.reduce((sum,item)=>{const name=String(item.name||'');if(!pattern.test(name))return sum;const value=Number(item.numericValue??item.value);return Number.isFinite(value)?sum+Math.max(0,value):sum;},0);
-    const bounded=(value,min,max)=>Math.max(min,Math.min(max,value));
-    const kinds=events.map(item=>String(item.kind||''));
-    score+=Math.min(2,kinds.filter(kind=>kind==='goal').length)*1.0;
-    score+=Math.min(1.4,kinds.filter(kind=>kind==='assist').length)*0.7;
-    score-=Math.min(2.4,kinds.filter(kind=>kind==='own-goal').length)*1.2;
-    score-=Math.min(0.75,kinds.filter(kind=>kind==='yellow').length)*0.25;
-    score-=Math.min(1.6,kinds.filter(kind=>kind==='double-yellow').length)*0.8;
-    score-=Math.min(1.3,kinds.filter(kind=>kind==='red').length)*1.3;
-    if(role==='G'){
-      score+=bounded(count(/save|defesa|goalkeeper save/i)*0.12,0,0.72);
-      score+=bounded(count(/penalt.*save|save.*penalt/i)*0.7,0,0.7);
-      score-=bounded(count(/goals? conceded|gols? sofridos/i)*0.28,0,1.12);
-    } else if(role==='D'){
-      score+=bounded(count(/tackle|desarme/i)*0.09,0,0.72);
-      score+=bounded(count(/interception|interceptação/i)*0.08,0,0.56);
-      score+=bounded(count(/clearance|corte|bloqueio|block/i)*0.05,0,0.5);
-      score-=bounded(count(/error.*goal|erro.*gol/i)*0.7,0,1.4);
-    } else if(role==='M'){
-      score+=bounded(count(/key pass|passe decisivo|chance created/i)*0.13,0,0.78);
-      score+=bounded(count(/recover|recupera/i)*0.05,0,0.4);
-      score+=bounded(count(/dribble|drible/i)*0.08,0,0.4);
-      score-=bounded(count(/possession lost|perda de posse/i)*0.035,0,0.42);
-    } else {
-      score+=bounded(count(/shots? on target|finalizações? no gol/i)*0.16,0,0.8);
-      score+=bounded(count(/dribble|drible/i)*0.07,0,0.35);
-      score-=bounded(count(/big chances? missed|grandes chances? perdidas/i)*0.2,0,0.6);
+    // Eventos pontuais têm precedência apenas quando a estatística equivalente
+    // não veio no payload, evitando contar o mesmo gol/assistência duas vezes.
+    const goalStat=normalized.find(item=>/^(?:goals?|gols?)$/.test(item.name)&&Number.isFinite(item.value));
+    const assistStat=normalized.find(item=>/^(?:assists?|assistencias?)$/.test(item.name)&&Number.isFinite(item.value));
+    const goals=goalStat?Math.max(0,goalStat.value):kinds.filter(kind=>/^(?:goal|gol)$/.test(kind)).length;
+    const assists=assistStat?Math.max(0,assistStat.value):kinds.filter(kind=>/^(?:assist|assistencia)$/.test(kind)).length;
+    score+=capped(goals*1.0,2.0);
+    score+=capped(assists*.72,1.44);
+    score-=capped(kinds.filter(kind=>/own goal|gol contra/.test(kind)).length*1.15,2.3);
+    score-=capped(kinds.filter(kind=>/double yellow|duplo amarelo|segundo amarelo/.test(kind)).length*.8,1.6);
+    score-=capped(kinds.filter(kind=>/yellow|amarelo/.test(kind)).length*.22,.66);
+    score-=capped(kinds.filter(kind=>/red|vermelho/.test(kind)).length*1.2,1.8);
+    score-=capped(kinds.filter(kind=>/missed penalty|penalti perdido/.test(kind)).length*.7,1.4);
+    score+=attackingWeight*capped(sum(/expected assists|assistencia esperada| x a$/)*.42,.7);
+    score+=attackingWeight*capped(sum(/expected goals|gols esperados| x g$/)*.22,.65);
+    score+=attackingWeight*capped(sum(/expected goals on target|gols esperados no alvo|xgot/)*.18,.5);
+    score+=attackingWeight*capped(sum(/chances created|chances perigosas criadas|oportunidades criadas/)*.09,.45);
+
+    const shots=sum(/^(?:total shots|shots|chutes|total de chutes|finalizacoes)$/);
+    const shotsOn=sum(/shots on target|chutes no gol|finalizacoes no gol|remates a puerta/);
+    score+=attackingWeight*(capped(shots*.035,.28)+capped(shotsOn*.13,.65));
+    score-=attackingWeight*capped(sum(/shots off target|shots wide|chutes para fora|finalizacoes para fora|remates desviados/)*.025,.22);
+    score+=attackingWeight*capped(sum(/blocked shots|shots blocked|chutes bloqueados/)*.035,.18);
+    score+=attackingWeight*capped(sum(/key passes|passes decisivos|pases clave/)*.105,.63);
+    score+=attackingWeight*capped(sum(/passes in final third|passes no ultimo terco|passes no terco final/)*.012,.42);
+    score+=attackingWeight*capped(sum(/passes completed|passes completos|pases completados/)*.003,.24);
+    score+=attackingWeight*capped(sum(/backward passes|passes para tras|passes atras/)*.006,.18);
+    score+=attackingWeight*capped(sum(/long passes completed|passes longos completos|pases largos completados/)*.035,.2);
+    score+=attackingWeight*capped(sum(/crosses completed|cruzamentos completos|centros completados/)*.035,.18);
+    score+=attackingWeight*ratioBonus(/^(?:passes completed|passes completos|pases completados)$/ ,70,.009,.25);
+    score+=attackingWeight*ratioBonus(/long passes completed|passes longos completos|pases largos completados/,55,.006,.18);
+    score+=attackingWeight*ratioBonus(/crosses completed|cruzamentos completos|centros completados/,30,.004,.16);
+    score+=attackingWeight*capped(sum(/successful dribbles|dribbles completed|dribles completos|dribles certos/)*.09,.45);
+    score+=attackingWeight*capped(sum(/ball actions|touches|acoes com a bola|toques na bola/)*.002,.22);
+    score+=capped(sum(/fouls suffered|faltas sofridas|faltas recebidas/)*.035,.21);
+    score-=capped(sum(/fouls committed|faltas cometidas/)*.075,.45);
+    score-=capped(sum(/possession lost|lost possession|posse de bola perdida|posse perdida|perdas de posse/)*.025,.55);
+    score-=capped(sum(/times dribbled past|dribbled past|driblado|driblado por/)*.085,.43);
+    score-=capped(sum(/offsides|impedimentos|fuera de juego/)*.045,.18);
+
+    const ground=normalized.filter(item=>/ground duels|duelos no chao|duelos terrestres/.test(item.name));
+    const aerial=normalized.filter(item=>/aerial duels|duelos aereos|duelos por arriba/.test(item.name));
+    for(const item of [...ground,...aerial]){
+      if(Number.isFinite(item.success))score+=capped(item.success*.018,.3);
+      if(Number.isFinite(item.percent))score+=Math.max(-.12,Math.min(.22,(item.percent-50)*.005));
     }
-    const value=Number(bounded(score,3,10).toFixed(1));
-    return {value,source:'estimativa por eventos e estatísticas individuais'};
+    const defensiveWeight=role==='D'?1:role==='M'?.72:role==='F'?.35:.55;
+    score+=defensiveWeight*capped(sum(/tackles|desarmes|entradas bem sucedidas/)*.075,.6);
+    score+=defensiveWeight*capped(sum(/interceptions|interceptacoes/)*.075,.55);
+    score+=defensiveWeight*capped(sum(/clearances|danger cleared|perigo afastado|cortes|corte/)*.045,.45);
+    score+=defensiveWeight*capped(sum(/recoveries|ball recoveries|recuperacao de posse de bola|recuperacoes/)*.04,.4);
+    score+=defensiveWeight*capped(sum(/blocks|blocked shots|bloqueios|chutes bloqueados/)*.09,.36);
+    score-=capped(sum(/errors leading to goal|erro que gerou gol|erros que resultaram em gol/)*.9,1.8);
+
+    if(role==='G'){
+      score+=capped(sum(/saves|defesas do goleiro|defesas realizadas|goalkeeper saves/)*.13,1.3);
+      score+=capped(sum(/punches|reposicao de soco|socos/)*.055,.33);
+      score+=capped(sum(/sweeper actions|atuou como libero|acoes de libero|libero/)*.08,.24);
+      score+=capped(sum(/goals prevented|gols evitados|expected goals prevented/)*.2,.6);
+      score+=ratioBonus(/save percentage|percentual de defesas|defesas percentuais/,65,.008,.28);
+      score-=capped(sum(/goals conceded|gols sofridos|goles recibidos/)*.18,1.08);
+      score+=capped(sum(/penalties saved|penaltis defendidos/)*.7,.7);
+    }
+    const minutes=first(/minutes played|minutos|minutos jogados/);
+    // Poucos minutos reduzem a amplitude da estimativa, sem penalizar o atleta.
+    const participation=Math.max(.35,Math.min(1,(minutes||90)/65));
+    score=6+(score-6)*participation;
+    const value=Number(Math.max(0,Math.min(10,score)).toFixed(1));
+    return {value,source:'estimativa por eventos e estatísticas individuais (ataque, criação, passe, defesa, duelos e disciplina)'};
   }
 
   function renderPlayerRatings(lineups) {
@@ -273,17 +337,17 @@
     const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
     const label = `${name}, camisa ${number}`;
     const events=Array.isArray(player.events)?player.events:[];
-    const left=events.filter(item=>['yellow','red','double-yellow','substitution'].includes(item.kind));
-    const right=events.filter(item=>['goal','assist'].includes(item.kind));
+    const left=events.filter(item=>['yellow','red','double-yellow','substitution','missed-penalty'].includes(item.kind));
+    const right=events.filter(item=>['goal','own-goal','assist'].includes(item.kind));
     const badges=(items,side)=>{
       const output=[];
-      for(const kind of ['goal','assist']){
+      for(const kind of ['goal','own-goal','assist']){
         const grouped=items.filter(item=>item.kind===kind);
         if(!grouped.length)continue;
         const title=grouped.map(item=>`${item.label||kind}${item.minute?` · ${item.minute}`:''}`).join(' | ');
         output.push(`<span class="nvb-player-event ${side} ${kind} nvb-player-event-goal" title="${escapeHtml(title)}"><span class="nvb-player-event-symbol">${renderPlayerEventSymbol(grouped[0],eventIcons)}</span><small>${grouped.length}x</small></span>`);
       }
-      for(const item of items.filter(item=>!['goal','assist'].includes(item.kind))) {
+      for(const item of items.filter(item=>!['goal','own-goal','assist'].includes(item.kind))) {
         output.push(`<span class="nvb-player-event ${side} ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${renderPlayerEventSymbol(item,eventIcons)}</span>`);
       }
       return output.join('');

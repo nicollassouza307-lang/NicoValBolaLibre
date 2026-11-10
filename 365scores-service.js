@@ -107,6 +107,26 @@ function competitionOf(game) {
     stageNum: positiveId(game?.stageNum || first.stageNum || nested.stageNum || game?.stage?.num)
   };
 }
+function roundLabelOf(game) {
+  const item=asObject(game);
+  const round=asObject(item.round);
+  const raw=firstText(item.roundName,item.roundDisplayName,item.roundLabel,item.matchRound,round.name,round.displayName,round.roundName,round.label,typeof item.round==='string'?item.round:'');
+  const roundValue=(typeof item.round==='number'||/^\d+$/.test(String(item.round??'').trim()))?item.round:null;
+  const numeric=positiveId(item.roundNum||item.roundNumber||item.matchdayNumber||item.matchday||round.num||round.number||roundValue||item.weekNumber||item.week);
+  if(raw){
+    if(/^\d+$/.test(raw))return `Rodada ${Number(raw)}`;
+    if(/^(?:round|rodada|matchday|jornada|fecha)\s*\d+/i.test(raw))return raw.replace(/^round\s*/i,'Rodada ').replace(/^matchday\s*/i,'Rodada ').replace(/^jornada\s*/i,'Rodada ').replace(/^fecha\s*/i,'Rodada ');
+    if(/round of 16|group|stage|regular season|playoff|quarter|semi.?final|final|fase/i.test(raw))return /^fase\b/i.test(raw)?raw:`Fase: ${raw}`;
+    return raw;
+  }
+  if(numeric)return `Rodada ${numeric}`;
+  const stage=firstText(item.stageName,item.stage?.name,item.stage?.displayName);
+  const stageNum=positiveId(item.stageNum||item.stage?.num);
+  if(stage)return /^fase\b/i.test(stage)?stage:`Fase: ${stage}`;
+  if(stageNum)return `Fase ${stageNum}`;
+  return '';
+}
+
 function teamsOf(game) {
   const home = asObject(game?.homeCompetitor || game?.homeTeam);
   const away = asObject(game?.awayCompetitor || game?.awayTeam);
@@ -138,17 +158,23 @@ function normalizeGame(game) {
     home: teams.home,
     away: teams.away,
     competition,
-    round: firstText(item.roundName, item.round?.name),
+    round: roundLabelOf(item),
     venue: firstText(item.venue?.name, item.venueName),
     tvNetworks: asArray(item.tvNetworks).map(x => firstText(x.name, x.displayName, x)).filter(Boolean).slice(0, 20)
   };
 }
-function buildGameMemberMap(gameMembers) {
+function buildGameMemberMap(gameMembers, homeLineup = [], awayLineup = []) {
   const map = new Map();
-  for (const member of asArray(gameMembers)) {
+  const all = [...asArray(gameMembers), ...asArray(homeLineup), ...asArray(awayLineup)];
+  for (const member of all) {
     const item = asObject(member);
-    const ids = [positiveId(item.id), positiveId(item.athleteId)].filter(Boolean);
-    for (const id of ids) if (!map.has(id)) map.set(id, item);
+    const ids = [positiveId(item.id), positiveId(item.athleteId), positiveId(item.playerId) ].filter(Boolean);
+    for (const id of ids) {
+      const current=map.get(id)||{};
+      // Dados completos de game.members têm prioridade, mas não descarte um
+      // nome/ID que só exista no objeto da escalação.
+      map.set(id,{...item,...current,...Object.fromEntries(Object.entries(item).filter(([key,value])=>value!==null&&value!==undefined&&value!==''))});
+    }
   }
   return map;
 }
@@ -175,11 +201,20 @@ function normalizeStatRows(rows) {
     const type = item.type;
     const typeId = positiveId(item.typeId || (typeof type === 'number' || typeof type === 'string' ? type : type?.id));
     const value = item.value ?? item.displayValue ?? item.val ?? null;
+    const raw=String(value??'').trim().replace(/,/g,'.');
+    const ratio=raw.match(/(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)(?:\s*\(\s*(-?\d+(?:\.\d+)?)\s*%\s*\))?/);
+    const simple=raw!==''?Number(raw.replace('%','')):NaN;
+    const success=ratio?Number(ratio[1]):(Number.isFinite(simple)?simple:null);
+    const attempts=ratio?Number(ratio[2]):null;
+    const percentage=ratio?(ratio[3]!==undefined?Number(ratio[3]):(attempts>0?success/attempts*100:null)):(/%$/.test(raw)&&Number.isFinite(simple)?simple:null);
     return {
       typeId,
       name: firstText(item.name, item.typeName, item.label, typeof type === 'object' ? type?.name : ''),
       value,
-      numericValue: typeof value === 'number' ? value : (Number.isFinite(Number(String(value ?? '').replace(',', '.').replace('%', ''))) ? Number(String(value).replace(',', '.').replace('%', '')) : null)
+      numericValue:typeof value==='number'?value:(ratio?success:(Number.isFinite(simple)?simple:null)),
+      successValue:Number.isFinite(success)?success:null,
+      attemptsValue:Number.isFinite(attempts)?attempts:null,
+      percentageValue:Number.isFinite(percentage)?percentage:null
     };
   }).filter(row => row.typeId || row.name || row.value !== null);
 }
@@ -218,10 +253,11 @@ function extractLineup(team, memberMap, isNationalTeam = false) {
       number: detail.jerseyNumber ?? detail.shirtNumber ?? detail.number ?? member?.jerseyNumber ?? member?.shirtNumber ?? member?.number ?? null,
       position: positionName,
       positionCode: positionCode(positionName),
+      rating: detail.rating ?? detail.performanceScore ?? member?.rating ?? member?.performanceScore ?? null,
       status: Number.isFinite(Number(member?.status)) ? Number(member.status) : null,
       formationPosition: asObject(member?.yardFormation || detail.yardFormation),
       photoUrl: athleteImageUrl(photoId, isNationalTeam),
-      stats: normalizeStatRows(member?.stats || detail.stats)
+      stats: normalizeStatRows([...asArray(detail.stats), ...asArray(member?.stats)])
     };
   });
   const coachSource = asObject(lineup.coach || source.coach || lineup.manager || source.manager);
@@ -280,72 +316,53 @@ function normalizeGameEvent(event, memberMap, home, away) {
   const item = asObject(event);
   const nestedType = asObject(item.type || item.eventType || item.event?.type || item.EventType);
   const rawTypeId = item.typeId ?? item.TypeId ?? item.eventTypeId ?? item.EventTypeId ?? nestedType.id ?? nestedType.ID ?? nestedType.typeId ?? item.event?.typeId ?? item.eventType ?? (typeof item.type === 'number' ? item.type : null) ?? item.Type ?? null;
-  const rawTypeName = firstText(
-    item.eventTypeName, item.EventTypeName, item.typeName, item.TypeName,
-    item.eventSubTypeName, item.subTypeName, item.goalTypeName,
-    nestedType.name, nestedType.displayName, nestedType.description,
-    typeof item.type === 'string' ? item.type : '',
-    typeof item.eventType === 'string' ? item.eventType : '',
-    typeof item.Type === 'string' ? item.Type : ''
-  );
-  const ownGoalFlag = [
-    item.isOwnGoal, item.ownGoal, item.own_goal, item.IsOwnGoal, item.OwnGoal,
-    item.isOwnGoalEvent, item.event?.isOwnGoal, item.event?.ownGoal,
-    item.goal?.isOwnGoal, item.goal?.ownGoal, nestedType.isOwnGoal, nestedType.ownGoal
-  ].some(isTruthyEventFlag);
-  const ownGoalText = [
-    rawTypeName, item.eventSubType, item.subType, item.subtype, item.goalType,
-    item.eventDescription, item.description, item.Description, item.comment,
-    item.Comment, item.shortText, item.eventName, item.EventName, item.detail,
-    item.Details, item.note, item.message, item.goal?.type, item.goal?.typeName
-  ].some(isOwnGoalText);
-  const isOwnGoal = ownGoalFlag || ownGoalText;
-  const isSubstitution = /substitution|substitu/i.test(rawTypeName) || Number(rawTypeId) === 1000;
-  const athleteId = positiveId(
-    (isSubstitution ? item.outAthleteId || item.outPlayerId || item.playerOutId || item.exitingAthleteId || item.substitutedAthleteId || item.substitution?.out?.id || item.substitution?.playerOut?.id : null) ||
-    item.athleteId || item.playerId || item.memberId || item.player?.id || item.athlete?.id || item.Player?.id || item.PID
-  );
-  const rawPlayer = item.outPlayer || item.playerOut || item.substitution?.out || item.substitution?.playerOut || item.player || item.athlete || item.Player;
-  const player = (athleteId && memberMap.get(athleteId)) || asObject(rawPlayer);
-  const secondAthleteId = positiveId(
-    (isSubstitution ? item.inAthleteId || item.inPlayerId || item.playerInId || item.enteringAthleteId || item.substituteId || item.substitution?.in?.id || item.substitution?.playerIn?.id : null) ||
-    item.assistAthleteId || item.assistPlayerId || item.assist?.id || item.PID2 || item.extraPlayerId
-  );
-  const rawSecondPlayer = item.inPlayer || item.playerIn || item.substitution?.in || item.substitution?.playerIn || item.assist || item.secondaryPlayer || item.ExtraPlayers?.[0];
-  const secondPlayer = (secondAthleteId && memberMap.get(secondAthleteId)) || asObject(rawSecondPlayer);
-  const competitorRaw = item.competitorNum ?? item.competitor?.competitorNum ?? item.CompetitorNum ?? item.Comp ?? item.side ?? item.competitorSide ?? item.teamSide;
-  const explicitHome = item.isHome === true || item.isHomeCompetitor === true || String(item.homeAway || item.side || item.teamSide || '').toLowerCase() === 'home';
-  const explicitAway = item.isHome === false || item.isAway === true || item.isAwayCompetitor === true || String(item.homeAway || item.side || item.teamSide || '').toLowerCase() === 'away';
-  const competitorNum = Number(competitorRaw);
-  const nestedTeam = asObject(item.team || item.competitor || item.competitorData || item.Team);
-  const teamId = positiveId(item.teamId || item.competitorId || item.competitor?.id || item.team?.id || item.TeamId || item.CompetitorId || nestedTeam.teamId);
-  const rawTeamName = firstText(nestedTeam.name, nestedTeam.shortName, item.teamName, item.TeamName, item.competitorName, item.CompetitorName);
-  const memberTeamNum = Number(player.competitorNum || player.teamNum || player.competitor?.competitorNum || player.team?.competitorNum);
-  const memberTeamId = positiveId(player.competitorId || player.teamId || player.competitor?.id || player.team?.id);
-  const team = (teamId && teamId === home.id) || (memberTeamId && memberTeamId === home.id) || competitorNum === 1 || explicitHome || memberTeamNum === 1
-    ? home.name
-    : (teamId && teamId === away.id) || (memberTeamId && memberTeamId === away.id) || competitorNum === 2 || explicitAway || memberTeamNum === 2
-      ? away.name
-      : rawTeamName;
-  const resolvedTeamId = teamId || memberTeamId || (team === home.name ? home.id : team === away.name ? away.id : null);
-  const type = eventTypeLabel(rawTypeId, rawTypeName, isOwnGoal);
-  const rawDetail = firstText(item.description, item.Description, item.comment, item.Comment, item.shortText, item.eventName, item.EventName, item.detail, item.Details, rawTypeName);
-  const detail = type === 'Gol contra' && isOwnGoalText(rawDetail) ? '' : rawDetail;
+  const rawTypeName = firstText(item.eventTypeName,item.EventTypeName,item.typeName,item.TypeName,item.eventSubTypeName,item.subTypeName,item.goalTypeName,nestedType.name,nestedType.displayName,nestedType.description,typeof item.type==='string'?item.type:'',typeof item.eventType==='string'?item.eventType:'',typeof item.Type==='string'?item.Type:'');
+  const ownGoalFlag=[item.isOwnGoal,item.ownGoal,item.own_goal,item.IsOwnGoal,item.OwnGoal,item.isOwnGoalEvent,item.event?.isOwnGoal,item.event?.ownGoal,item.goal?.isOwnGoal,item.goal?.ownGoal,nestedType.isOwnGoal,nestedType.ownGoal].some(isTruthyEventFlag);
+  const ownGoalText=[rawTypeName,item.eventSubType,item.subType,item.subtype,item.goalType,item.eventDescription,item.description,item.Description,item.comment,item.Comment,item.shortText,item.eventName,item.EventName,item.detail,item.Details,item.note,item.message,item.goal?.type,item.goal?.typeName].some(isOwnGoalText);
+  const isOwnGoal=ownGoalFlag||ownGoalText;
+  const isSubstitution=/substitution|substitu/i.test(rawTypeName)||Number(rawTypeId)===1000;
+  const substitution=asObject(item.substitution||item.substitutionData||item.Substitution||item.substitutionDetails);
+  const outObject=asObject(item.outPlayer||item.playerOut||item.outAthlete||item.playerOff||item.playerOffData||item.subOut||item.substitutedPlayer||substitution.out||substitution.playerOut||substitution.outgoingPlayer||substitution.playerOff||substitution.outgoing);
+  const inObject=asObject(item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||substitution.incoming);
+  const athleteId=positiveId((isSubstitution?(item.outAthleteId||item.outPlayerId||item.playerOutId||item.exitingAthleteId||item.substitutedAthleteId||item.playerOffId||item.outgoingPlayerId||item.subOutId||outObject.id||outObject.athleteId||outObject.playerId):null)||item.athleteId||item.playerId||item.memberId||item.player?.id||item.athlete?.id||item.Player?.id||item.PID);
+  const rawPlayer=item.outPlayer||item.playerOut||item.outAthlete||item.playerOff||item.playerOffData||item.subOut||item.substitutedPlayer||substitution.out||substitution.playerOut||substitution.outgoingPlayer||substitution.playerOff||item.player||item.athlete||item.Player||item.P;
+  const player=(athleteId&&memberMap.get(athleteId))||outObject||asObject(rawPlayer);
+  const secondAthleteId=positiveId((isSubstitution?(item.inAthleteId||item.inPlayerId||item.playerInId||item.enteringAthleteId||item.substituteId||item.playerOnId||item.incomingPlayerId||item.subInId||inObject.id||inObject.athleteId||inObject.playerId):null)||item.assistAthleteId||item.assistPlayerId||item.assist?.id||item.PID2||item.extraPlayerId||item.secondaryPlayer?.id||item.ExtraPlayers?.[0]?.id);
+  const rawSecondPlayer=item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||item.assist||item.secondaryPlayer||item.ExtraPlayers?.[0]||item.P2||item.player2Name||item.secondPlayerName;
+  const secondPlayer=(secondAthleteId&&memberMap.get(secondAthleteId))||inObject||asObject(rawSecondPlayer);
+  const stringPlayer=typeof rawPlayer==='string'?rawPlayer:'';
+  const stringSecond=typeof rawSecondPlayer==='string'?rawSecondPlayer:'';
+  const outName=firstText(player.name,player.displayName,player.longName,player.shortName,stringPlayer,item.outPlayerName,item.playerOutName,item.exitingPlayerName,item.exitingPlayer,item.PlayerOutName,item.playerOffName,item.PlayerOffName,substitution.outName,substitution.playerOutName,substitution.outgoingName,item.substitutedPlayerName,item.playerName,item.P,item.p);
+  const inName=firstText(secondPlayer.name,secondPlayer.displayName,secondPlayer.longName,secondPlayer.shortName,stringSecond,item.inPlayerName,item.playerInName,item.enteringPlayerName,item.enteringPlayer,item.PlayerInName,item.playerOnName,item.PlayerOnName,substitution.inName,substitution.playerInName,substitution.enteringPlayerName,substitution.incomingName,item.substituteName,item.SubstituteName,item.playerName2,item.PlayerName2,item.athleteName2,item.P2,item.p2,item.player2Name,item.secondPlayerName,item.incomingName);
+  const competitorRaw=item.competitorNum??item.competitor?.competitorNum??item.CompetitorNum??item.Comp??item.side??item.competitorSide??item.teamSide;
+  const explicitHome=item.isHome===true||item.isHomeCompetitor===true||String(item.homeAway||item.side||item.teamSide||'').toLowerCase()==='home';
+  const explicitAway=item.isHome===false||item.isAway===true||item.isAwayCompetitor===true||String(item.homeAway||item.side||item.teamSide||'').toLowerCase()==='away';
+  const competitorNum=Number(competitorRaw);
+  const nestedTeam=asObject(item.team||item.competitor||item.competitorData||item.Team);
+  const teamId=positiveId(item.teamId||item.competitorId||item.competitor?.id||item.team?.id||item.TeamId||item.CompetitorId||nestedTeam.teamId);
+  const rawTeamName=firstText(nestedTeam.name,nestedTeam.shortName,item.teamName,item.TeamName,item.competitorName,item.CompetitorName);
+  const memberTeamNum=Number(player.competitorNum||player.teamNum||player.competitor?.competitorNum||player.team?.competitorNum);
+  const memberTeamId=positiveId(player.competitorId||player.teamId||player.competitor?.id||player.team?.id);
+  const team=(teamId&&teamId===home.id)||(memberTeamId&&memberTeamId===home.id)||competitorNum===1||explicitHome||memberTeamNum===1?home.name:(teamId&&teamId===away.id)||(memberTeamId&&memberTeamId===away.id)||competitorNum===2||explicitAway||memberTeamNum===2?away.name:rawTeamName;
+  const resolvedTeamId=teamId||memberTeamId||(team===home.name?home.id:team===away.name?away.id:null);
+  const type=eventTypeLabel(rawTypeId,rawTypeName,isOwnGoal);
+  const rawDetail=firstText(item.description,item.Description,item.comment,item.Comment,item.shortText,item.eventName,item.EventName,item.detail,item.Details,rawTypeName);
+  const detail=type==='Gol contra'&&isOwnGoalText(rawDetail)?'':rawDetail;
   return {
-    typeId: Number.isInteger(Number(rawTypeId)) && rawTypeId !== null && rawTypeId !== undefined ? Number(rawTypeId) : null,
+    typeId:Number.isInteger(Number(rawTypeId))&&rawTypeId!==null&&rawTypeId!==undefined?Number(rawTypeId):null,
     type,
-    minute: firstText(item.gameTime, item.minute, item.time, item.timeLabel, item.displayTime, item.GTD, item.GT),
-    playerId: athleteId,
-    player: firstText(player.name, player.displayName, player.longName, player.shortName, typeof rawPlayer === 'string' ? rawPlayer : '', item.playerName, item.PlayerName, item.name, item.Player),
-    secondaryPlayerId: secondAthleteId,
-    secondaryPlayer: firstText(secondPlayer.name, secondPlayer.displayName, secondPlayer.longName, secondPlayer.shortName, typeof rawSecondPlayer === 'string' ? rawSecondPlayer : '', item.assistName, item.inPlayerName, item.Player2, item.ExtraPlayers?.[0]),
-    team,
-    teamId: resolvedTeamId,
-    competitorNum: Number.isFinite(competitorNum) && [1, 2].includes(competitorNum) ? competitorNum : (team === home.name ? 1 : team === away.name ? 2 : null),
-    detail: detail && detail !== type ? detail : '',
-    score: firstText(item.score, item.scoreText, item.S, item.result?.score)
+    minute:firstText(item.gameTime,item.minute,item.time,item.timeLabel,item.displayTime,item.GTD,item.GT,item.gameTimeDisplay),
+    playerId:athleteId,
+    player:outName||firstText(item.playerName,item.PlayerName,item.name,typeof item.Player==='string'?item.Player:''),
+    secondaryPlayerId:secondAthleteId,
+    secondaryPlayer:inName||firstText(item.assistName,item.inPlayerName,item.Player2,item.P2,item.player2Name,item.secondPlayerName,typeof item.ExtraPlayers?.[0]==='string'?item.ExtraPlayers[0]:''),
+    team,teamId:resolvedTeamId,
+    competitorNum:Number.isFinite(competitorNum)&&[1,2].includes(competitorNum)?competitorNum:(team===home.name?1:team===away.name?2:null),
+    detail:detail&&detail!==type?detail:'',
+    score:firstText(item.score,item.scoreText,item.S,item.result?.score)
   };
 }
+
 const LINEUP_STAT_LABELS = Object.freeze({
   19: 'Passes completos', 53: 'Passes longos', 52: 'Cruzamentos', 54: 'Dribles',
   80: 'Passes no último terço', 46: 'Passes decisivos', 42: 'Faltas cometidas',
@@ -402,7 +419,9 @@ function normalizeGameDetails(payload) {
   const home = asObject(game.homeCompetitor);
   const away = asObject(game.awayCompetitor);
   const members = asArray(game.members);
-  const memberMap = buildGameMemberMap(members);
+  const homeRawMembers=asArray(game.homeCompetitor?.lineups?.members||game.homeCompetitor?.lineup?.members);
+  const awayRawMembers=asArray(game.awayCompetitor?.lineups?.members||game.awayCompetitor?.lineup?.members);
+  const memberMap = buildGameMemberMap(members,homeRawMembers,awayRawMembers);
   const isNationalTeam = Boolean(game.isNationalTeam || home.isNationalTeam || away.isNationalTeam);
   const homeLineup = extractLineup(home, memberMap, isNationalTeam);
   const awayLineup = extractLineup(away, memberMap, isNationalTeam);
@@ -444,7 +463,7 @@ function normalizeGameDetails(payload) {
     home: teams.home,
     away: teams.away,
     competition,
-    round: firstText(game.roundName, Number(game.roundNum) > 0 ? `Rodada ${Number(game.roundNum)}` : '', game.stageName, Number(game.stageNum) > 0 ? `Fase ${Number(game.stageNum)}` : ''),
+    round: roundLabelOf(game),
     roundNum: positiveId(game.roundNum),
     stageNum: positiveId(game.stageNum),
     venue: firstText(game.venue?.name, game.venue?.stadium?.name, game.venueName, game.stadium?.name, game.ground?.name, game.stadiumName),

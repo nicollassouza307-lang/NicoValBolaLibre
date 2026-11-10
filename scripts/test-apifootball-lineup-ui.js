@@ -64,6 +64,53 @@ const forwardPositions = ui.playerPlacements(snapshot.lineups[1].startXI, 'home'
 assert.ok(forwardPositions.length, 'A formação de teste deve incluir atacantes.');
 assert.ok(forwardPositions.every(entry => entry.left >= 77), 'Atacantes devem ocupar a zona avançada e manter o desenho de ponta.');
 assert.ok(forwardPositions.every(entry => entry.depth >= 77), 'A profundidade real também deve estar disponível para a orientação vertical em telas estreitas.');
+
+const keeperSeparation=ui.playerPlacements([
+  {player:{name:'Goleiro',pos:'G',grid:'1:1'}},
+  {player:{name:'Zagueiro A',pos:'D',grid:'1:2'}},
+  {player:{name:'Zagueiro B',pos:'D',grid:'1:3'}},
+  {player:{name:'Meia',pos:'M',grid:'2:1'}},
+  {player:{name:'Atacante',pos:'F',grid:'3:1'}}
+],'home','4-2-3-1');
+const keeperDepth=keeperSeparation.find(item=>item.player.player.name==='Goleiro').depth;
+const defenderDepth=keeperSeparation.find(item=>item.player.player.name==='Zagueiro A').depth;
+assert.ok(defenderDepth-keeperDepth>=19,'A primeira linha defensiva deve ficar claramente afastada do goleiro, mesmo quando a grade usa a mesma linha.');
+assert.ok(keeperSeparation.find(item=>item.player.player.name==='Atacante').depth>defenderDepth,'As linhas de meio/ataque devem avançar progressivamente.');
+
+const attackingRating=ui.playerRatingInfo({name:'Atacante',pos:'F',stats:[
+  {name:'Gols',value:1},{name:'Assistências',value:1},{name:'Total de chutes',value:4},
+  {name:'Assistência esperada (xA)',value:'0.46'},{name:'Passes decisivos',value:3},
+  {name:'Passes no último terço',value:8},{name:'Passes completos',value:'30/43 (70%)'},
+  {name:'Passes longos completos',value:'7/20 (35%)'},{name:'Cruzamentos completos',value:'1/1 (100%)'},
+  {name:'Dribles completos',value:'1/1 (100%)'},{name:'Ações com a bola',value:62},
+  {name:'Faltas sofridas',value:2},{name:'Faltas cometidas',value:1},{name:'Posse de bola perdida',value:7},
+  {name:'Driblado',value:2},{name:'Impedimentos',value:1},{name:'Duelos no chão',value:'12/20 (60%)'},
+  {name:'Duelos aéreos',value:'2/3 (67%)'},{name:'Minutos',value:90}
+]});
+assert.ok(attackingRating.value>7,'Nota deve considerar estatísticas ofensivas, passe, drible, posse e duelos.');
+const defensiveRating=ui.playerRatingInfo({name:'Zagueiro',pos:'D',stats:[
+  {name:'Desarmes',value:4},{name:'Interceptações',value:3},{name:'Perigo afastado',value:8},
+  {name:'Recuperação de posse de bola',value:5},{name:'Faltas cometidas',value:1},
+  {name:'Passes completos',value:'42/48 (88%)'},{name:'Duelos no chão',value:'8/10 (80%)'},
+  {name:'Duelos aéreos',value:'5/7 (71%)'},{name:'Minutos',value:90}
+]});
+assert.ok(defensiveRating.value>6.5,'Defensores devem receber crédito por desarmes, interceptações, cortes, recuperações e duelos.');
+const goalkeeperRating=ui.playerRatingInfo({name:'Goleiro',pos:'G',stats:[{name:'Defesas do goleiro',value:6},{name:'Gols sofridos',value:1},{name:'Reposição de soco',value:2},{name:'Minutos',value:90}]});
+assert.ok(goalkeeperRating.value>6,'A nota do goleiro deve contabilizar defesas, gols sofridos e reposições de soco.');
+const fullIndividualStats=ui.playerRatingInfo({name:'Meio-campista',pos:'M',stats:[
+  {name:'Minutos',value:90},{name:'Gols',value:0},{name:'Assistências',value:0},{name:'Gols esperados (xG)',value:.15},
+  {name:'Gols esperados no alvo (xGOT)',value:.2},{name:'Total de chutes',value:1},{name:'Chutes para fora',value:1},
+  {name:'Impedimentos',value:0},{name:'Assistência esperada (xA)',value:.3},{name:'Passes decisivos',value:2},
+  {name:'Chances perigosas criadas',value:2},{name:'Passes no último terço',value:8},{name:'Passes para trás',value:4},
+  {name:'Passes completos',value:'40/45 (89%)'},{name:'Passes longos completos',value:'5/7 (71%)'},
+  {name:'Cruzamentos completos',value:'2/4 (50%)'},{name:'Ações com a bola',value:65},{name:'Faltas sofridas',value:2},
+  {name:'Faltas cometidas',value:1},{name:'Posse de bola perdida',value:8},{name:'Driblado',value:1},
+  {name:'Perigo afastado',value:2},{name:'Interceptações',value:3},{name:'Recuperação de posse de bola',value:5},
+  {name:'Duelos no chão',value:'8/12 (67%)'},{name:'Duelos aéreos',value:'2/3 (67%)'},
+  {name:'Desarmes',value:2},{name:'Cortes',value:1},{name:'Bloqueios',value:1}
+]});
+assert.ok(fullIndividualStats.value!==null&&fullIndividualStats.value>=0&&fullIndividualStats.value<=10,'Todas as estatísticas individuais do quadro devem alimentar uma nota válida entre 0 e 10.');
+
 const fallbackFormation = ui.playerPlacements([
   { player: { name: 'GK', pos: 'G' } },
   { player: { name: 'CB', pos: 'D' } },
@@ -83,6 +130,9 @@ const scores365LineupSnapshot = { ...snapshot, lineups: [{ team:{id:10,name:'Pal
 const scores365LineupHtml = ui.renderLineups(scores365LineupSnapshot);
 assert.match(scores365LineupHtml, /imagecache\.365scores\.com\/image\/upload\/v1\/Athletes\/4321/, 'O campo deve aceitar fotos da CDN 365Scores.');
 assert.match(scores365LineupHtml, /Atleta 365/);
+const eventDotLineupHtml=ui.renderLineups({...scores365LineupSnapshot,lineups:[{...scores365LineupSnapshot.lineups[0],startXI:[{player:{id:4321,name:'Atleta 365',number:8,pos:'M',events:[{kind:'goal',label:'Gol',minute:'10'},{kind:'own-goal',label:'Gol contra',minute:'20'},{kind:'yellow',label:'Cartão amarelo',minute:'30'},{kind:'substitution',label:'Saiu',minute:'70'},{kind:'missed-penalty',label:'Pênalti perdido',minute:'80'}]}}]}]});
+assert.match(eventDotLineupHtml,/nvb-player-event [^\"]*own-goal/,'Gol contra precisa aparecer como marcador individual na formação.');
+assert.match(eventDotLineupHtml,/nvb-player-event [^\"]*missed-penalty/,'Pênalti perdido também deve aparecer na formação.');
 assert.match(lineupHtml, /Camisa 10/);
 assert.match(lineupHtml, /Técnico Mandante/);
 assert.match(lineupHtml, /Reserva Mandante/);
@@ -135,6 +185,13 @@ assert.match(index, /img\.crest\.crest-github\s*\{\s*background-color:\s*#0c1b27
 assert.doesNotMatch(index, /\.match-scoreboard \.match-team-home[^}]*background:\s*#fff/, 'O cartão do time na central não deve ficar branco.');
 assert.doesNotMatch(index, /\.match-center-panel\s*\{[^}]*background:\s*#(?:fff|f[0-9a-f]{3,6})/i, 'O painel inferior da partida deve manter o tema escuro.');
 assert.match(index, /\.match-center-panel \.apifootball-stat-card \.home \{\s*background:\s*var\(--stat-home-color/, 'A barra de estatísticas do mandante deve usar a cor do clube.');
+assert.match(index, /\.match-center-panel \.apifootball-stat-team-labels strong \{ color: #aec2d9; \}/, 'Os nomes dos times nas estatísticas devem ter cor neutra.');
+assert.match(index, /playerNameMatches\(member\.name,ev\.player\)/, 'Eventos devem associar jogadores pelo nome como fallback mesmo quando existe ID divergente.');
+assert.match(index, /make\('missed-penalty'/, 'Eventos de pênalti perdido também devem ser convertidos em marcadores individuais.');
+assert.match(index, /ensureScores365MatchDataOnOpen\(e\)/, 'Abrir a partida deve iniciar o carregamento automático da 365Scores.');
+assert.match(index, /Busca automática ao abrir a partida/, 'O painel deve explicar a busca automática ao abrir o jogo.');
+assert.match(index, /scores365MatchOpenBusy/, 'O estado de carregamento deve ser isolado por partida.');
+assert.match(index, /round of 16\|group\|stage/, 'Fases eliminatórias não devem ser confundidas com rodadas numéricas.');
 assert.match(index, /\.match-center-panel \.apifootball-stat-card \.away \{\s*background:\s*var\(--stat-away-color/, 'A barra de estatísticas do visitante deve usar a cor do clube.');
 assert.doesNotMatch(index, /id="competitionsView"|id="competitionsBtn"/, 'A página isolada de Competições deve sair da navegação.');
 assert.ok(index.indexOf('${renderScores365MatchPanel(e)}') > index.indexOf('class="player-shell match-player-card"'), 'Painel 365Scores deve aparecer depois do player.');

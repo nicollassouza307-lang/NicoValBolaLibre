@@ -1,3 +1,12 @@
+## V0.22.1 · Correções de escalação, eventos e dados individuais
+
+- Separação de goleiro e zaga na formação, com profundidades progressivas ajustadas à referência.
+- Eventos de atletas vinculados por ID ou nome; resolução ampliada de jogadores nas substituições.
+- Normalização de rodada numérica e distinção entre rodada e fase eliminatória.
+- Notas individuais com mais métricas ofensivas, de criação, passe, defesa, duelos e goleiros, usando percentuais e dados completos disponíveis.
+- Cores neutras nos nomes dos times em estatísticas.
+- Busca e carregamento 365Scores automáticos ao abrir cada partida, com loading localizado e associação conservadora.
+
 # Changelog NicoValBolaLibre
 
 ## V0.22.0 · Mega atualização
