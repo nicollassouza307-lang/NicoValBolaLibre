@@ -1139,7 +1139,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.7 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.8 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -1154,6 +1154,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
 <script src="/team-logo-index.js"></script>
 <script src="/competition-ranking.js"></script>
 <script src="/apifootball-lineup-ui.js"></script>
+<script src="/scores365-agenda-links.js"></script>
 <script>
 (() => {
   'use strict';
@@ -2830,16 +2831,18 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
     return 'upcoming';
   }
+  function scores365AgendaLinkEntriesForEvent(event,links=readStore(SCORES365_AGENDA_LINKS_KEY,{})) {
+    return window.Scores365AgendaLinks.findEntries(event,links,{
+      teamKey:matchTeamKey,
+      keyBuilder:scores365AgendaLinkKey
+    });
+  }
   function scores365LinkedGameForEvent(event) {
     const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
-    const key=scores365AgendaLinkKey(event);
-    if(key&&links[key])return links[key];
-    const eventId=String(event?.id||'');
-    if(eventId) {
-      const byId=Object.values(links).find(item=>String(item?.eventId||'')===eventId);
-      if(byId)return byId;
-    }
-    return null;
+    return window.Scores365AgendaLinks.findEntry(event,links,{
+      teamKey:matchTeamKey,
+      keyBuilder:scores365AgendaLinkKey
+    })?.value||null;
   }
   function scores365MatchInfoForEvent(event) {
     const link=scores365LinkedGameForEvent(event);
@@ -3703,11 +3706,15 @@ const BROADCASTER_ALIAS_GROUPS = [
       const candidate=row?.candidates?.[0];
       const key=scores365AgendaLinkKey(row);
       if(!key||!candidate?.autoEligible||!Number(candidate.gameId))continue;
-      const existing=links[key];
-      // Um vínculo manual nunca é substituído por uma sugestão automática.
-      if(existing&&existing.source!=='365scores-auto-confidence'){skipped++;continue;}
-      const duplicate=Object.entries(links).find(([existingKey,value])=>existingKey!==key&&Number(value?.gameId)===Number(candidate.gameId));
+      const sameEventEntries=scores365AgendaLinkEntriesForEvent(row,links);
+      const sameEventKeys=new Set(sameEventEntries.map(([existingKey])=>existingKey));
+      // Um vínculo manual nunca é substituído por uma sugestão automática, mesmo que a chave da agenda tenha mudado.
+      const existingManual=sameEventEntries.find(([,value])=>value?.source!=='365scores-auto-confidence');
+      if(existingManual){skipped++;continue;}
+      const duplicate=Object.entries(links).find(([existingKey,value])=>!sameEventKeys.has(existingKey)&&Number(value?.gameId)===Number(candidate.gameId));
       if(duplicate){skipped++;continue;}
+      const existing=sameEventEntries.find(([existingKey])=>existingKey===key)?.[1]||sameEventEntries[0]?.[1]||null;
+      for(const [oldKey] of sameEventEntries)if(oldKey!==key)delete links[oldKey];
       links[key]={
         ...(existing||{}),eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,
         gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,
@@ -3780,7 +3787,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(!scores365AgendaMatchSnapshot.length){root.innerHTML='<div class="admin-empty">Nenhuma partida da agenda pôde ser comparada.</div>';return;}
     root.innerHTML=scores365AgendaMatchSnapshot.map((row,index)=>{
       const key=scores365AgendaLinkKey(row);
-      const linked=key?links[key]:null;
+      const linkedEntry=window.Scores365AgendaLinks.findEntry(row,links,{teamKey:matchTeamKey,keyBuilder:scores365AgendaLinkKey});
+      const linked=linkedEntry?.value||null;
       const candidates=Array.isArray(row.candidates)?row.candidates:[];
       const status=linked?`<span class="api-football-status-pill ok">${linked.source==='365scores-auto-confidence'?'Auto-vinculado':'Vinculado manualmente'} · gameId ${Number(linked.gameId)||'—'}</span>`:(candidates.length?'<span class="api-football-status-pill warn">Revisar correspondência</span>':'<span class="api-football-status-pill warn">Sem candidato</span>');
       const candidateMarkup=candidates.map((candidate,candidateIndex)=>{
@@ -3805,9 +3813,20 @@ const BROADCASTER_ALIAS_GROUPS = [
       const key=scores365AgendaLinkKey(row);
       if(!key||!candidate?.gameId){toast('Não foi possível criar esse vínculo.');return;}
       const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
-      const duplicate=Object.entries(links).find(([existingKey,value])=>existingKey!==key&&Number(value?.gameId)===Number(candidate.gameId));
-      if(duplicate){toast('Esse gameId já está vinculado a outra partida. Confira antes de reutilizá-lo.');return;}
-      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,category:String(candidate.category||''),round:String(candidate.round||''),roundNum:Number(candidate.roundNum)||null,stageNum:Number(candidate.stageNum)||null,competitionMeta:candidate.competitionMeta&&typeof candidate.competitionMeta==='object'?candidate.competitionMeta:{},homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt:new Date().toISOString(),source:'365scores-manual-confirmation'};
+      const sameEventEntries=scores365AgendaLinkEntriesForEvent(row,links);
+      const sameEventKeys=new Set(sameEventEntries.map(([existingKey])=>existingKey));
+      const duplicate=Object.entries(links).find(([existingKey,value])=>!sameEventKeys.has(existingKey)&&Number(value?.gameId)===Number(candidate.gameId));
+      if(duplicate){
+        const owner=duplicate[1];
+        const ownerName=[owner.home,owner.away].filter(Boolean).join(' x ')||'outra partida';
+        const ownerDate=owner.dateEvent?` (${owner.dateEvent})`:'';
+        toast(`Esse gameId já está vinculado a ${ownerName}${ownerDate}. Desvincule a outra partida antes de reutilizá-lo.`);
+        return;
+      }
+      const previousSameEvent=sameEventEntries.find(([,value])=>Number(value?.gameId)===Number(candidate.gameId));
+      const linkedAt=previousSameEvent?.[1]?.linkedAt||new Date().toISOString();
+      for(const [oldKey] of sameEventEntries)if(oldKey!==key)delete links[oldKey];
+      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,category:String(candidate.category||''),round:String(candidate.round||''),roundNum:Number(candidate.roundNum)||null,stageNum:Number(candidate.stageNum)||null,competitionMeta:candidate.competitionMeta&&typeof candidate.competitionMeta==='object'?candidate.competitionMeta:{},homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt,source:'365scores-manual-confirmation'};
       writeStore(SCORES365_AGENDA_LINKS_KEY,links);
       toast(`Vínculo salvo neste computador: gameId ${candidate.gameId}.`);
       renderScores365AgendaMatches(scores365AgendaMatchSnapshot);
@@ -3816,7 +3835,9 @@ const BROADCASTER_ALIAS_GROUPS = [
       const row=scores365AgendaMatchSnapshot[Number(button.dataset.scores365AgendaUnlink)];
       const key=scores365AgendaLinkKey(row);
       const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
-      if(key&&links[key]){delete links[key];writeStore(SCORES365_AGENDA_LINKS_KEY,links);toast('Vínculo removido.');renderScores365AgendaMatches(scores365AgendaMatchSnapshot);}
+      const linkedEntries=scores365AgendaLinkEntriesForEvent(row,links);
+      if(key&&links[key]&&!linkedEntries.some(([entryKey])=>entryKey===key))linkedEntries.push([key,links[key]]);
+      if(linkedEntries.length){for(const [entryKey] of linkedEntries)delete links[entryKey];writeStore(SCORES365_AGENDA_LINKS_KEY,links);toast('Vínculo removido.');renderScores365AgendaMatches(scores365AgendaMatchSnapshot);}
     }));
   }
   function buildScores365AgendaPayload() {
@@ -5215,7 +5236,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.7',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.8',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

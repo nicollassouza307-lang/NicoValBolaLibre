@@ -1,3 +1,14 @@
+# NicoValBolaLibre V0.22.8
+
+## V0.22.8 · Correção de vínculos 365Scores após mudança na chave da agenda
+
+- A identificação de vínculo agora considera o eventId da agenda e, como fallback, os dois clubes na mesma data, além da chave composta que inclui competição.
+- Vínculos antigos da mesma partida podem ser recuperados e migrados quando a competição ou a chave da agenda muda, evitando o falso aviso de gameId já vinculado.
+- A exclusividade 1:1 continua bloqueando o uso do mesmo gameId em partidas realmente diferentes; a mensagem de conflito agora identifica a partida que já possui o vínculo.
+- A ação de desvincular também localiza vínculos antigos pela identidade da partida e remove as entradas obsoletas correspondentes.
+- A associação automática preserva vínculos manuais mesmo quando a chave composta muda e limpa chaves antigas da mesma partida antes de salvar a nova.
+- Adicionado teste de regressão para chaves alteradas, IDs regenerados, conflitos reais e separação por data.
+
 ## V0.22.7 · Correção de sufixos de competições nos visitantes
 
 - Corrige a extração de visitantes quando a fonte concatena o nome da equipe com a competição, incluindo UEFA Nations League e Champions League Feminina.

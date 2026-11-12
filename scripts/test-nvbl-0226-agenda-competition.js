@@ -7,7 +7,7 @@ const { normalizeGame } = require('../365scores-service');
 const { stripRepeatedTeamSuffix, extractCompetitionAndAway } = require('../server');
 const lineup = require('../apifootball-lineup-ui');
 
-assert.equal(version, '0.22.7');
+assert.equal(version, '0.22.8');
 
 // Feeds can duplicate the away-team suffix with or without spaces.
 assert.equal(stripRepeatedTeamSuffix('Racing Avellaneda Avellaneda'), 'Racing Avellaneda');
