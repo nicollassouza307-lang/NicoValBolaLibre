@@ -7,7 +7,7 @@ const { normalizeGame } = require('../365scores-service');
 const { stripRepeatedTeamSuffix, extractCompetitionAndAway } = require('../server');
 const lineup = require('../apifootball-lineup-ui');
 
-assert.equal(version, '0.22.6');
+assert.equal(version, '0.22.7');
 
 // Feeds can duplicate the away-team suffix with or without spaces.
 assert.equal(stripRepeatedTeamSuffix('Racing Avellaneda Avellaneda'), 'Racing Avellaneda');
@@ -17,6 +17,13 @@ assert.equal(stripRepeatedTeamSuffix('Palmeiras'), 'Palmeiras');
 assert.deepEqual(extractCompetitionAndAway('Racing AvellanedaPrimera División', ''), { away: 'Racing Avellaneda', competition: 'Primera División' });
 assert.deepEqual(extractCompetitionAndAway('MonterreyLiga MX', ''), { away: 'Monterrey', competition: 'Liga MX' });
 assert.deepEqual(extractCompetitionAndAway('Al AhlyCONCACAF Champions Cup', ''), { away: 'Al Ahly', competition: 'CONCACAF Champions Cup' });
+
+// Regressão da captura enviada pelo usuário: competição UEFA estava sendo colada ao visitante.
+assert.deepEqual(extractCompetitionAndAway('Bélgica UEFA Nations League', ''), { away: 'Bélgica', competition: 'UEFA Nations League' });
+assert.deepEqual(extractCompetitionAndAway('ChipreUEFA Nations League', ''), { away: 'Chipre', competition: 'UEFA Nations League' });
+assert.deepEqual(extractCompetitionAndAway('Bielorrússia UEFA Nations League', ''), { away: 'Bielorrússia', competition: 'UEFA Nations League' });
+assert.deepEqual(extractCompetitionAndAway('FinlândiaUEFA Nations League', ''), { away: 'Finlândia', competition: 'UEFA Nations League' });
+assert.deepEqual(extractCompetitionAndAway('Arsenal Feminino Champions League Feminina', ''), { away: 'Arsenal Feminino', competition: 'Champions League Feminina' });
 
 // Keep 365Scores competition structure attached to each normalized match.
 const normalized = normalizeGame({

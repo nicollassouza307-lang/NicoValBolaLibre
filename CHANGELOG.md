@@ -1,3 +1,9 @@
+## V0.22.7 · Correção de sufixos de competições nos visitantes
+
+- Corrige a extração de visitantes quando a fonte concatena o nome da equipe com a competição, incluindo UEFA Nations League e Champions League Feminina.
+- Amplia o reconhecimento de competições UEFA masculinas e femininas e qualificatórias, mantendo a regra de correspondência mais longa primeiro.
+- Adiciona testes de regressão baseados nos exemplos da captura: Bélgica, Chipre, Bielorrússia, Finlândia e Arsenal Feminino.
+
 ## V0.22.6 · Organização de agenda, competições e escalações
 
 - Corrige nomes de visitantes com cauda duplicada e amplia o reconhecimento de competições no parser PelotaLibre, evitando que campeonatos sejam anexados ao nome do visitante.

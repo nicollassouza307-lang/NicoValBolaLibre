@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const lineup=fs.readFileSync(path.join(root,'apifootball-lineup-ui.js'),'utf8');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.22.6');
+assert.equal(pkg.version,'0.22.7');
 assert.match(html,/setInterval\(async\(\)=>[\s\S]*?90000/,'Livescore precisa consultar em intervalo moderado de 90 segundos.');
 assert.match(html,/loadScores365MatchData\(event,false,true\)/,'Polling automático deve respeitar o cache do servidor.');
 assert.match(html,/refreshScores365PanelInModal/,'Atualização deve mexer só no painel esportivo.');

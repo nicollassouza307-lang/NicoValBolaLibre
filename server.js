@@ -348,6 +348,11 @@ function htmlToPublicText(html) {
     .trim();
 }
 const COMPETITION_PATTERNS = [
+  // Competições internacionais (inclui variantes femininas, que podem vir concatenadas ao visitante).
+  "UEFA Women's Champions League","UEFA Women’s Champions League","UEFA Champions League Feminina","UEFA Champions League Femenina",
+  "Champions League Feminina","Champions League Femenina","Champions League Feminino","Women's Champions League","Women’s Champions League","Champions League Women",
+  "UEFA Women's Europa League","UEFA Women’s Europa League","UEFA Women's Nations League","UEFA Women’s Nations League",
+  'UEFA Nations League','Nations League','UEFA European Qualifiers','European Qualifiers','UEFA World Cup Qualifiers','UEFA Euro Qualifiers','Euro Qualifiers',
   'UEFA Champions League','UEFA Europa League','UEFA Conference League','CONCACAF Champions Cup','FIFA Club World Cup',
   'Primera División Argentina','Primera Division Argentina','Liga Profesional Argentina','Primera Nacional Argentina','Copa de la Liga Profesional','Copa Argentina','Primera División','Primera Division',
   'Liga Betplay DIMAYOR','Campeonato Brasileiro Série A','Campeonato Brasileiro Série B','Campeonato Brasileiro Serie A','Campeonato Brasileiro Serie B','Brasileirão Série A','Brasileirão Série B','Brasileirao Serie A','Brasileirao Serie B','Copa do Nordeste','Copa do Brasil','Campeonato Paulista','Campeonato Carioca','Campeonato Mineiro','Campeonato Gaúcho','Brasileirão','Brasileirao','Campeonato Brasileiro',
