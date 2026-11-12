@@ -7,7 +7,7 @@ const workflow = fs.readFileSync(path.join(root, '.github/workflows/release.yml'
 const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'build/electron-builder.config.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.22.9');
+assert.equal(pkg.version, '0.22.10');
 const electronConfig = require('../build/electron-builder.config.js');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}multi-api-engine.js`)), 'O Multi-API Engine deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}football-data-service.js`)), 'O serviço football-data.org deve ser incluído no instalador Windows.');

@@ -20,10 +20,40 @@
     return raw ? raw.slice(0, 10) : '';
   }
 
-  function teamPairOf(value, teamKey) {
+  const COMPETITION_SUFFIXES = [
+    'UEFA Women Champions League','UEFA Women’s Champions League','UEFA Champions League Feminina','UEFA Champions League Femenina',
+    'Champions League Feminina','Champions League Femenina','Champions League Feminino','Women Champions League','Champions League Women',
+    'UEFA Women Europa League','UEFA Women Nations League','UEFA Nations League','Nations League',
+    'UEFA European Qualifiers','European Qualifiers','UEFA World Cup Qualifiers','UEFA Euro Qualifiers','Euro Qualifiers',
+    'UEFA Champions League','UEFA Europa League','UEFA Conference League','CONCACAF Champions Cup','FIFA Club World Cup',
+    'Primera Division Argentina','Liga Profesional Argentina','Primera Nacional Argentina','Copa de la Liga Profesional','Copa Argentina','Primera Division',
+    'Liga Betplay DIMAYOR','Campeonato Brasileiro Serie A','Campeonato Brasileiro Serie B','Brasileirao Serie A','Brasileirao Serie B',
+    'Copa do Nordeste','Copa do Brasil','Campeonato Paulista','Campeonato Carioca','Campeonato Mineiro','Campeonato Gaucho','Brasileirao','Campeonato Brasileiro',
+    'Bundesliga','Serie A Italiana','Serie B Italiana','Francia Ligue 1','Ligue 1','Ligue 2','La Liga EA Sports','LaLiga Hypermotion','LaLiga',
+    'Premier League','EFL Championship','Championship','League One','League Two','EFL Cup','FA Cup','Community Shield',
+    'Copa Libertadores','Copa Sudamericana','Recopa Sudamericana','Saudi Pro League','Eredivisie','Primeira Liga','Liga Portugal',
+    'Liga MX Apertura','Liga MX Clausura','Liga MX','MLS','Copa del Rey','Coppa Italia','KNVB Beker','DFB Pokal','Coupe de France','Scottish Premiership','Turkish Super Lig'
+  ];
+
+  function cleanTeamKey(value, competitionHints = [], teamKey) {
     const normalize = typeof teamKey === 'function' ? teamKey : defaultTeamKey;
-    const home = normalize(value?.home || '');
-    const away = normalize(value?.away || '');
+    let key = normalize(value || '');
+    const suffixes = [...new Set([...(Array.isArray(competitionHints) ? competitionHints : [competitionHints]), ...COMPETITION_SUFFIXES]
+      .map(item => normalize(item || '')).filter(Boolean))].sort((a, b) => b.length - a.length);
+    for (const suffix of suffixes) {
+      if (key.endsWith(` ${suffix}`)) {
+        const candidate = key.slice(0, -(suffix.length + 1)).trim();
+        if (candidate.length >= 2) { key = candidate; break; }
+      }
+    }
+    return key;
+  }
+
+  function teamPairOf(value, teamKey, competitionHints = []) {
+    const normalize = typeof teamKey === 'function' ? teamKey : defaultTeamKey;
+    const hints = [value?.competition, value?.league, ...((Array.isArray(competitionHints) ? competitionHints : [competitionHints]))];
+    const home = cleanTeamKey(value?.home || '', hints, normalize);
+    const away = cleanTeamKey(value?.away || '', hints, normalize);
     return { home, away };
   }
 
@@ -37,8 +67,9 @@
     const eventDate = dateOf(event);
     if (!existingDate || !eventDate || existingDate !== eventDate) return false;
 
-    const a = teamPairOf(existing, teamKey);
-    const b = teamPairOf(event, teamKey);
+    const hints = [existing?.competition, existing?.league, event?.competition, event?.league];
+    const a = teamPairOf(existing, teamKey, hints);
+    const b = teamPairOf(event, teamKey, hints);
     if (!a.home || !a.away || !b.home || !b.away) return false;
     return (a.home === b.home && a.away === b.away) ||
       (a.home === b.away && a.away === b.home);
@@ -74,5 +105,5 @@
     return { key: entries[0][0], value: entries[0][1] };
   }
 
-  return { sameAgendaEvent, findEntries, findEntry };
+  return { sameAgendaEvent, findEntries, findEntry, cleanTeamKey };
 });

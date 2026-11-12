@@ -1,3 +1,11 @@
+## V0.22.10 · Recuperação e gerenciamento de vínculos históricos 365Scores
+
+- Corrige a comparação de vínculos antigos criados quando o parser anexava o nome da competição ao visitante (ex.: “Chipre UEFA Nations League”). O reconhecimento remove sufixos de competições conhecidos antes de comparar equipes, na mesma data.
+- Ao abrir o diagnóstico de associação, vínculos reconhecidos por essa regra são migrados para a chave atual da partida, preservando o gameId e os dados esportivos em cache.
+- Adiciona inventário global dos vínculos salvos no Admin, incluindo registros de outras datas que não estão na agenda carregada, com ação de desvincular cada gameId.
+- Em conflitos reais, a sugestão passa a oferecer “Desvincular e vincular aqui”, com confirmação explícita e identificação da partida que perderá o vínculo. A transferência preserva o cache antigo e carrega os dados da nova partida.
+- Adiciona testes de regressão para vínculos com nomes de visitantes contaminados por sufixos de competição e para os novos controles de gerenciamento.
+
 ## V0.22.9
 - Corrigida a inicialização da agenda removendo dependência de helper externo de vínculos 365Scores.
 - Recuperação de vínculos antigos embutida no HTML; inicialização da agenda protegida contra falha de renderização inicial.

@@ -1,4 +1,10 @@
-# NicoValBolaLibre V0.22.9
+# NicoValBolaLibre V0.22.10
+
+## V0.22.10 · Recuperação e gerenciamento de vínculos 365Scores
+
+- Identifica vínculos antigos mesmo quando o parser anterior salvou a competição grudada ao nome do visitante; faz migração automática da chave quando os times e a data confirmam a mesma partida.
+- Adiciona inventário global para localizar/desvincular gameIds mesmo fora da data atualmente carregada.
+- Permite transferir um gameId ocupado diretamente para a partida selecionada, com confirmação e mantendo o cache esportivo.
 
 ## V0.22.9 · Correção de vínculos 365Scores
 
@@ -133,8 +139,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.9` e `Push origin`.
-3. Crie e envie a tag `v0.22.9`.
+2. Faça commit `NicoValBolaLibre V0.22.10` e `Push origin`.
+3. Crie e envie a tag `v0.22.10`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
