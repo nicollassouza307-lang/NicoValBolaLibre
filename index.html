@@ -1139,7 +1139,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.8 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.9 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -1154,7 +1154,6 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
 <script src="/team-logo-index.js"></script>
 <script src="/competition-ranking.js"></script>
 <script src="/apifootball-lineup-ui.js"></script>
-<script src="/scores365-agenda-links.js"></script>
 <script>
 (() => {
   'use strict';
@@ -2831,18 +2830,37 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(['FT','AET','PEN','AWD','WO'].includes(value)) return 'finished';
     return 'upcoming';
   }
+  // Recuperação de vínculos 365Scores fica embutida no app para não depender
+  // de um arquivo JS externo que, se faltar no pacote/instalação, interromperia
+  // a inicialização da agenda antes de loadEvents().
+  function scores365LinkEventId(value) { return String(value?.eventId || value?.id || '').trim(); }
+  function scores365LinkDate(value) { return String(value?.dateEvent || value?.date || value?.startTime || value?.start || '').trim().slice(0,10); }
+  function scores365LinkSameEvent(existing,event) {
+    if(!existing||!event)return false;
+    const oldId=scores365LinkEventId(existing), newId=scores365LinkEventId(event);
+    if(oldId&&newId&&oldId===newId)return true;
+    const oldDate=scores365LinkDate(existing), newDate=scores365LinkDate(event);
+    if(!oldDate||!newDate||oldDate!==newDate)return false;
+    const oldHome=matchTeamKey(existing.home||''), oldAway=matchTeamKey(existing.away||'');
+    const newHome=matchTeamKey(event.home||''), newAway=matchTeamKey(event.away||'');
+    if(!oldHome||!oldAway||!newHome||!newAway)return false;
+    return (oldHome===newHome&&oldAway===newAway)||(oldHome===newAway&&oldAway===newHome);
+  }
   function scores365AgendaLinkEntriesForEvent(event,links=readStore(SCORES365_AGENDA_LINKS_KEY,{})) {
-    return window.Scores365AgendaLinks.findEntries(event,links,{
-      teamKey:matchTeamKey,
-      keyBuilder:scores365AgendaLinkKey
-    });
+    const store=links&&typeof links==='object'&&!Array.isArray(links)?links:{};
+    const found=new Map();
+    const directKey=scores365AgendaLinkKey(event);
+    if(directKey&&store[directKey])found.set(directKey,store[directKey]);
+    for(const [key,value] of Object.entries(store))if(scores365LinkSameEvent(value,event))found.set(key,value);
+    return [...found.entries()];
   }
   function scores365LinkedGameForEvent(event) {
     const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
-    return window.Scores365AgendaLinks.findEntry(event,links,{
-      teamKey:matchTeamKey,
-      keyBuilder:scores365AgendaLinkKey
-    })?.value||null;
+    const entries=scores365AgendaLinkEntriesForEvent(event,links);
+    if(!entries.length)return null;
+    const eventId=scores365LinkEventId(event), directKey=scores365AgendaLinkKey(event);
+    entries.sort((a,b)=>((a[0]===directKey?0:(eventId&&scores365LinkEventId(a[1])===eventId?1:2))- (b[0]===directKey?0:(eventId&&scores365LinkEventId(b[1])===eventId?1:2))));
+    return entries[0][1]||null;
   }
   function scores365MatchInfoForEvent(event) {
     const link=scores365LinkedGameForEvent(event);
@@ -3787,7 +3805,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     if(!scores365AgendaMatchSnapshot.length){root.innerHTML='<div class="admin-empty">Nenhuma partida da agenda pôde ser comparada.</div>';return;}
     root.innerHTML=scores365AgendaMatchSnapshot.map((row,index)=>{
       const key=scores365AgendaLinkKey(row);
-      const linkedEntry=window.Scores365AgendaLinks.findEntry(row,links,{teamKey:matchTeamKey,keyBuilder:scores365AgendaLinkKey});
+      const linkedEntry=(scores365AgendaLinkEntriesForEvent(row,links).sort((a,b)=>a[0]===scores365AgendaLinkKey(row)?-1:b[0]===scores365AgendaLinkKey(row)?1:0)[0]||[])[1];
       const linked=linkedEntry?.value||null;
       const candidates=Array.isArray(row.candidates)?row.candidates:[];
       const status=linked?`<span class="api-football-status-pill ok">${linked.source==='365scores-auto-confidence'?'Auto-vinculado':'Vinculado manualmente'} · gameId ${Number(linked.gameId)||'—'}</span>`:(candidates.length?'<span class="api-football-status-pill warn">Revisar correspondência</span>':'<span class="api-football-status-pill warn">Sem candidato</span>');
@@ -5236,7 +5254,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.8',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.9',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -5340,8 +5358,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   function closeModal(){ stopScores365LivePolling();$('#matchModal').classList.remove('open');document.body.style.overflow=''; const screen=$('#playerScreen'); if(screen) screen.innerHTML=''; }
   $('#dateInput').title='Escolha o dia das partidas';
   applyTranslations(document.body);
-  render();
-  loadEvents();
+  setApiStatus('warn','Carregando agendas…');
+  try { render(); } catch (startupRenderError) { console.error('Falha ao desenhar a interface inicial:', startupRenderError); }
+  void loadEvents();
   startScores365AgendaClockPolling();
   // Atualiza as agendas enquanto o NicoValBolaLibre estiver aberto e visível.
   // Ao virar o dia, acompanha automaticamente a nova data se o usuário estava em "hoje".

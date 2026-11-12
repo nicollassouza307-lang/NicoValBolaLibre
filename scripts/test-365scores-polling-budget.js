@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const engine=fs.readFileSync(path.join(root,'multi-api-engine.js'),'utf8');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.22.8');
+assert.equal(pkg.version,'0.22.9');
 assert.match(service,/ttlMs:\s*90_000/,'Detalhes da partida devem usar cache de 90s.');
 assert.match(service,/ttlMs:\s*10\s*\*\s*60_000/,'Classificação deve usar cache de 10min.');
 assert.match(html,/},90000\);/,'Partida aberta deve atualizar a cada 90s.');

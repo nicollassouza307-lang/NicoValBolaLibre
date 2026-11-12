@@ -36,7 +36,10 @@ assert.equal(linksApi.findEntries(genuinelyDifferent, links, { teamKey, keyBuild
   'Um jogo com adversário diferente não pode herdar o vínculo antigo.');
 assert.equal(linksApi.sameAgendaEvent(links[oldKey], genuinelyDifferent, teamKey), false);
 
-assert.match(html, /<script src="\/scores365-agenda-links\.js"><\/script>/, 'O helper de recuperação de vínculos precisa ser carregado antes do app.');
+assert.doesNotMatch(html, /<script src="\/scores365-agenda-links\.js"><\/script>/, 'A recuperação de vínculos não deve depender de um arquivo externo.');
+assert.match(html, /function scores365AgendaLinkEntriesForEvent\(event,links=/, 'A recuperação de vínculos deve estar embutida no app.');
+assert.match(html, /function scores365LinkSameEvent\(existing,event\)/, 'O app deve reconhecer vínculo antigo pela identidade da partida.');
+assert.match(html, /void loadEvents\(\)/, 'A carga da agenda deve iniciar mesmo se a renderização inicial falhar.');
 assert.match(html, /scores365AgendaLinkEntriesForEvent\(row,links\)/, 'O Admin deve localizar vínculos antigos para exibir e desvincular.');
 assert.match(html, /sameEventKeys=new Set\(sameEventEntries\.map/, 'A gravação manual deve excluir o próprio evento da verificação de duplicidade.');
 assert.match(html, /Desvincule a outra partida antes de reutilizá-lo/, 'Conflitos reais devem identificar a necessidade de desvincular a outra partida.');

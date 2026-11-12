@@ -1,6 +1,6 @@
-# NicoValBolaLibre V0.22.8
+# NicoValBolaLibre V0.22.9
 
-## V0.22.8 · Correção de vínculos 365Scores
+## V0.22.9 · Correção de vínculos 365Scores
 
 - Recupera vínculos antigos pelo eventId ou pelos dois clubes na mesma data quando a chave composta muda.
 - Permite migrar a chave antiga da mesma partida ao salvar novamente, sem liberar gameId já pertencente a outro confronto.
@@ -133,8 +133,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.8` e `Push origin`.
-3. Crie e envie a tag `v0.22.8`.
+2. Faça commit `NicoValBolaLibre V0.22.9` e `Push origin`.
+3. Crie e envie a tag `v0.22.9`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.
@@ -159,6 +159,6 @@ O ZIP contém código-fonte; o instalador não está incluído. A integração u
 Correção do parser PelotaLibre para separar UEFA Nations League e Champions League Feminina do nome do visitante.
 
 
-## V0.22.8
+## V0.22.9
 
 Correção de recuperação e migração de vínculos manuais da 365Scores quando a chave composta da agenda muda.

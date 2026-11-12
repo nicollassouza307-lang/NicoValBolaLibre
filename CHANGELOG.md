@@ -1,6 +1,10 @@
-# NicoValBolaLibre V0.22.8
+## V0.22.9
+- Corrigida a inicialização da agenda removendo dependência de helper externo de vínculos 365Scores.
+- Recuperação de vínculos antigos embutida no HTML; inicialização da agenda protegida contra falha de renderização inicial.
 
-## V0.22.8 · Correção de vínculos 365Scores após mudança na chave da agenda
+# NicoValBolaLibre V0.22.9
+
+## V0.22.9 · Correção de vínculos 365Scores após mudança na chave da agenda
 
 - A identificação de vínculo agora considera o eventId da agenda e, como fallback, os dois clubes na mesma data, além da chave composta que inclui competição.
 - Vínculos antigos da mesma partida podem ser recuperados e migrados quando a competição ou a chave da agenda muda, evitando o falso aviso de gameId já vinculado.
