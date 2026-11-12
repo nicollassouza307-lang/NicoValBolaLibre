@@ -151,7 +151,8 @@
     for(const player of ordered){if(!byDepth.has(player.__depth))byDepth.set(player.__depth,[]);byDepth.get(player.__depth).push(player);}
     const depthKeys=[...byDepth.keys()].sort((a,b)=>a-b);
     const nonKeeperDepths=depthKeys.filter(depth=>!byDepth.get(depth).every(player=>roleForPlayer(player)==='G'));
-    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?48:16+(index/(nonKeeperDepths.length-1))*62]));
+    // Keep a deliberate gap after the goalkeeper: the defensive line starts farther upfield.
+    const rowX=new Map(nonKeeperDepths.map((depth,index)=>[depth,nonKeeperDepths.length===1?56:30+(index/(nonKeeperDepths.length-1))*56]));
     const lanePresets={1:[50],2:[36,64],3:[24,50,76],4:[19,40,60,81],5:[15,32.5,50,67.5,85]};
     const positions=[];
     for(const depth of depthKeys){
@@ -162,10 +163,10 @@
       group.forEach((player,index)=>{
         const lane=Number.isFinite(player.__row)&&maxRow>1?15+((player.__row-1)/(maxRow-1))*70:preset[index];
         const isKeeper=roleForPlayer(player)==='G';
-        let xForward=isKeeper?8.5:(rowX.get(depth)||16);
+        let xForward=isKeeper?8.5:(rowX.get(depth)||22);
         const raw=String(player.__player?.role||player.__player?.position||'').toLowerCase();
         if(!isKeeper&&/wing|ponta|wide|lateral/.test(raw))xForward+=1.5;
-        xForward=Math.max(8.5,Math.min(80,xForward));
+        xForward=isKeeper?8.5:Math.max(22,Math.min(86,xForward));
         positions.push({player,left:Number((side==='away'?100-xForward:xForward).toFixed(2)),top:Number(lane.toFixed(2)),depth:Number(xForward.toFixed(2))});
       });
     }
@@ -335,11 +336,17 @@
     return teams.length?`<section class="apifootball-player-ratings"><div class="apifootball-section-title">Notas dos jogadores</div><p class="apifootball-muted">Escala de 0 a 10. A estimativa considera as estatísticas individuais disponíveis, eventos, posição e minutos. A nota oficial da fonte é usada apenas quando faltam dados individuais. Sem dados suficientes, exibimos —.</p><div class="apifootball-rating-grid">${teams.join('')}</div></section>`:'';
   }
 
+  function shirtNumberMarkup(value, className, titlePrefix = 'Camisa') {
+    const raw = value === null || value === undefined ? '' : String(value).trim();
+    if (!raw || /^0+(?:\.0+)?$/.test(raw)) return '';
+    return `<span class="${className}" title="${escapeHtml(`${titlePrefix} ${raw}`)}">${escapeHtml(raw)}</span>`;
+  }
   function renderPitchPlayer(entry, eventIcons = {}) {
     const player = entry.__player || (entry.player?.player && typeof entry.player.player === 'object' ? entry.player.player : entry.player) || {};
     const name = String(player.name || 'Jogador');
-    const number = player.number === null || player.number === undefined || player.number === '' ? '—' : String(player.number);
-    const label = `${name}, camisa ${number}`;
+    const number = player.number === null || player.number === undefined ? '' : String(player.number).trim();
+    const numberBadge = shirtNumberMarkup(number, 'apifootball-pitch-shirt-number apifootball-pitch-number');
+    const label = numberBadge ? `${name}, camisa ${number}` : name;
     const events=Array.isArray(player.events)?player.events:[];
     const left=events.filter(item=>['yellow','red','double-yellow','substitution','missed-penalty'].includes(item.kind));
     const right=events.filter(item=>['goal','own-goal','assist'].includes(item.kind));
@@ -363,18 +370,19 @@
     return `<div class="apifootball-pitch-player" style="--pitch-depth:${entry.depth ?? entry.left}%;--pitch-lane:${entry.top}%;left:${entry.left}%;top:${entry.top}%" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
       <div class="nvb-player-event-rail left">${badges(left,'left')}</div><div class="nvb-player-event-rail right">${badges(right,'right')}</div>
       ${renderPhoto(player)}${rating}
-      <div class="apifootball-pitch-name-row"><span class="apifootball-pitch-shirt-number apifootball-pitch-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-pitch-name">${escapeHtml(name)}</span></div>
+      <div class="apifootball-pitch-name-row">${numberBadge}<span class="apifootball-pitch-name">${escapeHtml(name)}</span></div>
     </div>`;
   }
 
   function renderBenchPlayer(player, eventIcons = {}) {
     const record = player?.player && typeof player.player === 'object' ? player.player : player;
     const name = String(record?.name || 'Jogador');
-    const number = record?.number === null || record?.number === undefined || record?.number === '' ? '—' : String(record.number);
+    const number = record?.number === null || record?.number === undefined ? '' : String(record.number).trim();
+    const numberBadge = shirtNumberMarkup(number, 'apifootball-bench-number');
     const ratingInfo=playerRatingInfo(record);const rating=ratingInfo.value!==null?`<span class="apifootball-bench-rating" title="${escapeHtml(ratingInfo.source)}">${ratingInfo.value.toFixed(1)}</span>`:'';
     const events=Array.isArray(record?.events)?record.events:[];
     const eventHtml=events.length?`<span class="apifootball-bench-events">${events.map(item=>`<span class="apifootball-bench-event ${escapeHtml(item.kind)}" title="${escapeHtml(item.label||item.kind)} · ${escapeHtml(item.minute||'')}">${renderPlayerEventSymbol(item,eventIcons)}</span>`).join('')}</span>`:'';
-    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<div class="apifootball-bench-copy"><div class="apifootball-bench-name-row"><span class="apifootball-bench-number" title="Camisa ${escapeHtml(number)}">${escapeHtml(number)}</span><span class="apifootball-bench-name">${escapeHtml(name)}</span>${eventHtml}</div>${rating}</div></div>`;
+    return `<div class="apifootball-bench-player">${renderPhoto(player, true)}<div class="apifootball-bench-copy"><div class="apifootball-bench-name-row">${numberBadge}<span class="apifootball-bench-name">${escapeHtml(name)}</span>${eventHtml}</div>${rating}</div></div>`;
   }
 
   function renderTeamHead(lineup, fixtureTeam, label) {

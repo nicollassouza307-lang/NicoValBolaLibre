@@ -567,6 +567,47 @@ img.crest:not(.crest-github),.apifootball-team-head-crest{background-color:trans
 .match-scoreboard .crest{background:transparent!important;padding:2px}
 @media(max-width:640px){.match-scoreboard .crest{background:transparent!important;padding:2px}}
 
+
+/* V0.22.6: pequenas ações de agenda e reforço da leitura das escalações. */
+.card-top-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.game-card-remove{width:25px;height:25px;display:grid;place-items:center;flex:0 0 25px;border:1px solid #ff647833;border-radius:8px;background:#ff647810;color:#ff9ba8;font-size:17px;line-height:1;opacity:.78;transition:background .15s,border-color .15s,opacity .15s}
+.game-card-remove:hover,.game-card-remove:focus-visible{opacity:1;background:#ff647822;border-color:#ff647877;outline:none}
+.hidden-agenda-list{display:grid;gap:8px}
+.hidden-agenda-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#ffffff04;min-width:0}
+.hidden-agenda-copy{display:grid;gap:4px;min-width:0}
+.hidden-agenda-copy strong{color:#dce8fa;font-size:11px;overflow-wrap:anywhere}
+.hidden-agenda-copy small{color:#8297b5;font-size:10px;overflow-wrap:anywhere}
+.apifootball-lineups-view .apifootball-pitch-player{width:88px}
+.apifootball-lineups-view .apifootball-pitch-player .apifootball-photo-frame{width:48px;height:48px;flex-basis:48px}
+.apifootball-lineups-view .apifootball-pitch-name-row{max-width:88px;gap:3px!important}
+.apifootball-lineups-view .apifootball-pitch-name{max-width:76px;font-size:9px}
+@media(max-width:700px){
+  .card-top-actions{gap:4px}
+  .game-card-remove{width:23px;height:23px;flex-basis:23px}
+  .hidden-agenda-row{align-items:flex-start}
+  .apifootball-lineups-view .apifootball-pitch-player{width:76px}
+  .apifootball-lineups-view .apifootball-pitch-player .apifootball-photo-frame{width:40px;height:40px;flex-basis:40px}
+  .apifootball-lineups-view .apifootball-pitch-name-row{max-width:74px}
+  .apifootball-lineups-view .apifootball-pitch-name{max-width:64px;font-size:8px}
+}
+
+
+/* V0.22.6: maior leitura dos atletas e mais respiro entre goleiro e linha defensiva. */
+.apifootball-lineups-view .apifootball-pitch-player{width:88px!important;gap:3px!important}
+.apifootball-lineups-view .apifootball-pitch-player .apifootball-photo-frame{width:48px!important;height:48px!important;flex-basis:48px!important}
+.apifootball-lineups-view .apifootball-pitch-name-row{max-width:88px!important;gap:3px!important}
+.apifootball-lineups-view .apifootball-pitch-name{max-width:75px!important;font-size:8.5px!important}
+.apifootball-lineups-view .nvb-player-event-rail.left{left:calc(50% - 45px)!important}
+.apifootball-lineups-view .nvb-player-event-rail.right{right:calc(50% - 45px)!important}
+@media(max-width:700px){
+  .apifootball-lineups-view .apifootball-pitch-player{width:74px!important}
+  .apifootball-lineups-view .apifootball-pitch-player .apifootball-photo-frame{width:40px!important;height:40px!important;flex-basis:40px!important}
+  .apifootball-lineups-view .apifootball-pitch-name-row{max-width:72px!important}
+  .apifootball-lineups-view .apifootball-pitch-name{max-width:61px!important;font-size:7.5px!important}
+  .apifootball-lineups-view .nvb-player-event-rail.left{left:calc(50% - 37px)!important}
+  .apifootball-lineups-view .nvb-player-event-rail.right{right:calc(50% - 37px)!important}
+}
+
 </style>
 <style>
 /* V0.18.17: GitHub SVGs podem ser brancos; ficam em placa azul-marinho. Logos raster/competição ficam em placa branca. */
@@ -1098,7 +1139,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.3 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.6 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -1313,6 +1354,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   const savedMarkets = normalizeMarkets(readStore('futeblox_broadcast_markets_v1', 'BR,AR'));
   const state = { events: [], filter: 'all', view: 'all', date: localDateString(new Date()), markets: savedMarkets, selected: null, sourceIndex: 0, demo: false, loading: false, provider: 'Rei + PelotaLibre', cached: false };
   const favorites = new Set(readStore('futeblox_favorites', []));
+  const HIDDEN_AGENDA_MATCHES_KEY = 'nvb_hidden_agenda_matches_v1';
+  let hiddenAgendaMatches = readStore(HIDDEN_AGENDA_MATCHES_KEY, {});
+  if (!hiddenAgendaMatches || typeof hiddenAgendaMatches !== 'object' || Array.isArray(hiddenAgendaMatches)) hiddenAgendaMatches = {};
   const COMPETITION_ORDER_KEY = 'nvb_competition_section_order_v1';
   let competitionOrder = readStore(COMPETITION_ORDER_KEY, []);
   if (!Array.isArray(competitionOrder)) competitionOrder = [];
@@ -1748,6 +1792,32 @@ const BROADCASTER_ALIAS_GROUPS = [
     }
     return { name, corrected:false };
   }
+  function stripRepeatedTeamSuffix(value) {
+    let clean = String(value || '').trim().replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ').replace(/\s+/g, ' ');
+    let tokens = clean.split(' ').filter(Boolean);
+    let changed = true;
+    while (changed && tokens.length >= 2) {
+      changed = false;
+      for (let size = Math.floor(tokens.length / 2); size >= 1; size--) {
+        const left = tokens.slice(tokens.length - size * 2, tokens.length - size).map(foldLabel).join(' ');
+        const right = tokens.slice(-size).map(foldLabel).join(' ');
+        if (left && left === right) { tokens = tokens.slice(0, -size); changed = true; break; }
+      }
+    }
+    clean = tokens.join(' ').trim();
+    const normalized = [], offsets = [];
+    for (let index = 0; index < clean.length; index++) {
+      const chars = foldLabel(clean[index]).replace(/[^a-z0-9]/g, '');
+      for (const char of chars) { normalized.push(char); offsets.push(index); }
+    }
+    const compact = normalized.join('');
+    for (let size = Math.floor(compact.length / 2); size >= 4; size--) {
+      if (compact.slice(-size * 2, -size) !== compact.slice(-size)) continue;
+      const cutAt = offsets[compact.length - size];
+      if (Number.isInteger(cutAt) && cutAt > 0) return clean.slice(0, cutAt).trim();
+    }
+    return clean;
+  }
   function normalizeEvent(e) {
     const start = parseEventDate(e);
     const teams = e.teams || {};
@@ -1756,8 +1826,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     const leagueObj = (e.league && typeof e.league === 'object') ? e.league : ((e.competition && typeof e.competition === 'object') ? e.competition : {});
     const title = String(e.title || e.name || '');
     const titleParts = title.split(/\s+(?:x|vs\.?)\s+/i);
-    const home = homeObj.name || e.home || e.homeTeamName || (typeof e.homeTeam === 'string' ? e.homeTeam : '') || titleParts[0] || 'Time da casa';
-    const away = awayObj.name || e.away || e.awayTeamName || (typeof e.awayTeam === 'string' ? e.awayTeam : '') || titleParts[1] || 'Visitante';
+    const home = stripRepeatedTeamSuffix(homeObj.name || e.home || e.homeTeamName || (typeof e.homeTeam === 'string' ? e.homeTeam : '') || titleParts[0] || 'Time da casa');
+    const away = stripRepeatedTeamSuffix(awayObj.name || e.away || e.awayTeamName || (typeof e.awayTeam === 'string' ? e.awayTeam : '') || titleParts[1] || 'Visitante');
     const cleanScore=value=>value===null||value===undefined||value===''||!Number.isFinite(Number(value))||Number(value)<0?null:Number(value);
     const homeScore = cleanScore(e.home_score ?? e.homeScore ?? e.score?.home ?? e.teams?.home?.score ?? e.homeTeam?.score ?? null);
     const awayScore = cleanScore(e.away_score ?? e.awayScore ?? e.score?.away ?? e.teams?.away?.score ?? e.awayTeam?.score ?? null);
@@ -2298,9 +2368,57 @@ const BROADCASTER_ALIAS_GROUPS = [
     return event?.status||'upcoming';
   }
   function statusLabel(status) { return status==='live'?'AO VIVO':status==='finished'?'ENCERRADO':'PROGRAMADO'; }
+  function agendaHideKey(event) {
+    const key = scheduleMatchKey(event);
+    return key || `id:${String(event?.id || '')}`;
+  }
+  function isAgendaMatchHidden(event) {
+    return Boolean(hiddenAgendaMatches[agendaHideKey(event)]);
+  }
+  function hideAgendaMatch(eventId) {
+    const event = state.events.find(item => String(item.id) === String(eventId));
+    if (!event) return;
+    const description = `${event.home} x ${event.away}`;
+    if (!window.confirm(`Remover ${description} da agenda deste dispositivo?\n\nA partida não será apagada das fontes originais. Você poderá restaurá-la em Admin → Partidas.`)) return;
+    const key = agendaHideKey(event);
+    hiddenAgendaMatches[key] = {id:String(event.id),home:event.home,away:event.away,league:event.league,dateEvent:event.dateEvent,hiddenAt:new Date().toISOString()};
+    writeStore(HIDDEN_AGENDA_MATCHES_KEY, hiddenAgendaMatches);
+    if (state.selected && String(state.selected.id) === String(event.id)) closeModal();
+    render();
+    toast('Partida removida desta agenda. Você pode restaurá-la no Admin → Partidas.');
+  }
+  function restoreAgendaMatch(key) {
+    if (!Object.hasOwn(hiddenAgendaMatches, key)) return;
+    delete hiddenAgendaMatches[key];
+    writeStore(HIDDEN_AGENDA_MATCHES_KEY, hiddenAgendaMatches);
+    render();
+    renderHiddenAgendaMatchesAdmin();
+    toast('Partida restaurada na agenda.');
+  }
+  function restoreAllAgendaMatches() {
+    const count = Object.keys(hiddenAgendaMatches).length;
+    if (!count) return;
+    if (!window.confirm(`Restaurar as ${count} partida(s) removida(s) neste dispositivo?`)) return;
+    hiddenAgendaMatches = {};
+    writeStore(HIDDEN_AGENDA_MATCHES_KEY, hiddenAgendaMatches);
+    render();
+    renderHiddenAgendaMatchesAdmin();
+    toast(`${count} partida(s) restaurada(s).`);
+  }
+  function renderHiddenAgendaMatchesAdmin() {
+    const root = $('#hiddenAgendaMatchesList');
+    const countNode = $('#hiddenAgendaMatchesCount');
+    const restoreAll = $('#restoreAllAgendaMatches');
+    if (!root) return;
+    const entries = Object.entries(hiddenAgendaMatches).sort((a,b)=>String(b[1]?.hiddenAt||'').localeCompare(String(a[1]?.hiddenAt||'')));
+    if (countNode) countNode.textContent = `${entries.length} partida(s) removida(s)`;
+    if (restoreAll) restoreAll.disabled = !entries.length;
+    root.innerHTML = entries.length ? entries.map(([key,item])=>`<div class="hidden-agenda-row"><div class="hidden-agenda-copy"><strong>${escapeHtml(item.home||'Mandante')} x ${escapeHtml(item.away||'Visitante')}</strong><small>${escapeHtml(item.league||'Competição não informada')} · ${escapeHtml(item.dateEvent||'Data não informada')}</small></div><button class="btn secondary small" type="button" data-restore-hidden-match="${escapeHtml(key)}">Restaurar</button></div>`).join('') : '<div class="admin-empty">Nenhuma partida removida. As partidas ocultadas continuam nas fontes e podem ser restauradas aqui.</div>';
+    root.querySelectorAll('[data-restore-hidden-match]').forEach(button=>button.addEventListener('click',()=>restoreAgendaMatch(button.dataset.restoreHiddenMatch)));
+  }
   function filteredEvents() {
     const query=$('#searchInput').value.trim().toLowerCase();
-    let list=[...state.events]; const filter=state.filter;
+    let list=state.events.filter(event=>!isAgendaMatchHidden(event)); const filter=state.filter;
     if(filter!=='all') list=list.filter(e=>scores365NormalizedStatus(e)===filter);
     if(state.view==='favorites') list=list.filter(e=>favorites.has(e.id));
     if(state.view==='live') list=list.filter(e=>scores365NormalizedStatus(e)==='live');
@@ -2361,9 +2479,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     const demo=e.demo?'<span style="color:#ffc76b;font-size:8px;margin-left:5px">DEMO</span>':'';
     const tv=e.tvNetworks?.length ? `<span class="watch-label">📺 ${escapeHtml(e.tvNetworks.map(n=>n.displayName||n.name).join(', '))}</span>` : '<span>Emissora a confirmar</span>';
     const liveBadge=cardStatus==='live'?'<span class="agenda-live-dot" aria-label="Ao vivo"></span>':'';
+    const scores365Details=scores365.details;
     const cardStatusText=cardStatus==='live'?scores365PhasePresentation(e,scores365Details).label:statusLabel(cardStatus);
     return `<article class="game-card" data-id="${escapeHtml(e.id)}" tabindex="0" role="button" aria-label="Abrir ${escapeHtml(e.home)} contra ${escapeHtml(e.away)}">
-      <div class="card-top"><div class="league">${escapeHtml(e.league)}${demo}</div><span class="status ${cardStatus}">${liveBadge}${escapeHtml(cardStatusText)}</span></div>
+      <div class="card-top"><div class="league">${escapeHtml(e.league)}${demo}</div><div class="card-top-actions"><span class="status ${cardStatus}">${liveBadge}${escapeHtml(cardStatusText)}</span><button class="game-card-remove" type="button" data-remove-agenda-match="${escapeHtml(e.id)}" aria-label="Remover ${escapeHtml(e.home)} contra ${escapeHtml(e.away)} da agenda" title="Remover partida">×</button></div></div>
       <div class="teams">
         <div class="team">${logoMarkup(e.home,scores365TeamLogoFor(e,'home'),e.homeCountry || e.leagueCountry || leagueCountryHint(e.league),'',e.league)}<div class="team-copy"><div class="team-name">${escapeHtml(e.home)}</div><div class="team-meta">CASA</div></div></div>
         ${middle}
@@ -2382,15 +2501,46 @@ const BROADCASTER_ALIAS_GROUPS = [
     const [title,desc]=messages[state.view] || ['Nenhuma partida com transmissão encontrada.','As agendas consultadas não informaram jogos com emissoras para esta data. Tente outro dia ou confira os sites de origem.'];
     return `<div class="empty"><strong>${title}</strong>${desc}<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small" type="button" data-retry-agenda>↻ Tentar carregar novamente</button><button class="btn secondary small" type="button" data-show-all>Ver todos os jogos</button></div></div>`;
   }
+  function scores365CompetitionMetaForEvent(event) {
+    const info = scores365MatchInfoForEvent(event);
+    const linkedCompetition = info.link?.competitionMeta && typeof info.link.competitionMeta === 'object' ? info.link.competitionMeta : {};
+    const detailedCompetition = info.details?.competition && typeof info.details.competition === 'object' ? info.details.competition : {};
+    const competition = {};
+    for (const key of ['categoryId','categoryName','categoryType','gender','ageGroup','divisionId','divisionName','groupId','groupName','stageName','seasonName','country']) {
+      const detailed = detailedCompetition[key];
+      const linked = linkedCompetition[key];
+      competition[key] = detailed !== null && detailed !== undefined && String(detailed).trim() !== '' ? detailed : (linked ?? '');
+    }
+    const categoryType = String(competition.categoryType || info.details?.category || info.link?.category || '').trim().toLowerCase();
+    const categoryName = String(competition.categoryName || '').trim();
+    const gender = String(competition.gender || '').trim();
+    const ageGroup = String(competition.ageGroup || '').trim();
+    const divisionName = String(competition.divisionName || '').trim();
+    const groupName = String(competition.groupName || '').trim();
+    const stageName = String(competition.stageName || '').trim();
+    const seasonName = String(competition.seasonName || '').trim();
+    const roundName = String(info.details?.round || info.link?.round || info.link?.competitionMeta?.round || '').trim();
+    const descriptiveCategory = [categoryName, ageGroup, divisionName].filter(Boolean).filter((value,index,array)=>array.findIndex(other=>foldLabel(other)===foldLabel(value))===index).join(' · ');
+    const normalizedCategory = descriptiveCategory || (categoryType==='women_youth'?'Feminino · Base':categoryType==='women'?'Feminino':categoryType==='youth'?'Categorias de base':(gender && !/^(?:men|male|masculino)$/i.test(gender)?gender:''));
+    const meaningfulStage = stageName && !/^(?:regular season|temporada regular|liga regular|fase regular)$/i.test(stageName) ? stageName : '';
+    const bucket = [normalizedCategory, groupName, meaningfulStage].filter(Boolean).filter((value,index,array)=>array.findIndex(other=>foldLabel(other)===foldLabel(value))===index).join(' · ');
+    return {category:normalizedCategory,division:divisionName,group:groupName,stage:stageName,season:seasonName,round:roundName,country:String(competition.country||'').trim(),bucket};
+  }
   function competitionGroupKey(event) {
     const raw = String(event?.league || 'Outras competições').trim() || 'Outras competições';
-    return foldLabel(raw) || 'outras competicoes';
+    const meta = scores365CompetitionMetaForEvent(event);
+    const baseKey = foldLabel(raw) || 'outras competicoes';
+    const bucketKey = foldLabel(meta.bucket);
+    return bucketKey ? `${baseKey}|${bucketKey}` : baseKey;
   }
   function buildCompetitionGroups(events) {
     const grouped = new Map();
     for (const event of events || []) {
       const key = competitionGroupKey(event);
-      if (!grouped.has(key)) grouped.set(key, { key, name:String(event.league || 'Outras competições').trim() || 'Outras competições', items:[] });
+      const meta = scores365CompetitionMetaForEvent(event);
+      const baseName = String(event.league || 'Outras competições').trim() || 'Outras competições';
+      const name = meta.bucket ? `${baseName} · ${meta.bucket}` : baseName;
+      if (!grouped.has(key)) grouped.set(key, { key, name, baseName, meta, items:[] });
       grouped.get(key).items.push(event);
     }
     for (const group of grouped.values()) {
@@ -2416,16 +2566,17 @@ const BROADCASTER_ALIAS_GROUPS = [
       const label = count === 1 ? '1 partida' : `${count} partidas`;
       const position = String(index + 1).padStart(2, '0');
       const leagueLogo = competitionLogoForGroup(group);
-      const leagueCountry=String(group.items?.[0]?.leagueCountry||group.items?.[0]?.country||leagueCountryHint(group.name)||'');
-      const leagueAttrs=`data-league-name="${escapeHtml(group.name)}" data-league-country="${escapeHtml(leagueCountry)}"`;
+      const leagueCountry=String(group.items?.[0]?.leagueCountry||group.items?.[0]?.country||leagueCountryHint(group.baseName||group.name)||'');
+      const leagueAttrs=`data-league-name="${escapeHtml(group.baseName||group.name)}" data-league-country="${escapeHtml(leagueCountry)}"`;
+      const metaLabel=[group.meta?.round,group.meta?.stage,group.meta?.season].filter(Boolean).filter((value,index,array)=>array.findIndex(other=>foldLabel(other)===foldLabel(value))===index).join(' · ');
       const collapsed = readStore('nvb_competition_collapsed_v1', {});
       const isOpen = collapsed[group.key] !== true;
-      const divider = `<summary class="competition-divider" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo ${leagueAttrs}>` : `<span class="competition-divider-mark" ${leagueAttrs}>🏆</span>`}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${label}</span></summary>`;
+      const divider = `<summary class="competition-divider" aria-label="${position} · Competição: ${escapeHtml(group.name)}"><div class="competition-divider-title"><span class="competition-divider-rank">${position}</span>${leagueLogo ? `<img class="competition-divider-logo" src="${escapeHtml(leagueLogo)}" alt="" loading="lazy" data-competition-logo ${leagueAttrs}>` : `<span class="competition-divider-mark" ${leagueAttrs}>🏆</span>`}<span class="competition-divider-name">${escapeHtml(group.name)}</span></div><span class="competition-divider-meta">${metaLabel?`${escapeHtml(metaLabel)} · `:''}${label}</span></summary>`;
       return `<details class="competition-section" data-competition-section="${escapeHtml(group.key)}" ${isOpen?'open':''}>${divider}<div class="competition-section-cards">${group.items.map(cardMarkup).join('')}</div></details>`;
     }).join('');
   }
   function moveCompetitionRanking(key, direction) {
-    const visibleGroups = orderedCompetitionGroups(state.events);
+    const visibleGroups = orderedCompetitionGroups(state.events.filter(event=>!isAgendaMatchHidden(event)));
     if (!visibleGroups.length || !window.NVBCompetitionRanking) return;
     const next = window.NVBCompetitionRanking.move(competitionOrder, visibleGroups, key, direction);
     if (next.length === competitionOrder.length && next.every((value,index)=>value===competitionOrder[index])) return;
@@ -2443,7 +2594,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderCompetitionRanking() {
     const root = $('#competitionRankingList');
     if (!root) return;
-    const groups = orderedCompetitionGroups(state.events);
+    const groups = orderedCompetitionGroups(state.events.filter(event=>!isAgendaMatchHidden(event)));
     const resetButton = $('#resetCompetitionRanking');
     if (resetButton && !resetButton.dataset.bound) {
       resetButton.dataset.bound = '1';
@@ -2522,6 +2673,12 @@ const BROADCASTER_ALIAS_GROUPS = [
     ['stationFormPanel','stationListPanel','stationCompletionPanel','channelDirectoryPanel','reiChannelPanel','autoLinkPanel'].forEach(id=>move(id,'general'));
     ['scores365Panel'].forEach(id=>move(id,'scores365'));
     ['competitionRankingPanel','manualLinkPanel'].forEach(id=>move(id,'matches'));
+    const hiddenMatchesPanel = document.createElement('section');
+    hiddenMatchesPanel.className = 'admin-panel';
+    hiddenMatchesPanel.id = 'hiddenAgendaMatchesPanel';
+    hiddenMatchesPanel.innerHTML = '<h4>Partidas removidas da agenda</h4><p>Remover uma partida oculta o card somente neste dispositivo. As fontes de agenda não são alteradas. Restaure aqui quando quiser.</p><div id="hiddenAgendaMatchesCount" class="admin-small" style="margin-bottom:9px">0 partidas removidas</div><div id="hiddenAgendaMatchesList" class="hidden-agenda-list"></div><div class="admin-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="restoreAllAgendaMatches">Restaurar todas</button></div>';
+    pageMap.get('matches').appendChild(hiddenMatchesPanel);
+    $('#restoreAllAgendaMatches')?.addEventListener('click', restoreAllAgendaMatches);
     ['teamLogoPanel','playerEventIconsPanel','cloudSyncPanel','adminDataActionsPanel'].forEach(id=>move(id,'data'));
     ['theSportsDBPanel'].forEach(id=>move(id,'diagnostics'));
     ['apiFootballPanel','footballDataPanel'].forEach(id=>document.getElementById(id)?.remove());
@@ -2595,9 +2752,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     autoLinkCatalogStations(state.events);
     renderScheduleDateStrip();
     const list=filteredEvents();
-    $('#totalCount').textContent=state.events.length;
-    $('#liveCount').textContent=state.events.filter(e=>e.status==='live').length;
-    $('#favCount').textContent=favorites.size;
+    const activeAgendaEvents=state.events.filter(event=>!isAgendaMatchHidden(event));
+    $('#totalCount').textContent=activeAgendaEvents.length;
+    $('#liveCount').textContent=activeAgendaEvents.filter(e=>scores365NormalizedStatus(e)==='live').length;
+    $('#favCount').textContent=activeAgendaEvents.filter(e=>favorites.has(e.id)).length;
     $('#sectionTitle').textContent=state.view==='favorites'?'Seus favoritos':state.view==='live'?'Partidas ao vivo':state.view==='upcoming'?'Próximas partidas':state.view==='finished'?'Partidas encerradas':'Partidas';
     $('#sectionSubtitle').textContent=`${list.length} resultado(s) · ${dateLabel(state.date)} · emissoras ${marketLabel()}${state.cached?' · agenda salva localmente':''} · ${state.provider}`;
     if(!list.length) {
@@ -2607,7 +2765,8 @@ const BROADCASTER_ALIAS_GROUPS = [
       return;
     }
     $('#gamesGrid').innerHTML=renderGroupedGameCards(list);
-    $('#gamesGrid').querySelectorAll('.game-card').forEach(card=>{card.addEventListener('click',()=>openMatch(card.dataset.id));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openMatch(card.dataset.id);}});});
+    $('#gamesGrid').querySelectorAll('[data-remove-agenda-match]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();hideAgendaMatch(button.dataset.removeAgendaMatch);}));
+    $('#gamesGrid').querySelectorAll('.game-card').forEach(card=>{card.addEventListener('click',event=>{if(event.target.closest('[data-remove-agenda-match]'))return;openMatch(card.dataset.id);});card.addEventListener('keydown',e=>{if(e.target.closest('[data-remove-agenda-match]'))return;if(e.key==='Enter'||e.key===' '){e.preventDefault();openMatch(card.dataset.id);}});});
     $('#gamesGrid').querySelectorAll('[data-competition-section]').forEach(section=>section.addEventListener('toggle',()=>{const saved=readStore('nvb_competition_collapsed_v1',{});saved[section.dataset.competitionSection]=!section.open;writeStore('nvb_competition_collapsed_v1',saved);}));
     attachLogoFallback($('#gamesGrid'));
   }
@@ -2991,7 +3150,15 @@ const BROADCASTER_ALIAS_GROUPS = [
   function renderMatchFacts(event,details=null,kickoff={text:'',synced:false}) {
     const date=matchDatePresentation(event?.dateEvent);
     const venue=details?.venue||event?.venue||'';
-    const round=details?.round||event?.round||'';
+    const linkedMatch=scores365LinkedGameForEvent(event);
+    const linkedCompetitionMeta=linkedMatch?.competitionMeta&&typeof linkedMatch.competitionMeta==='object'?linkedMatch.competitionMeta:{};
+    const detailedCompetitionMeta=details?.competition&&typeof details.competition==='object'?details.competition:{};
+    const competitionMeta={};
+    for(const key of ['categoryName','ageGroup','divisionName','groupName','stageName','seasonName']){
+      const detailed=detailedCompetitionMeta[key];
+      competitionMeta[key]=detailed!==null&&detailed!==undefined&&String(detailed).trim()!==''?detailed:(linkedCompetitionMeta[key]||'');
+    }
+    const round=details?.round||event?.round||linkedMatch?.round||linkedCompetitionMeta.round||'';
     const referee=details?.referee||event?.referee||details?.officials?.find(item=>/referee|árbitro|arbitro/i.test(String(item.role||'')))?.name||'';
     const address=details?.venueAddress||event?.venueAddress||'';
     const capacity=details?.venueCapacity??event?.venueCapacity??null;
@@ -3006,6 +3173,11 @@ const BROADCASTER_ALIAS_GROUPS = [
       `<div class="match-fact"><span>🕒 HORÁRIO</span><strong>${escapeHtml(kickoff.text||event?.timeText||'Horário a confirmar')}</strong><small>${kickoff.synced?'Horário sincronizado pela 365Scores':'Horário local informado pela agenda'}</small></div>`,
       fact('📍','Local',venue||'Não informado',[address,capacityText].filter(Boolean).join(' · ')),
       fact('🏆',/^fase\b|^fase:/i.test(String(round))?'Fase':'Rodada',round),
+      fact('🗂','Categoria',competitionMeta.categoryName||competitionMeta.ageGroup||''),
+      fact('🏷','Divisão',competitionMeta.divisionName||''),
+      fact('👥','Grupo',competitionMeta.groupName||''),
+      fact('🏁','Etapa',competitionMeta.stageName||''),
+      fact('📆','Temporada',competitionMeta.seasonName||''),
       fact('🧑‍⚖️','Árbitro',referee),
       officials.length?fact('👥','Equipe de arbitragem',officials.map(item=>`${item.role?`${item.role}: `:''}${item.name}`).join(' · ')):'',
       attendance?fact('👥','Público',attendance):''
@@ -3070,6 +3242,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       scores365MatchCache[String(event.id)]={gameId:Number(link.gameId),details:result.details,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       scores365MatchLoadErrors.delete(String(event.id));
       writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
+      render();
       if(state.selected&&String(state.selected.id)===String(event.id)){refreshScores365PanelInModal(event);refreshScores365MatchFacts(event);}
       void loadScores365Standings(event,{silent:true});
       if(!silent)startScores365LivePolling(event);
@@ -3538,6 +3711,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       links[key]={
         ...(existing||{}),eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,
         gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,
+        category:String(candidate.category||''),round:String(candidate.round||''),roundNum:Number(candidate.roundNum)||null,stageNum:Number(candidate.stageNum)||null,competitionMeta:candidate.competitionMeta&&typeof candidate.competitionMeta==='object'?candidate.competitionMeta:{},
         homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,
         agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,
         matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,
@@ -3633,7 +3807,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       const links=readStore(SCORES365_AGENDA_LINKS_KEY,{});
       const duplicate=Object.entries(links).find(([existingKey,value])=>existingKey!==key&&Number(value?.gameId)===Number(candidate.gameId));
       if(duplicate){toast('Esse gameId já está vinculado a outra partida. Confira antes de reutilizá-lo.');return;}
-      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt:new Date().toISOString(),source:'365scores-manual-confirmation'};
+      links[key]={eventId:String(row.eventId||''),dateEvent:row.date,home:row.home,away:row.away,competition:row.competition,gameId:Number(candidate.gameId),competitionId:Number(candidate.competitionId)||null,category:String(candidate.category||''),round:String(candidate.round||''),roundNum:Number(candidate.roundNum)||null,stageNum:Number(candidate.stageNum)||null,competitionMeta:candidate.competitionMeta&&typeof candidate.competitionMeta==='object'?candidate.competitionMeta:{},homeId:Number(candidate.homeId)||null,awayId:Number(candidate.awayId)||null,agendaHome365Id:Number(candidate.reversed?candidate.awayId:candidate.homeId)||null,agendaAway365Id:Number(candidate.reversed?candidate.homeId:candidate.awayId)||null,matchedHome:candidate.home,matchedAway:candidate.away,matchedCompetition:candidate.competition,homeScore:candidate.homeScore??null,awayScore:candidate.awayScore??null,status:String(candidate.status||''),startTime:String(candidate.startTime||''),score:Number(candidate.score)||0,confidence:candidate.confidence||'revisar',linkedAt:new Date().toISOString(),source:'365scores-manual-confirmation'};
       writeStore(SCORES365_AGENDA_LINKS_KEY,links);
       toast(`Vínculo salvo neste computador: gameId ${candidate.gameId}.`);
       renderScores365AgendaMatches(scores365AgendaMatchSnapshot);
@@ -3646,7 +3820,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     }));
   }
   function buildScores365AgendaPayload() {
-    return state.events.map(event=>{const linked=scores365LinkedGameForEvent(event);return {id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||''),category:String(event.category||event.gender||''),scores365HomeId:event.scores365HomeId||event.home365Id||linked?.agendaHome365Id||null,scores365AwayId:event.scores365AwayId||event.away365Id||linked?.agendaAway365Id||null};});
+    return state.events.filter(event=>!isAgendaMatchHidden(event)).map(event=>{const linked=scores365LinkedGameForEvent(event);return {id:String(event.id||''),home:String(event.home||''),away:String(event.away||''),dateEvent:String(event.dateEvent||''),timeText:String(event.timeText||''),start:event.start instanceof Date?event.start.toISOString():String(event.start||''),league:String(event.league||''),category:String(event.category||event.gender||''),scores365HomeId:event.scores365HomeId||event.home365Id||linked?.agendaHome365Id||null,scores365AwayId:event.scores365AwayId||event.away365Id||linked?.agendaAway365Id||null};});
   }
   function scores365AgendaSignature(date,agendaEvents) {
     const raw=`${date}|${agendaEvents.map(row=>scores365AgendaLinkKey(row)).sort().join(';;')}`;
@@ -4678,13 +4852,14 @@ const BROADCASTER_ALIAS_GROUPS = [
     }
     const select=$('#adminMatchSelect');
     const previous=select.value;
-    const options=state.events.map(e=>`<option value="${escapeHtml(e.id)}">${escapeHtml(e.home)} x ${escapeHtml(e.away)} · ${escapeHtml(e.league)}</option>`).join('');
+    const options=state.events.filter(e=>!isAgendaMatchHidden(e)).map(e=>`<option value="${escapeHtml(e.id)}">${escapeHtml(e.home)} x ${escapeHtml(e.away)} · ${escapeHtml(e.league)}</option>`).join('');
     select.innerHTML=options || '<option value="">Nenhuma partida carregada</option>';
-    if(previous && state.events.some(e=>e.id===previous)) select.value=previous;
+    if(previous && state.events.some(e=>e.id===previous&&!isAgendaMatchHidden(e))) select.value=previous;
     $('#stationAssignList').innerHTML=stationCatalog.length
       ? stationCatalog.map(st=>`<div class="station-row"><div class="station-copy"><div class="station-name">${escapeHtml(st.name)}${marketBadgeHtml(stationMarket(st))}${st.category==='Diversos'?'<span class="mk-badge">Diversos</span>':''}</div><div class="station-url">${escapeHtml(st.url)}</div></div><div class="station-actions"><button class="btn small" data-assign-station="${escapeHtml(st.id)}">Vincular manualmente</button></div></div>`).join('')
       : '<div class="admin-empty">Cadastre uma emissora acima para poder vinculá-la às partidas.</div>';
     renderAutoLinkStatus();
+    renderHiddenAgendaMatchesAdmin();
     $('#adminView').querySelectorAll('[data-delete-station]').forEach(btn=>btn.addEventListener('click',()=>deleteStation(btn.dataset.deleteStation)));
     $('#adminView').querySelectorAll('[data-link-station]').forEach(btn=>btn.addEventListener('click',()=>toggleStationLinkPanel(btn.dataset.linkStation)));
     $('#adminView').querySelectorAll('[data-assign-station]').forEach(btn=>btn.addEventListener('click',()=>assignStation(btn.dataset.assignStation)));
@@ -5040,7 +5215,7 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.3',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.6',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

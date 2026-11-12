@@ -246,6 +246,37 @@ function splitReiTitle(title) {
   const parts = value.split(/\s+(?:x|vs\.?|versus)\s+/i).map(part => part.trim()).filter(Boolean);
   return parts.length === 2 ? { home: parts[0], away: parts[1] } : { home:'', away:'' };
 }
+function stripRepeatedTeamSuffix(value) {
+  let clean = String(value || '').trim().replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ').replace(/\s+/g, ' ');
+  const normalize = part => part.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  let tokens = clean.split(' ').filter(Boolean);
+  let changed = true;
+  while (changed && tokens.length >= 2) {
+    changed = false;
+    for (let size = Math.floor(tokens.length / 2); size >= 1; size--) {
+      const left = tokens.slice(tokens.length - size * 2, tokens.length - size).map(normalize).join(' ');
+      const right = tokens.slice(-size).map(normalize).join(' ');
+      if (left && left === right) { tokens = tokens.slice(0, -size); changed = true; break; }
+    }
+  }
+  clean = tokens.join(' ').trim();
+
+  // Alguns feeds concatenam a repetição sem espaço (ex.: "RacingAvellanedaRacingAvellaneda").
+  // Remove somente quando a cauda é uma repetição exata, normalizada e suficientemente longa.
+  const normalized = [];
+  const offsets = [];
+  for (let index = 0; index < clean.length; index++) {
+    const chars = normalize(clean[index]).replace(/[^a-z0-9]/g, '');
+    for (const char of chars) { normalized.push(char); offsets.push(index); }
+  }
+  const compact = normalized.join('');
+  for (let size = Math.floor(compact.length / 2); size >= 4; size--) {
+    if (compact.slice(-size * 2, -size) !== compact.slice(-size)) continue;
+    const cutAt = offsets[compact.length - size];
+    if (Number.isInteger(cutAt) && cutAt > 0) return clean.slice(0, cutAt).trim();
+  }
+  return clean;
+}
 function normalizeProviderName(value) {
   return String(value || '').trim()
     .replace(/\s*[\[(]\s*(?:alternativo|alternative|backup|espelho|reserva|mirror)\s*[\])]\s*$/i, '')
@@ -257,8 +288,8 @@ function cleanReiEvent(row, requestedDate) {
   const homeObj = teams.home || row.homeTeam || row.home_team || {};
   const awayObj = teams.away || row.awayTeam || row.away_team || {};
   const fromTitle = splitReiTitle(row?.title || row?.name || '');
-  const home = String(homeObj.name || row.home || row.homeTeamName || fromTitle.home || '').trim();
-  const away = String(awayObj.name || row.away || row.awayTeamName || fromTitle.away || '').trim();
+  const home = stripRepeatedTeamSuffix(homeObj.name || row.home || row.homeTeamName || fromTitle.home || '');
+  const away = stripRepeatedTeamSuffix(awayObj.name || row.away || row.awayTeamName || fromTitle.away || '');
   const time = localDateFromRaw(row.start_time || row.startTime, row.start_timestamp || row.timestamp);
   if (!home || !away || time.date !== requestedDate) return null;
   const category = String(row.category || '').trim();
@@ -317,11 +348,11 @@ function htmlToPublicText(html) {
     .trim();
 }
 const COMPETITION_PATTERNS = [
-  'Primera División Argentina','Primera Division Argentina','Liga Profesional Argentina','Primera División','Primera Division',
-  'Liga Betplay DIMAYOR','Brasileirão','Brasileirao','Campeonato Brasileiro','Bundesliga','Serie A Italiana','Serie A',
-  'Francia Ligue 1','Ligue 1','La Liga EA Sports','LaLiga Hypermotion','LaLiga','Premier League','Championship',
-  'Copa Libertadores','Copa Sudamericana','Liga Chile','Liga Uruguay','Liga Paraguay','Liga Colombia','Liga Arabia Saudita',
-  'Copa Liga','MLS','Liga MX','FA Cup','Copa del Rey','Coppa Italia'
+  'UEFA Champions League','UEFA Europa League','UEFA Conference League','CONCACAF Champions Cup','FIFA Club World Cup',
+  'Primera División Argentina','Primera Division Argentina','Liga Profesional Argentina','Primera Nacional Argentina','Copa de la Liga Profesional','Copa Argentina','Primera División','Primera Division',
+  'Liga Betplay DIMAYOR','Campeonato Brasileiro Série A','Campeonato Brasileiro Série B','Campeonato Brasileiro Serie A','Campeonato Brasileiro Serie B','Brasileirão Série A','Brasileirão Série B','Brasileirao Serie A','Brasileirao Serie B','Copa do Nordeste','Copa do Brasil','Campeonato Paulista','Campeonato Carioca','Campeonato Mineiro','Campeonato Gaúcho','Brasileirão','Brasileirao','Campeonato Brasileiro',
+  'Bundesliga','Serie A Italiana','Serie B Italiana','Serie A','Serie B','Francia Ligue 1','Ligue 1','Ligue 2','La Liga EA Sports','LaLiga Hypermotion','LaLiga','Premier League','EFL Championship','Championship','League One','League Two','EFL Cup','FA Cup','Community Shield',
+  'Copa Libertadores','Copa Sudamericana','Recopa Sudamericana','Liga Chile','Liga Uruguay','Liga Paraguay','Liga Colombia','Liga Arabia Saudita','Saudi Pro League','Eredivisie','Primeira Liga','Liga Portugal','Liga MX Apertura','Liga MX Clausura','Liga MX','MLS','Copa del Rey','Coppa Italia','KNVB Beker','DFB Pokal','Coupe de France','Scottish Premiership','Turkish Super Lig'
 ];
 const CHANNEL_ALIASES = BROADCASTER_GROUPS.flatMap(group => group.aliases.map(alias => ({ alias, family:group.family, brand:group.label }))).sort((a,b)=>foldLabel(b.alias).length-foldLabel(a.alias).length);
 const CHANNEL_DISPLAY_NAMES = {
@@ -381,7 +412,7 @@ function extractCompetitionAndAway(rightText, segment) {
     const channel = CHANNEL_ALIASES.map(x=>foldLabel(x.alias)).filter(Boolean).sort((a,b)=>b.length-a.length).find(a=>folded.includes(a));
     if (channel) cut = rightText.toLowerCase().indexOf(channel);
   }
-  const away = (cut >= 0 ? rightText.slice(0,cut) : rightText).replace(/horario programado/ig,'').trim().replace(/[|·•]+$/,'').trim();
+  const away = stripRepeatedTeamSuffix((cut >= 0 ? rightText.slice(0,cut) : rightText).replace(/horario programado/ig,'').trim().replace(/[|·•]+$/,'').trim());
   return { away, competition: competition || 'Futebol' };
 }
 function parsePelotaAgendaHtml(html, sourceId, sourceLabel, requestedDate) {
@@ -1697,4 +1728,4 @@ if (require.main === module || process.env.NVB_SERVER_AUTOSTART === '1') {
   listenWithFallback(REQUESTED_PORT);
 }
 
-module.exports = { server, listenWithFallback };
+module.exports = { server, listenWithFallback, stripRepeatedTeamSuffix, extractCompetitionAndAway };

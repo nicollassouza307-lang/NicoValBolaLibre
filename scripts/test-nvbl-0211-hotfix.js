@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const ui=require('../apifootball-lineup-ui');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.22.5');
+assert.equal(pkg.version,'0.22.6');
 assert.match(html,/background-color:#101d30!important/,'Logos de competições devem usar o navy solicitado.');
 assert.match(html,/playerEventIconsPanel/,'Admin deve ter configuração de PNG dos eventos.');
 assert.match(html,/PLAYER_EVENT_ICONS_STORE_KEY/,'Ícones personalizados devem persistir.');

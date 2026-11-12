@@ -1,4 +1,12 @@
-# NicoValBolaLibre V0.22.5
+# NicoValBolaLibre V0.22.6
+
+## V0.22.6 · Organização da agenda, competições e escalações
+
+- Corrige sufixos duplicados em nomes de equipes quando a agenda recebe o texto repetido.
+- Permite ocultar partidas da agenda local e restaurá-las em Admin → Partidas, sem apagar dados das fontes originais.
+- Preserva metadados extras de competição da 365Scores (categoria, gênero, idade, divisão, grupo, etapa, temporada e rodada/fase) e usa essas informações nas divisórias quando disponíveis.
+- Amplia os jogadores no campo, afasta a primeira linha da posição do goleiro e oculta o selo de camisa quando o número é 0 ou não foi informado.
+- Corrige nomes de visitantes com sufixos duplicados e amplia o reconhecimento de ligas/copas no parser PelotaLibre para não anexar a competição ao nome do visitante.
 
 ## V0.22.5 · Restauração do posicionamento tático estável
 
@@ -117,8 +125,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.5` e `Push origin`.
-3. Crie e envie a tag `v0.22.5`.
+2. Faça commit `NicoValBolaLibre V0.22.6` e `Push origin`.
+3. Crie e envie a tag `v0.22.6`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.

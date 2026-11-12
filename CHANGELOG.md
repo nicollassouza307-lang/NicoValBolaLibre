@@ -1,3 +1,12 @@
+## V0.22.6 · Organização de agenda, competições e escalações
+
+- Corrige nomes de visitantes com cauda duplicada e amplia o reconhecimento de competições no parser PelotaLibre, evitando que campeonatos sejam anexados ao nome do visitante.
+- Adiciona remoção local de partidas da agenda com confirmação e restauração em Admin → Partidas. A remoção não altera as fontes externas nem apaga a partida do provedor.
+- Amplia os metadados normalizados de competições 365Scores: categoria, gênero, idade, divisão, grupo, etapa, temporada, país e rodada/fase. Usa categoria/divisão/grupo/etapa para separar divisórias quando a informação existe, preservando a ordem manual antiga nas competições sem subdivisão.
+- Mostra metadados de categoria, divisão, grupo, etapa e temporada no resumo da partida quando fornecidos pela fonte; a rodada/fase também pode aparecer na divisória da agenda.
+- Aumenta o tamanho visual dos atletas na formação, desloca a primeira linha defensiva para longe do goleiro e oculta o número da camisa quando o valor é zero ou ausente.
+- Ocultar partidas na agenda não as envia à associação automática da 365Scores nem as inclui na classificação de competições; a restauração continua disponível em Admin → Partidas.
+
 ## V0.22.5 · Restauração da lógica de formação da V0.22.0
 - Voltada a lógica de distribuição e posicionamento do campo para a versão anterior às mudanças de reconstrução automática das linhas.
 - Grid válido da escalação volta a ser a referência principal; formação e posição são fallback apenas quando o grid não é utilizável.

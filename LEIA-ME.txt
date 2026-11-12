@@ -1,4 +1,4 @@
-# NicoValBolaLibre V0.22.5
+# NicoValBolaLibre V0.22.6
 
 ## V0.22.4 · Correção de posições e banco de reservas
 
@@ -108,8 +108,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.5` e `Push origin`.
-3. Crie e envie a tag `v0.22.5`.
+2. Faça commit `NicoValBolaLibre V0.22.6` e `Push origin`.
+3. Crie e envie a tag `v0.22.6`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.

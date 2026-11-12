@@ -97,14 +97,37 @@ function competitionOf(game) {
   const list = asArray(game?.competitions);
   const first = asObject(list[0]);
   const nested = asObject(game?.competition);
+  const category = asObject(first.category || nested.category || game?.category || game?.competitionCategory);
+  const group = asObject(first.group || nested.group || game?.group || game?.competitionGroup);
+  const stage = asObject(first.stage || nested.stage || game?.stage || game?.tournamentStage || game?.competitionStage);
+  const season = asObject(first.season || nested.season || game?.season);
+  const division = asObject(first.division || nested.division || game?.division || game?.leagueDivision || game?.tier);
+  const rawCategory = firstText(
+    typeof first.category === 'string' ? first.category : '', first.categoryName, first.categoryDisplayName, first.competitionCategoryName,
+    typeof nested.category === 'string' ? nested.category : '', nested.categoryName, nested.categoryDisplayName, nested.competitionCategoryName,
+    typeof game?.category === 'string' ? game.category : '', game?.categoryName, game?.categoryDisplayName, game?.competitionCategoryName,
+    typeof game?.competitionCategory === 'string' ? game.competitionCategory : '',
+    category.name, category.displayName, category.shortName, category.label
+  );
   return {
     id: positiveId(first.id || nested.id || game?.competitionId),
     name: firstText(first.name, first.displayName, nested.name, game?.competitionDisplayName, game?.competitionName),
-    country: firstText(first.countryName, first.country?.name, nested.countryName),
+    country: firstText(first.countryName, first.country?.name, nested.countryName, game?.countryName),
+    categoryId: positiveId(first.categoryId || nested.categoryId || game?.categoryId || category.id),
+    categoryName: rawCategory,
+    categoryType: firstText(game?.categoryType, game?.competitionType, category.type, category.code) || categoryType(rawCategory, game?.gender, game?.competitorType, game?.ageGroup, game?.ageCategory, division.name, group.name),
+    gender: firstText(game?.gender, first.gender, nested.gender, category.gender),
+    ageGroup: firstText(game?.ageGroup, game?.ageCategory, first.ageGroup, first.ageCategory, nested.ageGroup, category.ageGroup, category.name && /u[- ]?\d+|sub[- ]?\d+/i.test(category.name) ? category.name : ''),
+    divisionId: positiveId(first.divisionId || nested.divisionId || game?.divisionId || division.id),
+    divisionName: firstText(game?.divisionName, game?.divisionDisplayName, first.divisionName, first.divisionDisplayName, nested.divisionName, division.name, division.displayName, division.shortName, typeof game?.division === 'string' ? game.division : '', typeof game?.tier === 'string' ? game.tier : ''),
+    groupId: positiveId(game?.groupId || first.groupId || nested.groupId || group.id),
+    groupName: firstText(game?.groupName, game?.groupDisplayName, first.groupName, first.groupDisplayName, nested.groupName, group.name, group.displayName, group.shortName, group.label),
+    stageName: firstText(game?.stageName, game?.stageDisplayName, first.stageName, first.stageDisplayName, nested.stageName, stage.name, stage.displayName, stage.shortName, stage.label),
+    seasonName: firstText(game?.seasonName, game?.seasonDisplayName, first.seasonName, nested.seasonName, season.name, season.displayName),
     // Keep the season/stage attached to the game so standings requests cannot
     // accidentally reuse the competition's default season when the game is historical.
-    seasonNum: positiveId(game?.seasonNum || first.seasonNum || nested.seasonNum || game?.season?.num || game?.season?.seasonNum || game?.season?.id),
-    stageNum: positiveId(game?.stageNum || first.stageNum || nested.stageNum || game?.stage?.num)
+    seasonNum: positiveId(game?.seasonNum || first.seasonNum || nested.seasonNum || season.num || season.seasonNum || season.id),
+    stageNum: positiveId(game?.stageNum || first.stageNum || nested.stageNum || stage.num)
   };
 }
 function roundLabelOf(game) {
@@ -154,7 +177,7 @@ function normalizeGame(game) {
     status: firstText(item.statusText, item.status?.name, item.status?.shortName, item.statusGroupName),
     statusGroup: item.statusGroup ?? item.status?.group ?? null,
     clock: extractLiveClock(item),
-    category: categoryType(item.categoryName, item.gender, item.competitorType, competition.name, item.competitionDisplayName, item.competitionName),
+    category: categoryType(item.categoryName, item.gender, item.competitorType, competition.name, competition.categoryName, competition.ageGroup, competition.divisionName),
     home: teams.home,
     away: teams.away,
     competition,
@@ -471,7 +494,7 @@ function normalizeGameDetails(payload) {
     status: firstText(game.statusText, game.status?.name),
     statusGroup: game.statusGroup ?? game.status?.group ?? null,
     clock: extractLiveClock(game),
-    category: categoryType(game.categoryName, game.gender, game.competitorType, competition.name, game.competitionDisplayName, game.competitionName),
+    category: categoryType(game.categoryName, game.gender, game.competitorType, competition.name, competition.categoryName, competition.ageGroup, competition.divisionName),
     score: { home: validScore(teams.home.score), away: validScore(teams.away.score), penalties: { home: homePenaltyScore, away: awayPenaltyScore } },
     home: teams.home,
     away: teams.away,
@@ -787,6 +810,8 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
         homeId: positiveId(item.home?.id), awayId: positiveId(item.away?.id),
         homeScore: item.home?.score ?? null, awayScore: item.away?.score ?? null,
         status: firstText(item.status), category: gameCategory, categoryCompatible: !categoryMismatch, competition: gameCompetition, competitionId: positiveId(item.competition?.id),
+        round: firstText(item.round), roundNum: positiveId(item.roundNum), stageNum: positiveId(item.stageNum),
+        competitionMeta: item.competition && typeof item.competition === 'object' ? {categoryId:positiveId(item.competition.categoryId),categoryName:firstText(item.competition.categoryName),categoryType:firstText(item.competition.categoryType),gender:firstText(item.competition.gender),ageGroup:firstText(item.competition.ageGroup),divisionId:positiveId(item.competition.divisionId),divisionName:firstText(item.competition.divisionName),groupId:positiveId(item.competition.groupId),groupName:firstText(item.competition.groupName),stageName:firstText(item.competition.stageName),seasonName:firstText(item.competition.seasonName),country:firstText(item.competition.country),round:firstText(item.round),roundNum:positiveId(item.roundNum),stageNum:positiveId(item.stageNum)} : {},
         score, confidence, autoEligible: false, reversed: isReversed, exactOriented,
         teamScore: Math.round(teamScore * 100), teamAverageScore: Math.round(pairAverage * 100),
         homeTeamScore: Math.round(selectedHomeScore * 100), awayTeamScore: Math.round(selectedAwayScore * 100),

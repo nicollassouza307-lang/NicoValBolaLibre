@@ -9,7 +9,7 @@ const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const pkg=require('../package.json');
 const ui=require('../apifootball-lineup-ui');
 
-assert.equal(pkg.version,'0.22.5');
+assert.equal(pkg.version,'0.22.6');
 assert.match(html,/Rei dos Canais/);
 assert.match(html,/LA18HD/);
 assert.match(html,/PelotaLibre/);
@@ -65,7 +65,7 @@ const placements=ui.playerPlacements(players4231,'home','4-2-3-1');
 assert.equal(placements.length,11,'Nenhum titular pode sumir do campo.');
 const rowCounts=[...new Set(placements.map(p=>p.depth))].map(depth=>placements.filter(p=>p.depth===depth).length);
 assert.deepEqual(rowCounts,[1,4,2,3,1],'O fallback deve reconstruir GK + 4-2-3-1.');
-assert.ok(placements.every(p=>p.left>=8&&p.left<=80&&p.top>=10&&p.top<=90));
+assert.ok(placements.every(p=>p.left>=8&&p.left<=86&&p.top>=10&&p.top<=90));
 const shortFormation=ui.playerPlacements([
   {player:{pos:'G',role:'Goalkeeper'}},
   ...['D','D','D','D','M','F'].map((pos,i)=>({player:{pos,role:pos==='D'?'Defender':pos==='M'?'Midfielder':'Forward',name:`S${i}`}}))
@@ -97,4 +97,4 @@ assert.match(html,/void loadScores365Standings\(event,\{silent:true\}\)/);
 assert.doesNotMatch(html,/class="broadcast-panel match-broadcast-panel/);
 assert.doesNotMatch(html,/Onde Assistir/);
 
-console.log('PASSOU: V0.22.5, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
+console.log('PASSOU: V0.22.6, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
