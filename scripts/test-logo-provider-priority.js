@@ -6,7 +6,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const pkg=require('../package.json');
-assert.equal(pkg.version,'0.22.10');
+assert.equal(pkg.version,'0.22.12');
 const logoStart=html.indexOf('function logoMarkup('),logoEnd=html.indexOf('\n  function theSportsDbLocalKey',logoStart);
 assert.ok(logoStart>=0&&logoEnd>logoStart);
 const logo=html.slice(logoStart,logoEnd);

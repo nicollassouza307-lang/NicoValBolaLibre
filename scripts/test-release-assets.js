@@ -7,12 +7,15 @@ const workflow = fs.readFileSync(path.join(root, '.github/workflows/release.yml'
 const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'build/electron-builder.config.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.equal(pkg.version, '0.22.10');
+assert.ok(fs.existsSync(path.join(root, '.env.example')), 'O modelo de configuração opcional precisa existir para o electron-builder.');
+assert.equal(pkg.version, '0.22.12');
 const electronConfig = require('../build/electron-builder.config.js');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}multi-api-engine.js`)), 'O Multi-API Engine deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}football-data-service.js`)), 'O serviço football-data.org deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}thesportsdb-service.js`)), 'O serviço TheSportsDB deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}365scores-service.js`)), 'O adaptador experimental da 365Scores deve ser incluído no instalador Windows.');
+assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}team-name-normalizer.js`)), 'O normalizador compartilhado de seleções deve ser incluído no instalador Windows.');
+assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}scores365-standings.js`)), 'O normalizador de classificação deve ser incluído no instalador Windows.');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const preload = fs.readFileSync(path.join(root, 'electron/preload.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');

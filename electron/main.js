@@ -145,6 +145,104 @@ function configureAutoUpdater() {
   }, 7000);
 }
 
+
+async function applyPlayerVolumeBoost(contents, percent) {
+  const mainFrame = contents?.mainFrame;
+  if (!mainFrame || contents.isDestroyed()) return { attached: 0, found: 0, frames: 0 };
+  const safePercent = Math.max(100, Math.min(300, Math.round(Number(percent) || 100)));
+  const gain = safePercent / 100;
+  let frames = [];
+  let playerSrc = '';
+  try {
+    frames = Array.from(mainFrame.framesInSubtree || []);
+    playerSrc = await mainFrame.executeJavaScript(`document.querySelector('#playerScreen iframe')?.getAttribute('src') || ''`);
+  } catch {}
+  const liveFrames = frames.filter(frame => frame && frame !== mainFrame && !frame.isDestroyed());
+  const directChildren = liveFrames.filter(frame => frame.parent === mainFrame);
+  const roots = new Set();
+  let targetHost = '';
+  try { targetHost = new URL(playerSrc, mainFrame.url).hostname.toLowerCase(); } catch {}
+  if (targetHost) {
+    for (const frame of liveFrames) {
+      let host = '';
+      try { host = new URL(frame.url).hostname.toLowerCase(); } catch {}
+      if (host && (host === targetHost || host.endsWith(`.${targetHost}`) || targetHost.endsWith(`.${host}`))) {
+        let root = frame;
+        while (root.parent && root.parent !== mainFrame) root = root.parent;
+        if (root.parent === mainFrame) roots.add(root);
+      }
+    }
+  }
+  // Alguns players redirecionam para outro host. Nesse caso, só usamos o
+  // fallback quando existe exatamente um iframe externo direto, evitando
+  // amplificar anúncios ou outros frames da interface.
+  if (!roots.size && directChildren.length === 1) roots.add(directChildren[0]);
+  const isInPlayerTree = frame => {
+    let current = frame;
+    while (current && current.parent && current.parent !== mainFrame) current = current.parent;
+    return Boolean(current && roots.has(current));
+  };
+  const targets = liveFrames.filter(isInPlayerTree);
+  if (!targets.length) return { attached: 0, found: 0, frames: 0, failed: 0, percent: safePercent, reason: 'player-frame-not-found' };
+  const script = `(() => {
+    const level = ${JSON.stringify(gain)};
+    const key = '__nvbVolumeBoostV1';
+    const state = window[key] || (window[key] = { context: null, media: new WeakMap(), attached: 0, failed: 0, observer: null, level: 1 });
+    state.level = level;
+    const attach = element => {
+      if (!(element instanceof HTMLMediaElement)) return false;
+      const previous = state.media.get(element);
+      if (previous) { previous.gain.gain.setTargetAtTime(level, previous.gain.context.currentTime, 0.04); return true; }
+      const current = element.currentSrc || element.src || '';
+      try {
+        if (/^https?:/i.test(current) && new URL(current, location.href).origin !== location.origin && !element.crossOrigin) { state.failed++; return false; }
+      } catch {}
+      try {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtor) { state.failed++; return false; }
+        const context = state.context || (state.context = new AudioCtor());
+        const source = context.createMediaElementSource(element);
+        const gainNode = context.createGain();
+        const limiter = context.createDynamicsCompressor();
+        limiter.threshold.value = -8;
+        limiter.knee.value = 12;
+        limiter.ratio.value = 12;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.22;
+        source.connect(gainNode);
+        gainNode.connect(limiter);
+        limiter.connect(context.destination);
+        gainNode.gain.setTargetAtTime(level, context.currentTime, 0.04);
+        state.media.set(element, { source, gain: gainNode, limiter });
+        state.attached++;
+        if (context.state === 'suspended') context.resume().catch(() => {});
+        return true;
+      } catch (error) { state.failed++; state.lastError = String(error?.message || error); return false; }
+    };
+    const scan = () => document.querySelectorAll('audio,video').forEach(attach);
+    scan();
+    if (!state.observer && document.documentElement) {
+      state.observer = new MutationObserver(scan);
+      state.observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+    return { attached: state.attached, found: document.querySelectorAll('audio,video').length, failed: state.failed, origin: location.origin };
+  })()`;
+  let attached = 0, found = 0, failed = 0, succeededFrames = 0;
+  for (const frame of targets) {
+    try {
+      const result = await frame.executeJavaScript(script, true);
+      attached += Number(result?.attached || 0);
+      found += Number(result?.found || 0);
+      failed += Number(result?.failed || 0);
+      succeededFrames++;
+    } catch (error) {
+      failed++;
+      console.warn('Não foi possível aplicar Volume Booster no frame do player:', error.message);
+    }
+  }
+  return { attached, found, failed, frames: succeededFrames, percent: safePercent };
+}
+
 function createWindow(url) {
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -170,6 +268,10 @@ function createWindow(url) {
 }
 
 ipcMain.handle('nvb:version', () => app.getVersion());
+ipcMain.handle('nvb:player-volume', async (event, percent) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) throw new Error('Janela do aplicativo não está disponível.');
+  return applyPlayerVolumeBoost(mainWindow.webContents, percent);
+});
 ipcMain.handle('nvb:update-check', async () => {
   if (!app.isPackaged) return { message: 'O atualizador fica ativo na versão instalada.' };
   if (!require('node:fs').existsSync(path.join(process.resourcesPath, 'app-update.yml'))) return { message: 'Atualizador ainda não configurado. Publique o instalador pelo GitHub Releases.' };

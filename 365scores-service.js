@@ -1,5 +1,7 @@
 'use strict';
 
+const { normalizeNationalTeamName } = require('./team-name-normalizer');
+
 // Integração experimental com os endpoints web observados publicamente em
 // implementações comunitárias. Não é uma API oficial documentada pela 365Scores.
 // Chamadas são feitas somente sob demanda, com cache e limite local conservador.
@@ -351,19 +353,25 @@ function normalizeGameEvent(event, memberMap, home, away) {
   const ownGoalText=[rawTypeName,item.eventSubType,item.subType,item.subtype,item.goalType,item.eventDescription,item.description,item.Description,item.comment,item.Comment,item.shortText,item.eventName,item.EventName,item.detail,item.Details,item.note,item.message,item.goal?.type,item.goal?.typeName].some(isOwnGoalText);
   const isOwnGoal=ownGoalFlag||ownGoalText;
   const isSubstitution=/substitution|substitu/i.test(rawTypeName)||Number(rawTypeId)===1000;
-  const substitution=asObject(item.substitution||item.substitutionData||item.Substitution||item.substitutionDetails);
+  const substitution=asObject(item.substitution||item.substitutionData||item.Substitution||item.substitutionDetails||item.substitutionEvent);
+  const extraPlayers=asArray(item.ExtraPlayers||item.extraPlayers||item.extraPlayerList);
   const outObject=asObject(item.outPlayer||item.playerOut||item.outAthlete||item.playerOff||item.playerOffData||item.subOut||item.substitutedPlayer||substitution.out||substitution.playerOut||substitution.outgoingPlayer||substitution.playerOff||substitution.outgoing);
-  const inObject=asObject(item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||substitution.incoming);
+  const inObject=asObject(item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.playerOnData||item.enteringPlayer||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||substitution.incoming);
+  const assistObject=asObject(item.assist||item.assistingPlayer||item.assistPlayer||item.assistedBy||item.assistAthlete||item.secondaryPlayer||extraPlayers[0]||item.P2);
   const athleteId=positiveId((isSubstitution?(item.outAthleteId||item.outPlayerId||item.playerOutId||item.exitingAthleteId||item.substitutedAthleteId||item.playerOffId||item.outgoingPlayerId||item.subOutId||outObject.id||outObject.athleteId||outObject.playerId):null)||item.athleteId||item.playerId||item.memberId||item.player?.id||item.athlete?.id||item.Player?.id||item.PID);
   const rawPlayer=item.outPlayer||item.playerOut||item.outAthlete||item.playerOff||item.playerOffData||item.subOut||item.substitutedPlayer||substitution.out||substitution.playerOut||substitution.outgoingPlayer||substitution.playerOff||item.player||item.athlete||item.Player||item.P;
-  const player=(athleteId&&memberMap.get(athleteId))||outObject||asObject(rawPlayer);
-  const secondAthleteId=positiveId((isSubstitution?(item.inAthleteId||item.inPlayerId||item.playerInId||item.enteringAthleteId||item.substituteId||item.playerOnId||item.incomingPlayerId||item.subInId||inObject.id||inObject.athleteId||inObject.playerId):null)||item.assistAthleteId||item.assistPlayerId||item.assist?.id||item.PID2||item.extraPlayerId||item.secondaryPlayer?.id||item.ExtraPlayers?.[0]?.id);
-  const rawSecondPlayer=item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||item.assist||item.secondaryPlayer||item.ExtraPlayers?.[0]||item.P2||item.player2Name||item.secondPlayerName;
-  const secondPlayer=(secondAthleteId&&memberMap.get(secondAthleteId))||inObject||asObject(rawSecondPlayer);
+  const playerFromMap=athleteId&&memberMap.get(athleteId);
+  const player=(playerFromMap&&Object.keys(playerFromMap).length?playerFromMap:(Object.keys(outObject).length?outObject:(rawPlayer&&typeof rawPlayer==='object'?rawPlayer:{})));
+  const secondAthleteId=positiveId((isSubstitution?(item.inAthleteId||item.inPlayerId||item.playerInId||item.enteringAthleteId||item.substituteId||item.playerOnId||item.incomingPlayerId||item.subInId||inObject.id||inObject.athleteId||inObject.playerId):null)||item.assistAthleteId||item.assistingPlayerId||item.assistedByPlayerId||item.assistPlayerId||assistObject.id||assistObject.athleteId||assistObject.playerId||item.PID2||item.extraPlayerId||item.extraAthleteId||item.secondaryPlayer?.id||extraPlayers[0]?.id);
+  const rawSecondPlayer=isSubstitution
+    ? (item.inPlayer||item.playerIn||item.inAthlete||item.playerOn||item.playerOnData||item.enteringPlayer||item.player2||item.athlete2||item.secondPlayer||item.subIn||item.substitutePlayer||substitution.in||substitution.playerIn||substitution.incomingPlayer||substitution.playerOn||substitution.incoming||item.P2||item.player2Name||item.secondPlayerName)
+    : (item.assist||item.assistingPlayer||item.assistPlayer||item.assistedBy||item.assistAthlete||item.secondaryPlayer||extraPlayers[0]||item.P2||item.player2Name||item.secondPlayerName);
+  const secondFromMap=secondAthleteId&&memberMap.get(secondAthleteId);
+  const secondPlayer=(secondFromMap&&Object.keys(secondFromMap).length?secondFromMap:(Object.keys(inObject).length?inObject:(Object.keys(assistObject).length?assistObject:(rawSecondPlayer&&typeof rawSecondPlayer==='object'?rawSecondPlayer:{}))));
   const stringPlayer=typeof rawPlayer==='string'?rawPlayer:'';
   const stringSecond=typeof rawSecondPlayer==='string'?rawSecondPlayer:'';
-  const outName=firstText(player.name,player.displayName,player.longName,player.shortName,stringPlayer,item.outPlayerName,item.playerOutName,item.exitingPlayerName,item.exitingPlayer,item.PlayerOutName,item.playerOffName,item.PlayerOffName,substitution.outName,substitution.playerOutName,substitution.outgoingName,item.substitutedPlayerName,item.playerName,item.P,item.p);
-  const inName=firstText(secondPlayer.name,secondPlayer.displayName,secondPlayer.longName,secondPlayer.shortName,stringSecond,item.inPlayerName,item.playerInName,item.enteringPlayerName,item.enteringPlayer,item.PlayerInName,item.playerOnName,item.PlayerOnName,substitution.inName,substitution.playerInName,substitution.enteringPlayerName,substitution.incomingName,item.substituteName,item.SubstituteName,item.playerName2,item.PlayerName2,item.athleteName2,item.P2,item.p2,item.player2Name,item.secondPlayerName,item.incomingName);
+  const outName=firstText(player.name,player.displayName,player.longName,player.shortName,stringPlayer,item.outPlayerName,item.playerOutName,item.exitingPlayerName,item.exitingPlayer,item.PlayerOutName,item.playerOffName,item.PlayerOffName,substitution.outName,substitution.playerOutName,substitution.outgoingName,item.substitutedPlayerName,item.playerName,item.PlayerName,item.P,item.p);
+  const inName=firstText(secondPlayer.name,secondPlayer.displayName,secondPlayer.longName,secondPlayer.shortName,secondPlayer.athleteName,secondPlayer.playerName,stringSecond,isSubstitution?item.inPlayerName:null,isSubstitution?item.playerInName:null,isSubstitution?item.enteringPlayerName:null,isSubstitution?item.enteringPlayer:null,isSubstitution?item.PlayerInName:null,isSubstitution?item.playerOnName:null,substitution.inName,substitution.playerInName,substitution.enteringPlayerName,substitution.incomingName,item.substituteName,item.SubstituteName,item.assistName,item.assistingPlayerName,item.assistedByName,item.playerName2,item.PlayerName2,item.athleteName2,item.P2,item.p2,item.player2Name,item.secondPlayerName,item.incomingName);
   const competitorRaw=item.competitorNum??item.competitor?.competitorNum??item.CompetitorNum??item.Comp??item.side??item.competitorSide??item.teamSide;
   const explicitHome=item.isHome===true||item.isHomeCompetitor===true||String(item.homeAway||item.side||item.teamSide||'').toLowerCase()==='home';
   const explicitAway=item.isHome===false||item.isAway===true||item.isAwayCompetitor===true||String(item.homeAway||item.side||item.teamSide||'').toLowerCase()==='away';
@@ -572,6 +580,8 @@ const MATCH_TEAM_ALIASES = new Map([
   ['cucuta deportivo', 'cucuta'], ['deportivo cucuta', 'cucuta'], ['cucuta', 'cucuta']
 ]);
 function normalizeMatchTeam(value) {
+  const national = normalizeNationalTeamName(value);
+  if (national) return national;
   let key = foldMatchText(value);
   if (MATCH_TEAM_ALIASES.has(key)) return MATCH_TEAM_ALIASES.get(key);
   key = key.replace(/^(?:fc|cf|ac|as|ssc|ss|sc|cd|ca|afc|rcd|rc|ud|vfb|ec|cr|se)\s+/, '');

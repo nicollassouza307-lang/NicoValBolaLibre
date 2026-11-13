@@ -1,10 +1,17 @@
-# NicoValBolaLibre V0.22.10
+# NicoValBolaLibre V0.22.12
 
-## V0.22.10 · Recuperação e gerenciamento de vínculos 365Scores
+## V0.22.12 · Seleções multilíngues, eventos, escalações, classificação e áudio
 
 - Identifica vínculos antigos mesmo quando o parser anterior salvou a competição grudada ao nome do visitante; faz migração automática da chave quando os times e a data confirmam a mesma partida.
 - Adiciona inventário global para localizar/desvincular gameIds mesmo fora da data atualmente carregada.
 - Permite transferir um gameId ocupado diretamente para a partida selecionada, com confirmação e mantendo o cache esportivo.
+- Normaliza aliases multilíngues de seleções para reconhecer a mesma partida entre agendas em português, espanhol e inglês, sem misturar seleções femininas/de base com as masculinas.
+- Reforça a extração de assistências e substituições, aceitando objetos aninhados e variantes de campos da 365Scores; associa jogadores pelo ID e, como apoio, pelo nome e pelo banco de reservas.
+- Eventos dos titulares ficam em trilhos laterais separados: substituições à esquerda e gols/assistências à direita, com espaçamento para evitar sobreposição.
+- Cabeçalho da escalação agora apresenta a média das notas dos titulares com dados disponíveis, cores por faixa e formação, em um visual escuro inspirado na referência FotMob.
+- Amplia a classificação 365Scores para tabelas aninhadas e divisões/grupos, preservando o nome hierárquico (ex.: League A · Group 1), filtrando temporada/fase e normalizando pontos, jogos, vitórias, empates, derrotas e saldo.
+- Adiciona Volume Booster de 100% a 300% no player Electron, com controle salvo, ganho por Web Audio, compressor/limitador, botão de reset para 100%, aviso acima de 200% e reaplicação ao carregar o iframe. O alcance depende de o player permitir processamento de áudio e CORS; o booster não altera volume de sites externos que bloqueiem esse recurso.
+
 
 ## V0.22.9 · Correção de vínculos 365Scores
 
@@ -139,8 +146,8 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.10` e `Push origin`.
-3. Crie e envie a tag `v0.22.10`.
+2. Faça commit `NicoValBolaLibre V0.22.12` e `Push origin`.
+3. Crie e envie a tag `v0.22.12`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 
 O ZIP contém código-fonte; o instalador não está incluído. A integração usa endpoints web não oficiais observados na versão pública do cliente 365Scores; não há API pública documentada ou garantia de disponibilidade, e a autorização para reutilização/redistribuição precisa ser confirmada. Os testes automatizados usam respostas simuladas e não executam consulta real à 365Scores. A associação automática é conservadora e salva vínculos somente no armazenamento local deste computador.

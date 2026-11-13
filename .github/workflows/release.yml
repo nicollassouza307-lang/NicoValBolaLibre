@@ -40,6 +40,16 @@ jobs:
         run: node scripts/test-365scores-service.js
       - name: Test Argentina/Brazil broadcaster market filtering
         run: node scripts/test-agenda-market-filter.js
+      - name: Test multilingual national-team match deduplication
+        run: node scripts/test-national-team-dedupe.js
+      - name: Test 365Scores assists and substitutions enrichment
+        run: node scripts/test-player-event-enrichment.js
+      - name: Test 365Scores Nations League group standings
+        run: node scripts/test-scores365-standings-groups.js
+      - name: Test FotMob-inspired lineup layout and substitution markers
+        run: node scripts/test-lineup-event-layout.js
+      - name: Test Electron Volume Booster and media-frame scoping
+        run: node scripts/test-player-volume-electron.js
       - name: Test 365Scores intelligent agenda matching and safe automatic linking
         run: node scripts/test-365scores-agenda-match.js
       - name: Test legacy football-data.org module compatibility (inactive provider)

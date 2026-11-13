@@ -1,4 +1,15 @@
-## V0.22.10 · Recuperação e gerenciamento de vínculos históricos 365Scores
+## V0.22.12 · Seleções multilíngues, escalações, eventos, classificação e áudio
+
+- Normaliza nomes exatos de seleções nacionais em português, espanhol, inglês e outros idiomas comuns, permitindo deduplicação das mesmas partidas entre Rei dos Canais e fontes hispanas; preserva marcadores femininos e de base.
+- Corrige aliases de seleções com prefixos como “Seleção de Alemanha” e amplia a lista de países reconhecidos.
+- Amplia a leitura de eventos da 365Scores para objetos aninhados de assistência/substituição e aliases adicionais de atletas que entram e saem.
+- Eventos de substituição dos titulares ficam no trilho esquerdo; gols, gols contra e assistências ficam no direito. Os trilhos usam espaçamento independente e não se empilham no mesmo ponto.
+- Cabeçalho das escalações mostra média das notas dos titulares disponíveis, com cor por faixa, nome e formação.
+- Refina a classificação para exibir hierarquia de divisões e grupos (ex.: League A · Group 1), reconhecer mais envelopes da API, filtrar temporada/fase e normalizar os dados de tabela. A deduplicação de linhas agora é local a cada grupo para não apagar equipes de outra divisão.
+- Adiciona Volume Booster de 100% a 300% para players compatíveis no Electron. O ganho é aplicado apenas na árvore do iframe do player, com compressor/limitador, reset rápido para 100%, aviso acima de 200% e reaplicação após o carregamento. Players que não permitem Web Audio/CORS podem não aceitar a amplificação.
+- Adiciona testes de regressão para deduplicação multilíngue, classificação aninhada, enriquecimento de eventos, layout e Volume Booster.
+
+## V0.22.11 · Recuperação e gerenciamento de vínculos históricos 365Scores
 
 - Corrige a comparação de vínculos antigos criados quando o parser anexava o nome da competição ao visitante (ex.: “Chipre UEFA Nations League”). O reconhecimento remove sufixos de competições conhecidos antes de comparar equipes, na mesma data.
 - Ao abrir o diagnóstico de associação, vínculos reconhecidos por essa regra são migrados para a chave atual da partida, preservando o gameId e os dados esportivos em cache.

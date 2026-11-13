@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('nvbDesktop', {
   getApiFootballKeyStatus: () => ipcRenderer.invoke('nvb:apifootball-key-status'),
   saveApiFootballKey: key => ipcRenderer.invoke('nvb:apifootball-key-save', key),
   clearApiFootballKey: () => ipcRenderer.invoke('nvb:apifootball-key-clear'),
+  setPlayerVolume: percent => ipcRenderer.invoke('nvb:player-volume', percent),
   onUpdateStatus: callback => {
     if (typeof callback !== 'function') return () => {};
     const listener = (_event, payload) => callback(payload);

@@ -10,6 +10,7 @@ const { URL } = require('node:url');
 const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
+const { normalizeNationalTeamName } = require('./team-name-normalizer');
 const { Scores365Service, matchAgendaEvents } = require('./365scores-service');
 const { filterAgendaByMarkets } = require('./agenda-market-filter');
 
@@ -220,6 +221,8 @@ const TEAM_CANONICAL_ALIASES = new Map(Object.entries({
   'internazionale milano':'internazionale', 'inter milan':'internazionale'
 }));
 function normalizeTeamForKey(value) {
+  const national = normalizeNationalTeamName(value);
+  if (national) return national;
   let key = foldLabel(value);
   // Junta iniciais institucionais pontuadas: U.S. -> US, S.S.C. -> SSC, R.C.D. -> RCD.
   key = key.replace(/^((?:[a-z]\s+){1,2}[a-z])(\s+)/, (_, initials, gap) => initials.replace(/\s+/g, '') + gap);
@@ -1733,4 +1736,4 @@ if (require.main === module || process.env.NVB_SERVER_AUTOSTART === '1') {
   listenWithFallback(REQUESTED_PORT);
 }
 
-module.exports = { server, listenWithFallback, stripRepeatedTeamSuffix, extractCompetitionAndAway };
+module.exports = { server, listenWithFallback, stripRepeatedTeamSuffix, extractCompetitionAndAway, normalizeTeamForKey, eventMatchKey, mergeCombinedEvents };

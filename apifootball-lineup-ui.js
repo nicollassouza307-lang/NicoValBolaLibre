@@ -389,7 +389,12 @@
     const name = String(lineup?.team?.name || fixtureTeam?.name || label);
     const logo = String(fixtureTeam?.logo || '');
     const formation = String(lineup?.formation || 'Formação não informada');
-    return `<div class="apifootball-pitch-team-head"><div class="apifootball-team-head-crest">${logo ? `<img src="${escapeHtml(logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span>${escapeHtml(initials(name))}</span>`}</div><div class="apifootball-team-head-info"><strong>${escapeHtml(name)}</strong><small>${escapeHtml(formation)}</small></div></div>`;
+    const starters = Array.isArray(lineup?.startXI) ? lineup.startXI : [];
+    const ratings = starters.map(item => playerRatingInfo(item?.player || item).value).filter(Number.isFinite);
+    const average = ratings.length ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length : null;
+    const tier = average === null ? '' : average >= 8 ? 'rating-excellent' : average >= 7 ? 'rating-good' : average >= 6 ? 'rating-average' : average >= 5 ? 'rating-low' : 'rating-poor';
+    const averageMarkup = average === null ? '' : `<span class="apifootball-team-head-average ${tier}" title="Média das notas dos titulares com dados disponíveis">${average.toFixed(2)}</span>`;
+    return `<div class="apifootball-pitch-team-head"><div class="apifootball-team-head-crest">${logo ? `<img src="${escapeHtml(logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span>${escapeHtml(initials(name))}</span>`}</div><div class="apifootball-team-head-info"><div class="apifootball-team-head-title"><strong>${escapeHtml(name)}</strong>${averageMarkup}</div><small>${escapeHtml(formation)}</small></div></div>`;
   }
 
   function renderSupportCard(lineup, fixtureTeam, label) {
