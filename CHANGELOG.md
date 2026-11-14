@@ -1,3 +1,10 @@
+## V0.22.13 · Redução de travamentos e trabalho redundante na interface
+
+- Atualizações silenciosas de partidas da 365Scores deixam de chamar `render()` da agenda inteira; atualizam somente o painel da partida selecionada e os elementos de placar/relógio necessários.
+- A reavaliação automática do catálogo de emissoras foi removida do caminho global de renderização; continua sendo executada nos fluxos de carregamento/atualização da agenda.
+- A atualização periódica de cinco minutos passa a reutilizar o cache do agregador, em vez de forçar consultas externas a cada ciclo. Atualização manual continua forçada.
+- Mantém cache, deduplicação de requisições, intervalos de atualização da 365Scores e tratamento de 403/429.
+
 ## V0.22.12 · Seleções multilíngues, escalações, eventos, classificação e áudio
 
 - Normaliza nomes exatos de seleções nacionais em português, espanhol, inglês e outros idiomas comuns, permitindo deduplicação das mesmas partidas entre Rei dos Canais e fontes hispanas; preserva marcadores femininos e de base.

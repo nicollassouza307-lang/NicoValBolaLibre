@@ -1207,7 +1207,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.12 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.13 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -2824,9 +2824,8 @@ const BROADCASTER_ALIAS_GROUPS = [
     $('#adminView').hidden=!isAdmin;
     const adminBtn=$('#adminBtn');if(adminBtn)adminBtn.classList.toggle('active',isAdmin);
     if(isAdmin) { renderAdmin(); return; }
-    // Reavalia o catálogo do painel a cada renderização. Assim, uma fonte cadastrada
-    // uma vez passa a aparecer em partidas atuais/futuras compatíveis.
-    autoLinkCatalogStations(state.events);
+    // O catálogo é reavaliado quando a agenda muda, não em cada render.
+    // Reprocessá-lo aqui multiplicava trabalho durante atualizações silenciosas da 365Scores.
     renderScheduleDateStrip();
     const list=filteredEvents();
     const activeAgendaEvents=state.events.filter(event=>!isAgendaMatchHidden(event));
@@ -3392,7 +3391,9 @@ const BROADCASTER_ALIAS_GROUPS = [
       scores365MatchCache[String(event.id)]={gameId:Number(link.gameId),details:result.details,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       scores365MatchLoadErrors.delete(String(event.id));
       writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
-      render();
+      // Atualizações silenciosas de relógio/placar não devem reconstruir a agenda inteira.
+      // Renderização completa fica reservada ao carregamento solicitado pelo usuário.
+      if(!silent) render();
       if(state.selected&&String(state.selected.id)===String(event.id)){refreshScores365PanelInModal(event);refreshScores365MatchFacts(event);}
       void loadScores365Standings(event,{silent:true});
       if(!silent)startScores365LivePolling(event);
@@ -5485,7 +5486,7 @@ O cache antigo não será apagado.`))return;
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.12',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.13',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');
@@ -5608,7 +5609,9 @@ O cache antigo não será apagado.`))return;
         activeScheduleContext = '';
       }
     }
-    loadEvents({force:true});
+    // A atualização periódica reutiliza o cache do agregador; consultas forçadas
+    // ficam somente para o botão Atualizar e mudanças explícitas de data/filtro.
+    loadEvents({force:false});
   }
   setInterval(refreshScheduleIfVisible, 5 * 60 * 1000);
   document.addEventListener('visibilitychange', () => {

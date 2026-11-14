@@ -1,6 +1,6 @@
-# NicoValBolaLibre V0.22.12
+# NicoValBolaLibre V0.22.13
 
-## V0.22.12 · Seleções multilíngues, eventos, escalações, classificação e áudio
+## V0.22.13 · Seleções multilíngues, eventos, escalações, classificação e áudio
 
 - Identifica vínculos antigos mesmo quando o parser anterior salvou a competição grudada ao nome do visitante; faz migração automática da chave quando os times e a data confirmam a mesma partida.
 - Adiciona inventário global para localizar/desvincular gameIds mesmo fora da data atualmente carregada.
@@ -146,7 +146,7 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.12` e `Push origin`.
+2. Faça commit `NicoValBolaLibre V0.22.13` e `Push origin`.
 3. Crie e envie a tag `v0.22.12`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 

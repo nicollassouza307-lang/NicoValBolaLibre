@@ -8,7 +8,7 @@ const main = fs.readFileSync(path.join(root, 'electron/main.js'), 'utf8');
 const builder = fs.readFileSync(path.join(root, 'build/electron-builder.config.js'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 assert.ok(fs.existsSync(path.join(root, '.env.example')), 'O modelo de configuração opcional precisa existir para o electron-builder.');
-assert.equal(pkg.version, '0.22.12');
+assert.equal(pkg.version, '0.22.13');
 const electronConfig = require('../build/electron-builder.config.js');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}multi-api-engine.js`)), 'O Multi-API Engine deve ser incluído no instalador Windows.');
 assert.ok(electronConfig.extraResources.some(item => item.from.endsWith(`${path.sep}football-data-service.js`)), 'O serviço football-data.org deve ser incluído no instalador Windows.');
