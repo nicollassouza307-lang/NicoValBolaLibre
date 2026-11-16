@@ -9,6 +9,7 @@ const { MultiApiEngine } = require('../multi-api-engine');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nvb-multi-api-'));
 let now = Date.parse('2026-11-08T16:00:00Z');
 
+(async()=>{
 try {
   const engine = new MultiApiEngine({ dataDir: tempDir, now: () => now });
   assert.equal(engine.set('api-football', 'fixture:123', { score: '2-1' }, 60_000), true);
@@ -25,6 +26,7 @@ try {
   assert.equal(quota.requestsUsed, 1);
   engine.reserveRequest('football-data', { dailyLimit: 1000, dailySoftLimit: 900, reserve: 100, perMinuteLimit: 2 });
   assert.throws(() => engine.reserveRequest('football-data', { dailyLimit: 1000, dailySoftLimit: 900, reserve: 100, perMinuteLimit: 2 }), error => error.code === 'PROVIDER_MINUTE_LIMIT');
+  await engine.flushCache();
   const restored = new MultiApiEngine({ dataDir: tempDir, now: () => now });
   assert.deepEqual(restored.get('api-football', 'fixture:123'), { score: '2-1' }, 'O cache precisa sobreviver ao reinício do aplicativo.');
   assert.equal(restored.getProviderUsage('api-football').requestsUsedByApp, 12);
@@ -44,3 +46,4 @@ try {
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
 }
+})().catch(error=>{console.error(error);process.exitCode=1;});

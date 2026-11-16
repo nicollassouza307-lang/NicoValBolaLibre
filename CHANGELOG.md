@@ -1,3 +1,24 @@
+# Histórico de versões
+
+## V0.22.15
+- Corrigido um ciclo infinito de timers na persistência dos caches de partidas e classificação: cada timer agora grava uma vez e termina, evitando trabalho contínuo no renderer.
+- Otimizado o carregamento da 365Scores: cache limitado e local-first, persistência assíncrona e agrupada, gravação compartilhada fora do caminho da resposta e deduplicação de requisições simultâneas.
+- Classificação, chaveamento e rankings passam a ser carregados sob demanda; o detalhe da partida não dispara essas consultas em toda atualização do Livescore.
+- Associação automática consulta primeiro a data selecionada e só expande para datas vizinhas quando necessário; comparação manual continua podendo pesquisar a janela completa.
+- Adicionadas abas Chaveamento e Rankings a partir dos endpoints já existentes da 365Scores, sem inserir jogos na agenda original.
+- Vínculos manuais da agenda são preservados; apenas os caches antigos e volumosos de detalhes/classificação são descartados e reconstruídos.
+
+## V0.22.14 · Cache 365Scores e abas de competição
+- Reduzido o trabalho síncrono do renderer ao persistir cache da 365Scores: cache de partidas limitado, persistência com debounce e gravação silenciosa espaçada.
+- Removido o carregamento automático de classificação ao abrir/atualizar uma partida; classificação, chaveamento e rankings passam a carregar sob demanda.
+- Adicionadas abas Chaveamento e Rankings usando os endpoints já existentes de brackets e estatísticas da competição.
+- Otimizada a associação automática: consulta primeiro o dia selecionado e só busca datas vizinhas quando necessário; comparação manual continua podendo pesquisar a janela completa.
+- Cache do servidor consultado localmente antes do cache compartilhado; gravação de cache compartilhado só ocorre após nova resposta da origem.
+- Persistência do cache local de provedores passou a ser assíncrona e agrupada para reduzir bloqueios do processo local.
+- Removidos do objeto normalizado os arrays brutos duplicados que não eram consumidos pela interface.
+- Primeiro polling de relógios da agenda adiado para depois da renderização inicial.
+- Não foram alteradas as fontes de agenda, nem a regra de que a 365Scores apenas enriquece partidas já existentes.
+
 ## V0.22.13 · Redução de travamentos e trabalho redundante na interface
 
 - Atualizações silenciosas de partidas da 365Scores deixam de chamar `render()` da agenda inteira; atualizam somente o painel da partida selecionada e os elementos de placar/relógio necessários.

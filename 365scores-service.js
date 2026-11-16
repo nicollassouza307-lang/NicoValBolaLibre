@@ -531,9 +531,8 @@ function normalizeGameDetails(payload) {
       athletes: athleteStatsCount,
       lineupPlayers: lineupPlayersWithStats.length,
       competitorRows,
-      athleteRows: rawAthleteStats,
-      rawCompetitorStats,
-      rawAthleteStats,
+      // Keep only normalized fields consumed by the UI. The raw upstream arrays
+      // can be large and duplicated the same player data in localStorage/cache.
       playerRows: (() => {
         const rows = new Map();
         for (const player of lineupPlayersWithStats) rows.set(String(player.athleteId || player.id || player.name), { athleteId:player.athleteId, name:player.name, team:homeLineup.members.includes(player)?teams.home.name:teams.away.name, stats:player.stats });
@@ -867,6 +866,16 @@ function matchAgendaEvents(agendaEvents, scoresGames) {
   return matches;
 }
 
+function shouldSearchNeighborDates(matches) {
+  const rows = asArray(matches);
+  if (!rows.length) return false;
+  return rows.some(match => {
+    const candidate = asArray(match?.candidates)[0];
+    if (!candidate) return true;
+    return Number(candidate.score || 0) < 90 || candidate.exactOriented !== true || Number(candidate.dateDiffDays || 0) !== 0;
+  });
+}
+
 class Scores365Service {
   constructor(options = {}) {
     this.baseUrl = String(options.baseUrl || API_BASE).replace(/\/$/, '');
@@ -952,11 +961,13 @@ class Scores365Service {
       if (value !== undefined && value !== null && String(value) !== '') url.searchParams.set(key, String(value));
     }
     const cacheKey = String(options.cacheKey || this.cacheKey(route, params));
+    // Coalesce even forced refreshes: two UI actions for the same resource must
+    // never start duplicate upstream requests while one is already in flight.
+    if (this.inflight.has(cacheKey)) return this.inflight.get(cacheKey);
     if (!options.force && this.engine) {
       const cached = this.engine.get('365scores', cacheKey);
       if (cached !== null && cached !== undefined) return { data: cached, cached: true, record: this.engine.getRecord('365scores', cacheKey) };
     }
-    if (!options.force && this.inflight.has(cacheKey)) return this.inflight.get(cacheKey);
 
     const pause = this.getPauseInfo();
     if (pause.paused) {
@@ -1017,7 +1028,7 @@ class Scores365Service {
         throw Object.assign(new Error(`Não foi possível consultar a 365Scores: ${error.message || 'falha de rede'}`), { status: 502, code: '365SCORES_NETWORK' });
       } finally { clearTimeout(timer); }
     })();
-    if (!options.force) this.inflight.set(cacheKey, task);
+    this.inflight.set(cacheKey, task);
     try { return await task; }
     finally { if (this.inflight.get(cacheKey) === task) this.inflight.delete(cacheKey); }
   }
@@ -1132,5 +1143,5 @@ class Scores365Service {
 
 module.exports = {
   Scores365Service, API_BASE, DEFAULT_PARAMS, ENDPOINTS,
-  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity, positionCode, categoryType, validScore, extractLiveClock
+  isoToBrDate, extractGames, normalizeGame, normalizeGameDetails, matchAgendaEvents, normalizeMatchTeam, teamNameSimilarity, positionCode, categoryType, validScore, extractLiveClock, shouldSearchNeighborDates
 };

@@ -1,7 +1,13 @@
-# NicoValBolaLibre V0.22.13
+# NicoValBolaLibre V0.22.15
 
-## V0.22.13 · Seleções multilíngues, eventos, escalações, classificação e áudio
+## V0.22.15 · Mega update de desempenho e dados 365Scores
 
+- Corrige os timers recursivos da persistência dos caches no renderer, que poderiam se reagendar indefinidamente. Agora cada debounce grava uma vez e termina.
+- Persiste o cache local de provedores com escrita assíncrona e agrupada, e evita regravar o cache remoto compartilhado quando a resposta já veio de cache.
+- Abre a central da partida sem puxar classificação junto com cada atualização do Livescore; classificação, chaveamento e rankings são carregados sob demanda.
+- Adiciona abas Chaveamento e Rankings para consultar os endpoints de bracket e estatísticas por competição já disponíveis no adaptador 365Scores.
+- Associação automática passa a consultar primeiro a data selecionada e só expande para datas vizinhas quando a correspondência do dia é fraca ou ausente.
+- Preserva todos os vínculos manuais da agenda; apenas os caches locais antigos e volumosos de detalhes/classificação são descartados e reconstruídos, mantendo o armazenamento de vínculos separado.
 - Identifica vínculos antigos mesmo quando o parser anterior salvou a competição grudada ao nome do visitante; faz migração automática da chave quando os times e a data confirmam a mesma partida.
 - Adiciona inventário global para localizar/desvincular gameIds mesmo fora da data atualmente carregada.
 - Permite transferir um gameId ocupado diretamente para a partida selecionada, com confirmação e mantendo o cache esportivo.
@@ -146,7 +152,7 @@
 ## Como atualizar
 
 1. Extraia o ZIP e copie os arquivos e pastas extraídos para a raiz do repositório, substituindo arquivos antigos e preservando `.git`.
-2. Faça commit `NicoValBolaLibre V0.22.13` e `Push origin`.
+2. Faça commit `NicoValBolaLibre V0.22.15` e `Push origin`.
 3. Crie e envie a tag `v0.22.12`.
 4. Confira o GitHub Actions. Só considere a Release pronta quando o instalador `*-Setup.exe` e `latest.yml` estiverem anexados.
 

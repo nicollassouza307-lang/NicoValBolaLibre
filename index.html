@@ -923,6 +923,20 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
 }
 </style>
 
+
+<style id="scores365-competition-extra-styles">
+.scores365-brackets-view,.scores365-rankings-view{display:grid;gap:12px;min-width:0}
+.scores365-bracket-stage,.scores365-ranking-section{border:1px solid var(--border-color,rgba(140,160,180,.22));border-radius:12px;padding:10px;min-width:0}
+.scores365-bracket-stage>header,.scores365-ranking-section>header{font-weight:750;margin-bottom:9px;color:var(--text-primary,#eaf1f8)}
+.scores365-bracket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:8px}
+.scores365-bracket-game{background:var(--surface-secondary,rgba(120,140,160,.08));border-radius:9px;padding:9px;min-width:0}
+.scores365-bracket-side{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0}
+.scores365-bracket-side span{overflow-wrap:anywhere}.scores365-bracket-side strong{font-variant-numeric:tabular-nums;min-width:20px;text-align:right}
+.scores365-bracket-penalties,.scores365-bracket-time{display:block;color:var(--text-muted,#91a7c1);font-size:11px;margin-top:4px}
+.scores365-ranking-section .apifootball-standings-wrap{max-width:100%;overflow:auto}
+@media(max-width:560px){.scores365-bracket-grid{grid-template-columns:1fr}.scores365-bracket-stage,.scores365-ranking-section{padding:8px}}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -1207,7 +1221,7 @@ img.competition-divider-logo,.public-competition-badge,img[data-competition-logo
       <div class="admin-small">Para compartilhar o catálogo manualmente, use Exportar/Importar JSON. Para sincronização automática entre computadores, configure o serviço em nuvem acima. A agenda usa fontes públicas consultadas pelo servidor local; os nomes de emissoras são normalizados por aliases para reconhecer variantes como Globo/Globoplay e ESPN Premium.</div>
     </section>
 
-    <footer class="footer"><span>NicoValBolaLibre • V0.22.13 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
+    <footer class="footer"><span>NicoValBolaLibre • V0.22.15 • <span id="logoLibraryStatus">Escudos: carregando base mundial…</span></span><span>Agendas: <a href="https://reidoscanais.li/api" target="_blank" rel="noopener">Rei dos Canais</a> · <a href="https://la18hd.su/eventos/" target="_blank" rel="noopener">LA18HD</a> · <a href="https://pelotalibre.video/agenda/" target="_blank" rel="noopener">PelotaLibre.video</a> · <a href="https://pelotalibre.ar/agenda/" target="_blank" rel="noopener">PelotaLibre.ar</a> · Escudos: 365Scores + <a href="https://github.com/JoseArroyave/football-logos" target="_blank" rel="noopener">Football Logos (GitHub)</a> · Dados esportivos: 365Scores</span></footer>
   </main>
 </div>
 
@@ -2120,7 +2134,7 @@ const BROADCASTER_ALIAS_GROUPS = [
       }
       console.warn('NicoValBolaLibre agendas combinadas:',error);
     } finally {
-      if (requestId===loadSequence) { state.loading=false; render(); void runScores365AutoAgendaMatching(requestedDate); }
+      if (requestId===loadSequence) { state.loading=false; render(); scheduleScores365AutoAgendaMatching(requestedDate); }
     }
   }
   function teamKey(name) {
@@ -3229,10 +3243,105 @@ const BROADCASTER_ALIAS_GROUPS = [
     const tableFor=group=>`<section class="scores365-standings-group">${group.label?`<header class="scores365-standings-group-title">${escapeHtml(group.label)}</header>`:''}<div class="apifootball-standings-wrap scores365-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>Equipe</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>${group.rows.map(row=>{const teamId=Number(row.competitor?.id||0),isHome=teamId&&teamId===Number(details.home?.id),isAway=teamId&&teamId===Number(details.away?.id);return `<tr class="${isHome?'is-match-home':isAway?'is-match-away':''}"><td>${Number(row.position)||'—'}</td><td><span style="display:flex;align-items:center;gap:7px">${teamId>0?`<img class="scores365-event-team-badge" src="https://imagecache.365scores.com/image/upload/f_png,w_32,h_32,c_limit,q_auto:eco,dpr_2,d_Competitors:default.png/v1/Competitors/${teamId}" alt="">`:''}${escapeHtml(row.competitor?.name||row.competitor?.shortName||'')}${isHome?'<small class="scores365-standing-side">CASA</small>':isAway?'<small class="scores365-standing-side">FORA</small>':''}</span></td><td><strong>${Number(row.points)||0}</strong></td><td>${Number(row.gamePlayed)||0}</td><td>${Number(row.gamesWon)||0}</td><td>${Number(row.gamesEven)||0}</td><td>${Number(row.gamesLost)||0}</td><td>${Number(row.ratio)||0}</td></tr>`;}).join('')}</tbody></table></div></section>`;
     return `${seasonLabel?`<div class="admin-small" style="margin-bottom:7px">${escapeHtml(seasonLabel)}${stageNum?` · Fase ${stageNum}`:''}</div>`:''}${positionsMarkup}<div class="scores365-standings-groups">${groups.map(tableFor).join('')}</div>`;
   }
+  function scores365CompetitionResourceKey(details) {
+    const competition=details?.competition||{};
+    return [Number(competition.id)||0,Number(competition.seasonNum)||0,Number(competition.stageNum)||0].join(':');
+  }
+  function scores365NestedArray(value) { return Array.isArray(value)?value:(value&&typeof value==='object'?[value]:[]); }
+  function scores365BracketTeam(value) {
+    const item=value?.competitor||value?.team||value?.participant||value?.entity||value||{};
+    return {name:String(item.name||item.displayName||item.shortName||item.athlete?.name||'A definir'),id:Number(item.id||item.competitorId||item.teamId||0),score:value?.score??value?.goals??value?.result?.score??null};
+  }
+  function renderScores365Brackets(details) {
+    const key=scores365CompetitionResourceKey(details),entry=scores365CompetitionDataCache.brackets.get(key);
+    if(!entry?.data)return '<div class="apifootball-message">Chaveamento ainda não carregado. Abra esta aba para consultar a estrutura eliminatória da competição.</div>';
+    const root=entry.data?.data||entry.data||{};
+    let brackets=scores365NestedArray(root.brackets||root.data?.brackets||root);
+    const sections=[];
+    for(const bracket of brackets){
+      const stages=scores365NestedArray(bracket?.stages||bracket?.rounds||bracket?.data?.stages);
+      for(const stage of stages){
+        const groups=scores365NestedArray(stage?.groups||stage?.bracketGroups||stage);
+        for(const group of groups){
+          const games=scores365NestedArray(group?.games||group?.matches||group?.fixtures||stage?.games);
+          const cards=games.map(game=>{
+            const participants=scores365NestedArray(game?.participants||game?.competitors);
+            let home=scores365BracketTeam(game?.homeCompetitor||game?.home||participants[0]||{});
+            let away=scores365BracketTeam(game?.awayCompetitor||game?.away||participants[1]||{});
+            if(participants.length>=2&&!game?.home&&!game?.homeCompetitor){home=scores365BracketTeam(participants[0]);away=scores365BracketTeam(participants[1]);}
+            const score=game?.score||game?.result||{};
+            const homeScore=home.score??score.home??score.homeScore??game?.homeScore??null;
+            const awayScore=away.score??score.away??score.awayScore??game?.awayScore??null;
+            const penalty=game?.penaltiesScore||game?.penaltyScore||game?.penalties||{};
+            const hasPenalties=penalty&&(penalty.home!==undefined||penalty.away!==undefined||penalty.homeScore!==undefined||penalty.awayScore!==undefined);
+            const time=String(game?.startTime||game?.date||game?.statusText||game?.time||'').trim();
+            return `<article class="scores365-bracket-game"><div class="scores365-bracket-side"><span>${escapeHtml(home.name)}</span><strong>${homeScore===null?'—':escapeHtml(homeScore)}</strong></div><div class="scores365-bracket-side"><span>${escapeHtml(away.name)}</span><strong>${awayScore===null?'—':escapeHtml(awayScore)}</strong></div>${hasPenalties?`<small class="scores365-bracket-penalties">Pênaltis ${escapeHtml(penalty.home??penalty.homeScore??'—')} × ${escapeHtml(penalty.away??penalty.awayScore??'—')}</small>`:''}${time?`<small class="scores365-bracket-time">${escapeHtml(time)}</small>`:''}</article>`;
+          }).filter(Boolean);
+          if(cards.length)sections.push(`<section class="scores365-bracket-stage"><header>${escapeHtml(stage?.name||stage?.displayName||stage?.stageName||group?.name||group?.displayName||bracket?.name||'Fase')}</header><div class="scores365-bracket-grid">${cards.join('')}</div></section>`);
+        }
+      }
+    }
+    if(!sections.length)return '<div class="apifootball-message">A 365Scores respondeu, mas não encontramos jogos em uma estrutura de chaveamento reconhecida nesta competição. Alguns torneios não possuem mata-mata.</div>';
+    return `<div class="scores365-brackets-view"><div class="admin-small">${entry.cached?'Dados em cache':'Dados recebidos da 365Scores'}</div>${sections.join('')}</div>`;
+  }
+  function renderScores365CompetitionStats(details) {
+    const key=scores365CompetitionResourceKey(details),entry=scores365CompetitionDataCache.stats.get(key);
+    if(!entry?.data)return '<div class="apifootball-message">Rankings ainda não carregados. Abra esta aba para consultar estatísticas de jogadores e equipes da competição.</div>';
+    const root=entry.data?.data||entry.data||{},statsRoot=root.stats||root;
+    const sections=[];
+    const addSections=(kind,label)=>{
+      const cats=scores365NestedArray(statsRoot?.[kind]||root?.[kind]);
+      for(const category of cats){
+        const rows=scores365NestedArray(category?.rows||category?.values||category?.ranking||category?.data);
+        if(!rows.length)continue;
+        const rowsMarkup=rows.slice(0,15).map((row,index)=>{
+          const entity=row?.entity||row?.athlete||row?.competitor||row?.player||row?.team||{};
+          const entityName=String(entity?.name||entity?.displayName||entity?.shortName||row?.name||row?.entityName||'Participante');
+          const stats=scores365NestedArray(row?.stats);
+          const values=stats.map(item=>`${item?.name||item?.typeName||item?.type?.name||''}${item?.value!==undefined?`: ${item.value}`:''}`).filter(Boolean);
+          const value=row?.value??row?.displayValue??row?.secondaryStatName??(values.length?values.join(' · '):'—');
+          const position=row?.position??row?.rank??(index+1);
+          return `<tr><td>${escapeHtml(position)}</td><td>${escapeHtml(entityName)}</td><td>${escapeHtml(value)}</td></tr>`;
+        }).join('');
+        sections.push(`<section class="scores365-ranking-section"><header>${escapeHtml(category?.name||category?.displayName||category?.typeName||label)}</header><div class="apifootball-standings-wrap"><table class="apifootball-table"><thead><tr><th>#</th><th>${label==='Jogadores'?'Jogador':'Equipe'}</th><th>Valor</th></tr></thead><tbody>${rowsMarkup}</tbody></table></div></section>`);
+      }
+    };
+    addSections('athletesStats','Jogadores');
+    addSections('competitorsStats','Equipes');
+    if(!sections.length)return '<div class="apifootball-message">A 365Scores respondeu, mas não trouxe rankings reconhecíveis para esta competição ou temporada.</div>';
+    return `<div class="scores365-rankings-view"><div class="admin-small">${entry.cached?'Dados em cache':'Dados recebidos da 365Scores'} · até 15 posições por categoria</div>${sections.join('')}</div>`;
+  }
+  async function loadScores365CompetitionData(event,kind,options={}) {
+    const link=scores365LinkedGameForEvent(event),details=scores365MatchCache[String(event?.id||'')]?.details;
+    const competitionId=Number(details?.competition?.id||link?.competitionId||0);
+    if(!competitionId){toast('A partida não informou o competitionId necessário.');return;}
+    const type=kind==='brackets'?'brackets':'stats',key=scores365CompetitionResourceKey(details||{competition:{id:competitionId}}),busyKey=`${type}:${key}`;
+    if(scores365CompetitionDataBusy.has(busyKey))return;
+    const existing=scores365CompetitionDataCache[type].get(key);
+    const ttl=type==='brackets'?60*60*1000:3*60*1000;
+    if(!options.force&&existing?.data&&Date.now()-(Number(existing.fetchedAt)||0)<ttl)return;
+    scores365CompetitionDataBusy.add(busyKey);
+    const button=$(`#scores365Load${type==='brackets'?'Brackets':'Rankings'}`);if(button)button.disabled=true;
+    const endpoint=type==='brackets'?'/api/365scores/brackets':'/api/365scores/competition-stats';
+    try {
+      const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,refresh:Boolean(options.force),cloudSync:readCloudSyncSettings()})});
+      const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||`Não foi possível carregar ${type==='brackets'?'o chaveamento':'os rankings'} da 365Scores.`);
+      scores365CompetitionDataCache[type].set(key,{data:result.data,cached:Boolean(result.cached||result.shared),fetchedAt:Date.now()});
+      if(state.selected&&String(state.selected.id)===String(event.id))refreshScores365PanelInModal(event);
+    } catch(error){const status=$('#scores365MatchStatus');if(status)status.textContent=error.message||'Falha ao carregar dados da competição.';toast(error.message||'Falha ao carregar dados da competição.');}
+    finally{scores365CompetitionDataBusy.delete(busyKey);if(button)button.disabled=false;}
+  }
+  function ensureScores365TabData(event,tab) {
+    if(tab==='standings')void loadScores365Standings(event,{silent:true});
+    else if(tab==='brackets')void loadScores365CompetitionData(event,'brackets');
+    else if(tab==='rankings')void loadScores365CompetitionData(event,'stats');
+  }
   function renderScores365MatchContent(details,tab) {
     if(tab==='lineups')return window.NVBLineupUI.renderLineups(scores365LineupAsApiSnapshot(details),{eventIcons:readStore('nvb_player_event_icons_v1',{})});
     if(tab==='statistics')return renderScores365Statistics(details);
     if(tab==='standings')return `${renderScores365Standings(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadStandings">Buscar/atualizar classificação</button></div>':''}`;
+    if(tab==='brackets')return `${renderScores365Brackets(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadBrackets">Buscar/atualizar chaveamento</button></div>':''}`;
+    if(tab==='rankings')return `${renderScores365CompetitionStats(details)}${Number(details.competition?.id)>0?'<div class="apifootball-actions" style="margin-top:10px"><button class="btn secondary small" type="button" id="scores365LoadRankings">Buscar/atualizar rankings</button></div>':''}`;
     const rawStatus=String(details.status||'').trim();
     const halftime=/^(?:int|ht|half time|halftime|intervalo)$/i.test(details.clock||rawStatus);
     const finished=/finished|full time|fim|fim de jogo|encerrado/i.test(rawStatus);
@@ -3244,7 +3353,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     const busy=scores365MatchOpenBusy.has(String(event.id));
     const cache=scores365MatchCache[String(event.id)]||null;
     const activeTab=scores365PanelActiveTab.get(String(event.id))||'livescore';
-    const tabs=[['livescore','Livescore'],['lineups','Escalações'],['statistics','Estatísticas'],['standings','Classificação']];
+    const tabs=[['livescore','Livescore'],['lineups','Escalações'],['statistics','Estatísticas'],['standings','Classificação'],['brackets','Chaveamento'],['rankings','Rankings']];
     const detail=cache?.details||null;
     if(!link||!Number(link.gameId)){
       const error=scores365MatchLoadErrors.get(String(event.id))||'';
@@ -3261,12 +3370,15 @@ const BROADCASTER_ALIAS_GROUPS = [
     panel.querySelector('#scores365FindMatch')?.addEventListener('click',()=>void ensureScores365MatchDataOnOpen(event,{force:true}));
     panel.querySelector('#scores365LoadMatchData')?.addEventListener('click',()=>loadScores365MatchData(event,Boolean(scores365MatchCache[String(event.id)])));
     panel.querySelectorAll('[data-scores365-match-tab]').forEach(button=>button.addEventListener('click',()=>{
-      const tab=['livescore','lineups','statistics','standings'].includes(button.dataset.scores365MatchTab)?button.dataset.scores365MatchTab:'livescore';
+      const tab=['livescore','lineups','statistics','standings','brackets','rankings'].includes(button.dataset.scores365MatchTab)?button.dataset.scores365MatchTab:'livescore';
       scores365PanelActiveTab.set(String(event.id),tab);
       panel.outerHTML=renderScores365MatchPanel(event);
       bindScores365MatchPanelEvents(event);
     }));
     panel.querySelector('#scores365LoadStandings')?.addEventListener('click',()=>loadScores365Standings(event,{force:true}));
+    panel.querySelector('#scores365LoadBrackets')?.addEventListener('click',()=>loadScores365CompetitionData(event,'brackets',{force:true}));
+    panel.querySelector('#scores365LoadRankings')?.addEventListener('click',()=>loadScores365CompetitionData(event,'stats',{force:true}));
+    ensureScores365TabData(event,scores365PanelActiveTab.get(String(event.id))||'livescore');
     attachApiFootballPhotoFallback(panel);
   }
   let scores365LiveTimer=null;
@@ -3348,6 +3460,7 @@ const BROADCASTER_ALIAS_GROUPS = [
     scores365LiveTimer=setInterval(async()=>{if(document.visibilityState!=='visible'||!state.selected||String(state.selected.id)!==String(event.id)||scores365LiveBusy)return;if(scores365NormalizedStatus(event)!=='live'){stopScores365LivePolling();return;}scores365LiveBusy=true;try{await loadScores365MatchData(event,false,true);}finally{scores365LiveBusy=false;}},90000);
   }
   let scores365AgendaClockTimer=null;
+  let scores365AgendaClockInitialTimer=null;
   let scores365AgendaClockBusy=false;
   let scores365AgendaClockCursor=0;
   async function refreshScores365AgendaClockBatch(){
@@ -3373,7 +3486,9 @@ const BROADCASTER_ALIAS_GROUPS = [
   }
   function startScores365AgendaClockPolling(){
     if(scores365AgendaClockTimer)clearInterval(scores365AgendaClockTimer);
-    void refreshScores365AgendaClockBatch();
+    if(scores365AgendaClockInitialTimer)clearTimeout(scores365AgendaClockInitialTimer);
+    // Let the calendar finish its first paint before any background 365Scores call.
+    scores365AgendaClockInitialTimer=setTimeout(()=>{scores365AgendaClockInitialTimer=null;void refreshScores365AgendaClockBatch();},20000);
     scores365AgendaClockTimer=setInterval(()=>void refreshScores365AgendaClockBatch(),120000);
   }
 
@@ -3390,12 +3505,11 @@ const BROADCASTER_ALIAS_GROUPS = [
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar os dados da 365Scores.');
       scores365MatchCache[String(event.id)]={gameId:Number(link.gameId),details:result.details,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
       scores365MatchLoadErrors.delete(String(event.id));
-      writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
+      persistScores365MatchCache({silent});
       // Atualizações silenciosas de relógio/placar não devem reconstruir a agenda inteira.
       // Renderização completa fica reservada ao carregamento solicitado pelo usuário.
       if(!silent) render();
       if(state.selected&&String(state.selected.id)===String(event.id)){refreshScores365PanelInModal(event);refreshScores365MatchFacts(event);}
-      void loadScores365Standings(event,{silent:true});
       if(!silent)startScores365LivePolling(event);
       if(!silent)toast(`Dados da 365Scores carregados para ${event.home} x ${event.away}.`);
     } catch(error) {
@@ -3422,10 +3536,10 @@ const BROADCASTER_ALIAS_GROUPS = [
     scores365StandingsBusy.add(cacheKey);
     const button=$('#scores365LoadStandings');if(button)button.disabled=true;
     try {
-      const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,seasonNum:seasonNum||undefined,stageNum:stageNum||undefined,cloudSync:readCloudSyncSettings()})});
+      const response=await fetch('/api/365scores/standings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({competitionId,seasonNum:seasonNum||undefined,stageNum:stageNum||undefined,refresh:force,cloudSync:readCloudSyncSettings()})});
       const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível carregar a classificação da 365Scores.');
       scores365StandingsCache[cacheKey]={data:result.data,seasonNum,stageNum,cached:Boolean(result.cached||result.shared),fetchedAt:new Date().toISOString()};
-      writeStore(SCORES365_STANDINGS_CACHE_KEY,scores365StandingsCache);
+      persistScores365StandingsCache();
       if(state.selected&&String(state.selected.id)===String(event.id))refreshScores365PanelInModal(event);
       if(!silent)toast(`Classificação recebida da 365Scores${seasonNum?` · temporada ${seasonNum}`:''}.`);
     } catch(error){if(!silent)toast(error.message||'Falha ao carregar a classificação da 365Scores.');else console.warn('NicoValBolaLibre · classificação 365Scores:',error.message||error);}
@@ -3818,8 +3932,12 @@ const BROADCASTER_ALIAS_GROUPS = [
     return new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(date);
   }
   const SCORES365_AGENDA_LINKS_KEY='nvb_365scores_agenda_links_v1';
-  const SCORES365_MATCH_CACHE_KEY='nvb_365scores_match_cache_v1';
-  const SCORES365_STANDINGS_CACHE_KEY='nvb_365scores_standings_cache_v1';
+  // The previous v1 detail caches could grow indefinitely and force the renderer
+  // to JSON-parse/stringify hundreds of KB synchronously. Drop only those caches;
+  // manual/automatic agenda links are preserved in their separate key.
+  try { localStorage.removeItem('nvb_365scores_match_cache_v1'); localStorage.removeItem('nvb_365scores_standings_cache_v1'); } catch {}
+  const SCORES365_MATCH_CACHE_KEY='nvb_365scores_match_cache_v2';
+  const SCORES365_STANDINGS_CACHE_KEY='nvb_365scores_standings_cache_v2';
   let scores365MatchCache=readStore(SCORES365_MATCH_CACHE_KEY,{});
   if(!scores365MatchCache||typeof scores365MatchCache!=='object'||Array.isArray(scores365MatchCache))scores365MatchCache={};
   let scores365StandingsCache=readStore(SCORES365_STANDINGS_CACHE_KEY,{});
@@ -3828,9 +3946,44 @@ const BROADCASTER_ALIAS_GROUPS = [
   const scores365StandingsBusy=new Set();
   const scores365MatchOpenBusy=new Set();
   const scores365MatchLoadErrors=new Map();
+  const scores365CompetitionDataCache={brackets:new Map(),stats:new Map()};
+  const scores365CompetitionDataBusy=new Set();
+  let scores365MatchPersistTimer=null;
+  let scores365StandingsPersistTimer=null;
+  let scores365LastSilentMatchPersistAt=0;
   let scores365AgendaMatchSnapshot=[];
   let scores365AgendaLinkInventorySnapshot=[];
   let scores365AutoMatchBusy=false;
+  let scores365AutoMatchScheduleTimer=null;
+
+  function trimScores365ObjectCache(cache,maxEntries) {
+    const entries=Object.entries(cache||{}).sort((a,b)=>(Date.parse(b[1]?.fetchedAt||'')||0)-(Date.parse(a[1]?.fetchedAt||'')||0));
+    for(const [key] of entries.slice(maxEntries))delete cache[key];
+  }
+  function persistScores365MatchCache(options={}) {
+    trimScores365ObjectCache(scores365MatchCache,10);
+    const silent=Boolean(options.silent);
+    if(silent&&Date.now()-scores365LastSilentMatchPersistAt<300000)return;
+    if(scores365MatchPersistTimer)clearTimeout(scores365MatchPersistTimer);
+    scores365MatchPersistTimer=setTimeout(()=>{
+      scores365MatchPersistTimer=null;
+      trimScores365ObjectCache(scores365MatchCache,6);
+      // Persist once and stop. Calling this scheduler from inside its own timer
+      // creates an endless timer loop and freezes the renderer over time.
+      writeStore(SCORES365_MATCH_CACHE_KEY,scores365MatchCache);
+      if(silent)scores365LastSilentMatchPersistAt=Date.now();
+    },silent?1800:350);
+  }
+  function persistScores365StandingsCache() {
+    trimScores365ObjectCache(scores365StandingsCache,8);
+    if(scores365StandingsPersistTimer)clearTimeout(scores365StandingsPersistTimer);
+    scores365StandingsPersistTimer=setTimeout(()=>{
+      scores365StandingsPersistTimer=null;
+      trimScores365ObjectCache(scores365StandingsCache,8);
+      // A single debounced localStorage write, not a recursive reschedule.
+      writeStore(SCORES365_STANDINGS_CACHE_KEY,scores365StandingsCache);
+    },900);
+  }
   const SCORES365_AUTO_MATCH_STORE_KEY='nvb_scores365_auto_match_runs_v1';
   const SCORES365_MATCH_SEARCH_ATTEMPTS_KEY='nvb_scores365_match_search_attempts_v1';
   function rememberScores365MatchSearches(events){
@@ -4061,8 +4214,18 @@ O cache antigo não será apagado.`))return;
     let hash=2166136261;for(let i=0;i<raw.length;i++){hash^=raw.charCodeAt(i);hash=Math.imul(hash,16777619);}
     return `${date}:${(hash>>>0).toString(36)}`;
   }
+  function scheduleScores365AutoAgendaMatching(date=state.date) {
+    if(scores365AutoMatchScheduleTimer)clearTimeout(scores365AutoMatchScheduleTimer);
+    scores365AutoMatchScheduleTimer=setTimeout(()=>{
+      scores365AutoMatchScheduleTimer=null;
+      const modalOpen=$('#matchModal')?.classList.contains('open')||$('#modalContent')?.classList.contains('open');
+      if(document.visibilityState!=='visible'||state.loading||modalOpen)return;
+      void runScores365AutoAgendaMatching(date);
+    },1800);
+  }
   async function runScores365AutoAgendaMatching(date=state.date) {
-    if(scores365AutoMatchBusy||!Array.isArray(state.events)||!state.events.length||!date)return;
+    const modalOpen=$('#matchModal')?.classList.contains('open')||$('#modalContent')?.classList.contains('open');
+    if(scores365AutoMatchBusy||document.visibilityState!=='visible'||modalOpen||state.loading||!Array.isArray(state.events)||!state.events.length||!date)return;
     const agendaEvents=buildScores365AgendaPayload();
     if(!agendaEvents.length)return;
     const signature=scores365AgendaSignature(date,agendaEvents);
@@ -4075,7 +4238,7 @@ O cache antigo não será apagado.`))return;
     const keys=Object.keys(runs).sort((a,b)=>Number(runs[b])-Number(runs[a])).slice(0,30);
     writeStore(SCORES365_AUTO_MATCH_STORE_KEY,Object.fromEntries(keys.map(key=>[key,runs[key]])));
     try {
-      const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
+      const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,searchWindow:'fallback',cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Falha na associação automática da agenda com a 365Scores.');
       rememberScores365MatchSearches(agendaEvents);
@@ -4116,7 +4279,7 @@ O cache antigo não será apagado.`))return;
     if(root)root.innerHTML='';
     try {
       const agendaEvents=buildScores365AgendaPayload();
-      const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,cloudSync:readCloudSyncSettings()})});
+      const response=await fetch('/api/365scores/match-agenda',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({date,agendaEvents,searchWindow:'all',cloudSync:readCloudSyncSettings()})});
       const result=await response.json();
       if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível comparar a agenda com a 365Scores.');
       rememberScores365MatchSearches(agendaEvents);
@@ -5486,7 +5649,7 @@ O cache antigo não será apagado.`))return;
   }
 
   function exportConfig() {
-    const data={app:'NicoValBolaLibre',version:'0.22.13',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
+    const data={app:'NicoValBolaLibre',version:'0.22.15',exportedAt:new Date().toISOString(),stations:stationCatalog,sources:sourcesStore,favorites:[...favorites],teamLogoOverrides,playerEventIcons:cleanPlayerEventIcons(readStore(PLAYER_EVENT_ICONS_STORE_KEY,{})),autoLinkEnabled};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='nicovalbolalibre-config.json'; a.click(); URL.revokeObjectURL(url);
     toast('Configuração exportada. Envie o JSON para seu amigo importar.');

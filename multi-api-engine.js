@@ -43,6 +43,9 @@ class MultiApiEngine {
     this.usageFile = path.join(this.dataDir, 'multi-api-usage.json');
     this.cache = new Map(Object.entries(this.loadJson(this.cacheFile, {})));
     this.usage = this.loadJson(this.usageFile, {});
+    this.cachePersistTimer = null;
+    this.cachePersistPromise = null;
+    this.cacheRevision = 0;
   }
 
   loadJson(file, fallback) {
@@ -133,9 +136,56 @@ class MultiApiEngine {
   }
 
   persistCache() {
-    const stored = {};
-    for (const [key, entry] of this.cache) if (entry && Number(entry.expiresAt) > this.now()) stored[key] = entry;
-    this.saveJson(this.cacheFile, stored);
+    // Cache writes used to stringify and synchronously rewrite the entire cache
+    // file on every response. That can stall the local API process during bursts.
+    this.cacheRevision += 1;
+    if (this.cachePersistTimer) clearTimeout(this.cachePersistTimer);
+    this.cachePersistTimer = setTimeout(() => {
+      this.cachePersistTimer = null;
+      this.flushCache().catch(error => console.warn('NicoValBolaLibre: falha ao persistir cache de provedores:', error?.message || error));
+    }, 450);
+    return true;
+  }
+
+  async flushCache() {
+    if (this.cachePersistTimer) {
+      clearTimeout(this.cachePersistTimer);
+      this.cachePersistTimer = null;
+    }
+    // Share a single writer. If the cache changes while a write is in flight,
+    // the same writer loops and persists the newest revision before resolving.
+    if (this.cachePersistPromise) return this.cachePersistPromise;
+
+    this.cachePersistPromise = (async () => {
+      while (true) {
+        const revision = this.cacheRevision;
+        const stored = {};
+        for (const [key, entry] of this.cache) {
+          if (entry && Number(entry.expiresAt) > this.now()) stored[key] = entry;
+        }
+        const payload = JSON.stringify(stored);
+        const temporary = `${this.cacheFile}.${process.pid}.${revision}.tmp`;
+        await fs.promises.mkdir(this.dataDir, { recursive: true });
+        await fs.promises.writeFile(temporary, payload, { encoding: 'utf8', mode: 0o600 });
+        await fs.promises.rename(temporary, this.cacheFile);
+        this.persistedCacheRevision = revision;
+        if (revision === this.cacheRevision) return true;
+      }
+    })();
+
+    try {
+      return await this.cachePersistPromise;
+    } finally {
+      this.cachePersistPromise = null;
+      // A mutation can arrive between the loop's final comparison and the
+      // promise cleanup. Schedule one more debounced flush in that rare case.
+      if (this.persistedCacheRevision !== this.cacheRevision && !this.cachePersistTimer) {
+        this.cachePersistTimer = setTimeout(() => {
+          this.cachePersistTimer = null;
+          this.flushCache().catch(error => console.warn('NicoValBolaLibre: falha ao persistir cache de provedores:', error?.message || error));
+        }, 50);
+      }
+    }
   }
 
   recordUsage(provider, usage) {

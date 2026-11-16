@@ -11,7 +11,7 @@ const { ApiFootballService } = require('./apifootball-service');
 const { FootballDataService, cleanStandingRows } = require('./football-data-service');
 const { TheSportsDBService, normalizeTeam: normalizeSportsDbTeam, countryKey: sportsDbCountryKey, fold: sportsDbFold } = require('./thesportsdb-service');
 const { normalizeNationalTeamName } = require('./team-name-normalizer');
-const { Scores365Service, matchAgendaEvents } = require('./365scores-service');
+const { Scores365Service, matchAgendaEvents, shouldSearchNeighborDates } = require('./365scores-service');
 const { filterAgendaByMarkets } = require('./agenda-market-filter');
 
 const ROOT = __dirname;
@@ -1124,6 +1124,11 @@ const requestHandler = async (req, res) => {
     }
   }
 
+  function hasFreshLocal365Cache(cacheKey) {
+    try { return Boolean(apiFootballService.multiApiEngine.getRecord('365scores', cacheKey)); }
+    catch { return false; }
+  }
+
   if (pathname === '/api/365scores/status' && req.method === 'GET') {
     const provider = apiFootballService.multiApiEngine.providerStatus().find(item => item.id === '365scores') || null;
     return json(res, 200, {
@@ -1152,12 +1157,13 @@ const requestHandler = async (req, res) => {
       const cacheKey = scores365Service.gamesForDateCacheKey(date);
       const cloudSync = body.cloudSync || {};
       let shared = null;
-      if (!body.refresh) {
+      const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+      if (!body.refresh && !localHit) {
         shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
         if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
       }
       const result = await scores365Service.getGamesForDate(date, { force: Boolean(body.refresh) });
-      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
       return json(res, 200, {
         ok: true, provider: '365Scores', experimental: true, date: result.date,
         games: result.games, count: result.count, rawCount: result.rawCount, normalization: result.normalization,
@@ -1180,23 +1186,33 @@ const requestHandler = async (req, res) => {
       const [year, month, day] = date.split('-').map(Number);
       const baseDate = new Date(Date.UTC(year, month - 1, day, 12));
       if (!Number.isFinite(baseDate.getTime())) throw Object.assign(new Error('Informe uma data válida.'), { status:400, code:'365SCORES_INVALID_DATE' });
-      const queryDates = [-1, 0, 1].map(offset => { const d = new Date(baseDate); d.setUTCDate(d.getUTCDate() + offset); return d.toISOString().slice(0,10); });
+      const allQueryDates = [-1, 0, 1].map(offset => { const d = new Date(baseDate); d.setUTCDate(d.getUTCDate() + offset); return d.toISOString().slice(0,10); });
       const dateResults = [];
       let sharedCount = 0;
-      for (const queryDate of queryDates) {
+      async function loadDate(queryDate) {
         const cacheKey = scores365Service.gamesForDateCacheKey(queryDate);
         let shared = null;
-        if (!body.refresh) {
+        const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+        if (!body.refresh && !localHit) {
           shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
           if (shared) { apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared); sharedCount++; }
         }
         const result = await scores365Service.getGamesForDate(queryDate, { force: Boolean(body.refresh) });
-        if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+        if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
         dateResults.push(result);
       }
-      const uniqueGames = new Map();
-      for (const result of dateResults) for (const game of result.games) if (game.gameId && !uniqueGames.has(game.gameId)) uniqueGames.set(game.gameId, game);
-      const games = [...uniqueGames.values()];
+      // Auto-association starts with the selected date; neighbor dates are
+      // consulted only when no strong same-day candidate exists. Manual Admin
+      // comparison can still request the complete three-day window.
+      await loadDate(date);
+      let games = [...new Map(dateResults.flatMap(item => item.games).filter(game => game.gameId).map(game => [game.gameId, game])).values()];
+      let matches = matchAgendaEvents(agendaEvents, games);
+      const searchAll = String(body.searchWindow || '').toLowerCase() === 'all';
+      if (searchAll || shouldSearchNeighborDates(matches)) {
+        for (const queryDate of allQueryDates.filter(value => value !== date)) await loadDate(queryDate);
+        games = [...new Map(dateResults.flatMap(item => item.games).filter(game => game.gameId).map(game => [game.gameId, game])).values()];
+        matches = matchAgendaEvents(agendaEvents, games);
+      }
       const result = {
         games, count:games.length,
         rawCount:dateResults.reduce((sum,item)=>sum+Number(item.rawCount||0),0),
@@ -1208,14 +1224,13 @@ const requestHandler = async (req, res) => {
           missingBothTeamNames:dateResults.reduce((sum,item)=>sum+Number(item.normalization?.missingBothTeamNames||0),0)
         }, cached:dateResults.every(item=>item.cached)
       };
-      const matches = matchAgendaEvents(agendaEvents, result.games);
       const candidateCount = matches.reduce((sum, item) => sum + item.candidates.length, 0);
       return json(res, 200, {
-        ok:true, provider:'365Scores', experimental:true, date, queryDates,
+        ok:true, provider:'365Scores', experimental:true, date, queryDates:dateResults.map(item=>item.date),
         agendaCount:agendaEvents.length, sourceGamesCount:result.count, sourceRawCount:result.rawCount, normalization:result.normalization,
-        matches, candidateCount, cached:result.cached, shared:sharedCount===queryDates.length, sharedDates:sharedCount,
+        matches, candidateCount, cached:result.cached, shared:sharedCount===dateResults.length, sharedDates:sharedCount,
         agendaChanged:false,
-        message:'Comparação feita com partidas do dia selecionado e dos dias vizinhos. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
+        message:'Comparação feita primeiro com o dia selecionado; datas vizinhas só são consultadas quando necessário ou quando solicitado no Admin. Vínculos automáticos só serão salvos quando a correspondência for inequívoca; a agenda permanece intacta.'
       });
     } catch (error) {
       return json(res, error.status || 502, { ok:false, provider:'365Scores', error:error.message || 'Não foi possível comparar a agenda com a 365Scores.', code:error.code || '' });
@@ -1230,12 +1245,13 @@ const requestHandler = async (req, res) => {
       const cacheKey = scores365Service.gameCacheKey(gameId, matchupId);
       const cloudSync = body.cloudSync || {};
       let shared = null;
-      if (!body.refresh) {
+      const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+      if (!body.refresh && !localHit) {
         shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
         if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
       }
       const result = await scores365Service.getGame(gameId, { matchupId, force: Boolean(body.refresh) });
-      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
       return json(res, 200, { ok: true, provider: '365Scores', experimental: true, details: result.details, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
     } catch (error) {
       return json(res, error.status || 502, { ok: false, provider: '365Scores', error: error.message || 'Não foi possível consultar os detalhes da partida.', code: error.code || '' });
@@ -1250,12 +1266,13 @@ const requestHandler = async (req, res) => {
       const cacheKey = scores365Service.standingsCacheKey(competitionId, options);
       const cloudSync = body.cloudSync || {};
       let shared = null;
-      if (!body.refresh) {
+      const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+      if (!body.refresh && !localHit) {
         shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
         if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
       }
       const result = await scores365Service.getStandings(competitionId, options);
-      if (!shared && result.record) await writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
       return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
     } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar a classificação da 365Scores.', code: error.code || '' }); }
   }
@@ -1264,8 +1281,17 @@ const requestHandler = async (req, res) => {
     try {
       const body = await readRequestJson(req, 16 * 1024);
       const competitionId = Number(body.competitionId || 0);
+      const cacheKey = scores365Service.cacheKey('/brackets/', { competitions: String(competitionId), live: 'false' });
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+      if (!body.refresh && !localHit) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
       const result = await scores365Service.getBrackets(competitionId, { force: Boolean(body.refresh) });
-      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: result.cached });
+      if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
     } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar o chaveamento da 365Scores.', code: error.code || '' }); }
   }
 
@@ -1273,8 +1299,17 @@ const requestHandler = async (req, res) => {
     try {
       const body = await readRequestJson(req, 16 * 1024);
       const competitionId = Number(body.competitionId || 0);
+      const cacheKey = scores365Service.cacheKey('/stats/', { competitions: String(competitionId), competitors: '', withSeasons: 'true' });
+      const cloudSync = body.cloudSync || {};
+      let shared = null;
+      const localHit = !body.refresh && hasFreshLocal365Cache(cacheKey);
+      if (!body.refresh && !localHit) {
+        shared = await readSharedProviderCache(cloudSync, cacheKey, '365scores');
+        if (shared) apiFootballService.multiApiEngine.importRecord('365scores', cacheKey, shared);
+      }
       const result = await scores365Service.getCompetitionStats(competitionId, { force: Boolean(body.refresh) });
-      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: result.cached });
+      if (!shared && !result.cached && result.record) void writeSharedProviderCache(cloudSync, cacheKey, result.record, '365scores');
+      return json(res, 200, { ok: true, provider: '365Scores', data: result.data, cached: Boolean(result.cached || shared), shared: Boolean(shared) });
     } catch (error) { return json(res, error.status || 502, { ok: false, error: error.message || 'Não foi possível carregar as estatísticas da competição.', code: error.code || '' }); }
   }
 

@@ -9,13 +9,13 @@ const service=fs.readFileSync(path.join(root,'365scores-service.js'),'utf8');
 const pkg=require('../package.json');
 const ui=require('../apifootball-lineup-ui');
 
-assert.equal(pkg.version,'0.22.13');
+assert.equal(pkg.version,'0.22.15');
 assert.match(html,/Rei dos Canais/);
 assert.match(html,/LA18HD/);
 assert.match(html,/PelotaLibre/);
 
 // Automatic association, high-confidence-only, never adding fixtures.
-assert.match(html,/runScores365AutoAgendaMatching\(requestedDate\)/);
+assert.match(html,/scheduleScores365AutoAgendaMatching\(requestedDate\)/);
 assert.match(html,/function runScores365AutoAgendaMatching/);
 assert.match(html,/persistAutoScores365Links\(result\.matches\)/);
 assert.match(html,/autoEligible/);
@@ -91,10 +91,12 @@ assert.match(html,/const darkStatColor='#35556f'/);
 assert.match(html,/scores365-match-table-positions/);
 assert.match(html,/is-match-home/);
 assert.match(html,/is-match-away/);
-assert.match(html,/void loadScores365Standings\(event,\{silent:true\}\)/);
+const matchLoader=html.slice(html.indexOf('async function loadScores365MatchData'),html.indexOf('async function loadScores365Standings'));
+assert.doesNotMatch(matchLoader,/loadScores365Standings/);
+assert.match(html,/if\(tab==='standings'\)void loadScores365Standings\(event,\{silent:true\}\)/);
 
 // The isolated Where to Watch panel was removed from the match modal.
 assert.doesNotMatch(html,/class="broadcast-panel match-broadcast-panel/);
 assert.doesNotMatch(html,/Onde Assistir/);
 
-console.log('PASSOU: V0.22.13, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
+console.log('PASSOU: V0.22.15, 14 planejamentos, associação automática, relógio em agenda, Livescore PNG/eventos, notas, formações, classificação e compatibilidade do player.');
